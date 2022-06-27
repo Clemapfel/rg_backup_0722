@@ -25,7 +25,7 @@ namespace rat
             SDL_DestroyWindow(_window);
 
 
-        uint32_t sdl_options = SDL_WINDOW_SHOWN;
+        uint32_t sdl_options = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
 
         if (options & FULLSCREEN)
         {
@@ -64,6 +64,7 @@ namespace rat
             sdl_options |= SDL_WINDOW_INPUT_GRABBED;
 
         // setup opengl
+
         SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
 
         SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
@@ -74,7 +75,7 @@ namespace rat
         SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 16);
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
         SDL_GL_SetAttribute(SDL_GL_BUFFER_SIZE, 32);
 
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
@@ -90,6 +91,7 @@ namespace rat
         if (_gl_context == nullptr)
             std::cerr << "In ts::Window::create: Unable to create OpenGL context." << std::endl;
 
+        glViewport(0, 0, width, height);
         _is_open = true;
     }
 

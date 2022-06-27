@@ -9,6 +9,7 @@
 
 namespace rat
 {
+    /*
     CircleShape::CircleShape(Vector2f center, float radius, size_t n_outer_vertices)
         : _center(center), _radius(radius), _n_vertices(n_outer_vertices)
     {
@@ -96,5 +97,6 @@ namespace rat
         _radius = radius;
         update();
     }
+     */
 }
 

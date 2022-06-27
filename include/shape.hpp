@@ -11,17 +11,18 @@
 #include <include/renderable.hpp>
 #include <include/colors.hpp>
 #include <include/vector.hpp>
+#include <include/geometric_shapes.hpp>
 
 namespace rat
 {
     class Texture;
 
-    /// \brief a textured, vertex-based shape. Rendered as a triangle-fan
     class Shape : public Renderable
     {
         public:
-            // no docs
             virtual ~Shape() = default;
+
+            void render(RenderTarget*, Transform) const final override;
 
             void set_centroid(Vector2f position);
             Vector2f get_centroid() const;
@@ -34,82 +35,34 @@ namespace rat
             size_t get_n_vertices() const;
             Texture* get_texture() const;
 
-            /// \brief set the texture of the shape, unless otherwise specified, the textures centroid will be aligned with the shapes centroid
-            /// \param pointer to texture, or nullptr for no texture
             void set_texture(Texture*);
 
-            /// \brief set which part of the texture is mapped, texture is anchored at the top left of the bounding box
-            /// \param rect: rectangle, relative coordinates. Rectangle({0, 0,}, {1, 1}) is the whole texture
             void set_texture_rectangle(Rectangle rect);
-
-            /// \brief get the texture rectangle
             Rectangle get_texture_rectangle();
 
-            /// \brief get the axis-aligned bounding box of the shape
-            /// \returns rectangle
             Rectangle get_bounding_box() const;
 
-            /// \brief set the position of a specific vertex
-            /// \param index: index of the vertex, in [0, get_n_vertices()]
-            /// \param position: new position of the vertex
             void set_vertex_position(size_t index, Vector2f position);
-
-            /// \brief set the color of a specific vertex
-            /// \param index: index of the vertex, in [0, get_n_vertices()]
-            /// \param color: color
             void set_vertex_color(size_t index, RGBA);
-
-            /// \brief set the texture coordinate of a specific vertex
-            /// \param index: index of the vertex, in [0, get_n_vertices()]
-            /// \param relative: relative texture coordinates, each element in [0, 1]
             void set_vertex_texture_coordinates(size_t index, Vector2f relative);
 
-            /// \brief get the true coordinates of a specific vertex
-            /// \param index: index of the vertex, in [0, get_n_vertices()]
-            /// \returns position, true coordinates
             Vector2f get_vertex_position(size_t index) const;
-
-            /// \brief get the color of a specific vertex
-            /// \param index: index of the vertex, in [0, get_n_vertices()]
-            /// \returns color
             RGBA get_vertex_color(size_t index) const;
-
-            /// \brief get the texture coordinates of a specific vertex
-            /// \param index: index of the vertex, in [0, get_n_vertices()]
-            /// \returns relative coordinates, each element in [0, 1]
             Vector2f get_vertex_texture_coordinates(size_t index);
 
-            /// \brief set the origin of rotation and scaling
-            /// \param relative_to_centroid: relative distance from centroid, where (0, 0) makes the origin the centroid
             void set_origin(Vector2f relative_to_centroid);
-
-            /// \brief access the origin
-            /// \returns origin
             Vector2f get_origin() const;
 
-            /// \param rotate around the shapes origin
-            /// \param angle
-            void rotate(Angle);
-
-            /// \brief scale around the shapes origin
-            /// \param factor: 1.0 is no change, 1.5 is 50% bigger, 0.5 is 50% smaller
+            void rotate();
             void scale(float);
 
-            /// \copydoc Renderable::render
-            void render(RenderTarget*, Transform) const final override;
-
         protected:
-            /// \brief default constructor
             Shape() = default;
 
-            /// \brief pairwise different vertices of shapes tris
-            std::vector<SDL_Vertex> _vertices;
-
-            /// \brief
-            std::vector<int> _vertex_indices;
-
-            /// \brief signal to the shape that a vertex property has changed
-            void signal_vertices_updated();
+            std::vector<float> _positions;
+            std::vector<float> _colors;
+            std::vector<float> _texture_coords;
+            std::vector<size_t> _indices;
 
         private:
             Vector2f _origin = {0, 0};
@@ -119,16 +72,5 @@ namespace rat
             void apply_texture_rectangle();
 
             Vector2f compute_centroid() const;
-
-            // contiguous data needed for fast rendering
-
-            std::vector<float> _xy; // spacial position, absolute
-            std::vector<SDL_Color> _colors; // color
-            std::vector<float> _uv; // texture position, relative
-
-            void update_xy();
-            void update_colors();
-            void update_uv();
-
     };
 }

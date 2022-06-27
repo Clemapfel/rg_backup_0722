@@ -15,12 +15,10 @@
 
 namespace rat
 {
+    /*
     void Shape::render(RenderTarget* target, Transform transform) const
     {
-        if (_texture != nullptr)
-            SDL_GL_BindTexture(_texture->get_native(), NULL, NULL);
-
-        if (_xy.size() == 0)
+        if (_positions.size() == 0)
             return;
 
         if (_texture == nullptr)
@@ -28,7 +26,7 @@ namespace rat
         else
             SDL_SetRenderDrawBlendMode(target->get_renderer(), (SDL_BlendMode) _texture->get_blend_mode());
 
-        auto xy = _xy;
+        auto xy = _positions;
         for (size_t i = 0; i < xy.size(); i += 2)
         {
             auto new_pos = transform.apply_to(Vector2f{xy.at(i), xy.at(i+1)});
@@ -36,34 +34,28 @@ namespace rat
             xy.at(i+1) = new_pos.y;
         }
 
+
         SDL_RenderGeometryRaw(
                 target->get_renderer(),
                 nullptr, //_texture != nullptr ? _texture->get_native() : nullptr,
                 xy.data(), 2 * sizeof(float),
-                _colors.data(), sizeof(SDL_Color),
-                _uv.data(), 2 * sizeof(float),
-                _vertices.size(),
-                _vertex_indices.data(), _vertex_indices.size(), sizeof(int)
+                _colors.data(), 4 * sizeof(float),
+                _texture_coords.data(), 2 * sizeof(float),
+                xy.size(),
+                _indices.data(), _indices.size(), sizeof(int)
         );
 
         SDL_SetRenderDrawBlendMode(target->get_renderer(), SDL_BLENDMODE_NONE);
     }
 
-    void Shape::signal_vertices_updated()
+    void Shape::update_positions()
     {
-        update_xy();
-        update_colors();
-        update_uv();
-    }
-
-    void Shape::update_xy()
-    {
-        _xy.clear();
-        _xy.reserve(2 * _vertices.size());
+        _positions.clear();
+        _positions.reserve(2 * _vertices.size());
         for (auto& v : _vertices)
         {
-            _xy.push_back(v.position.x);
-            _xy.push_back(v.position.y);
+            _positions.push_back(v.position.x);
+            _positions.push_back(v.position.y);
         }
     }
 
@@ -75,14 +67,14 @@ namespace rat
             _colors.push_back(v.color);
     }
 
-    void Shape::update_uv()
+    void Shape::update_texture_coords()
     {
-        _uv.clear();
-        _uv.reserve(2 * _vertices.size());
+        _texture_coords.clear();
+        _texture_coords.reserve(2 * _vertices.size());
         for (auto& v : _vertices)
         {
-            _uv.push_back(v.tex_coord.x);
-            _uv.push_back(v.tex_coord.y);
+            _texture_coords.push_back(v.tex_coord.x);
+            _texture_coords.push_back(v.tex_coord.y);
         }
     }
 
@@ -98,7 +90,7 @@ namespace rat
             v.tex_coord.y = (v.position.y - aabb.top_left.y) / aabb.size.y;
         }
 
-        update_uv();
+        update_texture_coords();
     }
 
     void Shape::move(float x_offset, float y_offset)
@@ -180,7 +172,7 @@ namespace rat
         _vertices.at(index).position.x = pos.x;
         _vertices.at(index).position.y = pos.y;
 
-        update_xy();
+        update_positions();
     }
 
     Vector2f Shape::get_centroid() const
@@ -207,7 +199,7 @@ namespace rat
             v.position.y += delta.y;
         }
 
-        update_xy();
+        update_positions();
     }
 
     void Shape::set_vertex_color(size_t index, RGBA color)
@@ -263,7 +255,7 @@ namespace rat
             v.position.y = pos.y;
         }
 
-        update_xy();
+        update_positions();
     }
 
     void Shape::scale(float scale)
@@ -279,7 +271,8 @@ namespace rat
             v.position.x = center.x + cos(angle_rad) * distance * scale;
             v.position.y = center.y + sin(angle_rad) * distance * scale;
         }
-        update_xy();
+        update_positions();
     }
+    */
 }
 

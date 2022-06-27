@@ -4,10 +4,10 @@
 //
 
 #include <include/rectangle_shape.hpp>
-#include <include/vertex.hpp>
 
 namespace rat
 {
+    /*
     RectangleShape::RectangleShape(Vector2f top_left, Vector2f size)
         : _top_left(top_left), _size(size)
     {
@@ -48,5 +48,6 @@ namespace rat
     {
         _top_left = top_left;
     }
+     */
 }
 

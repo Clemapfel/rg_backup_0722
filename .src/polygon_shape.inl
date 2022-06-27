@@ -11,6 +11,7 @@
 
 namespace rat
 {
+    /*
     PolygonShape::PolygonShape(const std::vector<Vector2f>& positions)
     {
         if (positions.size() < 3)
@@ -81,4 +82,5 @@ namespace rat
 
         signal_vertices_updated();
     }
+     */
 }

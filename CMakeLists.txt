@@ -24,7 +24,7 @@ add_library(mousetrap SHARED
     .src/input_handler.inl
     include/time.hpp
     .src/time.inl
-        include/window.hpp include/renderable.hpp include/transform.hpp include/render_target.hpp include/vector.hpp .src/window.inl include/image.hpp include/colors.hpp .src/colors.inl include/geometric_shapes.hpp)
+        include/window.hpp include/renderable.hpp include/transform.hpp include/render_target.hpp include/vector.hpp .src/window.inl include/image.hpp include/colors.hpp .src/colors.inl include/geometric_shapes.hpp include/angle.hpp .src/angle.inl)
 set_target_properties(mousetrap PROPERTIES
     LINKER_LANGUAGE CXX
     CXX_STANDARD 20

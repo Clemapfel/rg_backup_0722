@@ -4,10 +4,10 @@
 //
 
 #include <include/triangle_shape.hpp>
-#include <include/vertex.hpp>
 
 namespace rat
 {
+    /*
     TriangleShape::TriangleShape(Vector2f a, Vector2f b, Vector2f c)
     {
         // find bounding box to infer texture coordinates
@@ -43,4 +43,5 @@ namespace rat
     TriangleShape::TriangleShape(Triangle triangle)
         : TriangleShape(triangle.a, triangle.b, triangle.c)
     {}
+     */
 }
