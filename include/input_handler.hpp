@@ -14,18 +14,17 @@
 #include <array>
 #include <set>
 
-#include <input/keycodes.hpp>
+#include <include/keycodes.hpp>
+#include <include/vector.hpp>
 
 namespace rat
 {
     using ControllerID = size_t;
-    using WindowID = size_t;
-    using Vector2f = glm::vec<2, float>;
+    using WindowID = int32_t;
 
-    union InputHandler
+    union  InputHandler
     {
         public:
-            static void initialize();
             static void update();
 
             static bool is_down(KeyboardKey);
@@ -61,10 +60,15 @@ namespace rat
             static bool window_was_resized(WindowID);
             static bool window_was_moved(WindowID);
             static bool window_was_restored(WindowID);
+            static bool window_was_hidden(WindowID);
+            static bool window_was_shown(WindowID);
 
             static bool exit_requested();
 
         private:
+            static inline bool _initialized = false;
+            static void initialize();
+
             struct KeyboardState
             {
                 std::set<KeyboardKey> pressed;
@@ -113,4 +117,4 @@ namespace rat
     };
 }
 
-#include <input/input_handler.inl>
+#include <.src/input_handler.inl>

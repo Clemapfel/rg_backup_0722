@@ -11,7 +11,6 @@
 
 namespace rat
 {
-    /// \brief enum of keyboard keys
     enum KeyboardKey : int64_t
     {
         /// `0` or numpad key 0
