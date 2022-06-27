@@ -24,7 +24,6 @@ namespace rat
         if (_window != nullptr)
             SDL_DestroyWindow(_window);
 
-
         uint32_t sdl_options = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
 
         if (options & FULLSCREEN)
@@ -63,8 +62,12 @@ namespace rat
         if (options & GRAB_FOCUS_ON_INIT)
             sdl_options |= SDL_WINDOW_INPUT_GRABBED;
 
-        // setup opengl
+        _window = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, sdl_options);
+        _renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC |
+                                                    SDL_RENDERER_TARGETTEXTURE);
+        SDL_RenderSetVSync(_renderer, true);
 
+        // setup opengl
         SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
 
         SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
@@ -81,17 +84,17 @@ namespace rat
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 
-        _window = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height,
-                                   sdl_options);
-        _renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC |
-                                                    SDL_RENDERER_TARGETTEXTURE);
-        SDL_RenderSetVSync(_renderer, true);
-
         _gl_context = SDL_GL_CreateContext(_window);
-        if (_gl_context == nullptr)
-            std::cerr << "In ts::Window::create: Unable to create OpenGL context." << std::endl;
+
+        glewExperimental = GL_TRUE;
+        GLenum glew_error = glewInit();
+        if (glew_error != GLEW_OK)
+            std::cerr << "In Window::create: failed to initialize glew" << std::endl;
+
+        SDL_GL_SetSwapInterval(1);
 
         glViewport(0, 0, width, height);
+        SDL_GL_MakeCurrent(_window, _gl_context);
         _is_open = true;
     }
 

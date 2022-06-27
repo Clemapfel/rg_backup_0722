@@ -7,7 +7,7 @@
 
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_image.h>
-#include <GL/gl.h>
+#include <.src/include_gl.hpp>
 
 #include <string>
 #include <include/input_handler.hpp>

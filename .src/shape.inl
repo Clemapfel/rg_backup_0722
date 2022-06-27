@@ -8,8 +8,7 @@
 #include <glm/glm.hpp>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_image.h>
-#include <GL/gl.h>
-
+#include <.src/include_gl.hpp>
 #include <include/render_target.hpp>
 #include <include/shape.hpp>
 

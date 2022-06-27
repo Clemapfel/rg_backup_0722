@@ -9,6 +9,7 @@ find_library(SDL2 REQUIRED NAMES SDL2)
 find_library(SDL2_image REQUIRED NAMES SDL2_image)
 find_library(SDL2_mixer REQUIRED NAMES SDL2_mixer)
 find_library(OpenGL REQUIRED NAMES GL)
+find_library(GLEW REQUIRED NAMES GLEW)
 
 include(CheckIncludeFileCXX)
 CHECK_INCLUDE_FILE_CXX("glm/glm.hpp" GLM_FOUND)
@@ -24,7 +25,7 @@ add_library(mousetrap SHARED
     .src/input_handler.inl
     include/time.hpp
     .src/time.inl
-        include/window.hpp include/renderable.hpp include/transform.hpp include/render_target.hpp include/vector.hpp .src/window.inl include/image.hpp include/colors.hpp .src/colors.inl include/geometric_shapes.hpp include/angle.hpp .src/angle.inl)
+        include/window.hpp include/renderable.hpp include/transform.hpp include/render_target.hpp include/vector.hpp .src/window.inl include/image.hpp include/colors.hpp .src/colors.inl include/geometric_shapes.hpp include/angle.hpp .src/angle.inl include/shader.hpp)
 set_target_properties(mousetrap PROPERTIES
     LINKER_LANGUAGE CXX
     CXX_STANDARD 20
@@ -38,6 +39,7 @@ target_link_libraries(mousetrap PUBLIC
     ${SDL2_image}
     ${SDL2_mixer}
     ${OpenGL}
+    ${GLEW}
 )
 
 ### Tests
