@@ -10,4 +10,4 @@
 #include <SDL2/SDL_opengl.h>
 #include <GL/glu.h>
 
-using GLNativeID = GLuint;
+using GLNativeHandle = GLuint;

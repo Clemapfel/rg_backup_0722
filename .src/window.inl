@@ -15,6 +15,23 @@ namespace rat
         if (not _sdl_initialized)
             SDL_Init(SDL_INIT_VIDEO);
 
+        SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
+
+        SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+        SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+        SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+        SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
+
+        SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
+        SDL_GL_SetAttribute(SDL_GL_BUFFER_SIZE, 32);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+
         if (width == 0 or height == 0)
         {
             width = std::max<size_t>(width, 1);
@@ -63,38 +80,24 @@ namespace rat
             sdl_options |= SDL_WINDOW_INPUT_GRABBED;
 
         _window = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, sdl_options);
+
+        if (_window == nullptr)
+        {}
+
+        _gl_context = SDL_GL_CreateContext(_window);
+        if (_gl_context == nullptr)
+        {}
+
+        glewExperimental = GL_TRUE;
+        GLenum glewError = glewInit();
+        if(glewError != GLEW_OK)
+        {}
+
         _renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC |
                                                     SDL_RENDERER_TARGETTEXTURE);
         SDL_RenderSetVSync(_renderer, true);
-
-        // setup opengl
-        SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
-
-        SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-        SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-        SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-        SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-
-        SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-
-        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
-        SDL_GL_SetAttribute(SDL_GL_BUFFER_SIZE, 32);
-
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-
-        _gl_context = SDL_GL_CreateContext(_window);
-
-        glewExperimental = GL_TRUE;
-        GLenum glew_error = glewInit();
-        if (glew_error != GLEW_OK)
-            std::cerr << "In Window::create: failed to initialize glew" << std::endl;
-
         SDL_GL_SetSwapInterval(1);
 
-        glViewport(0, 0, width, height);
-        SDL_GL_MakeCurrent(_window, _gl_context);
         _is_open = true;
     }
 
@@ -139,14 +142,14 @@ namespace rat
     }
 
     Window::Window()
-            : _is_borderless(false),
-              _is_resizable(false),
-              _is_minimized(false),
-              _is_maximized(false),
-              _is_fullscreen(false),
-              _is_hidden(false),
-              _has_focus(false),
-              _has_mouse_focus(false)
+        : _is_borderless(false),
+          _is_resizable(false),
+          _is_minimized(false),
+          _is_maximized(false),
+          _is_fullscreen(false),
+          _is_hidden(false),
+          _has_focus(false),
+          _has_mouse_focus(false)
     {}
 
     Window::~Window()
