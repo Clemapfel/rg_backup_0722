@@ -27,43 +27,56 @@ int main()
     auto vertex_tex_coord_location = 1;
     auto vertex_color_location = 2;
 
+    float positions[] = {
+        +0.5, +0.5, 0,
+        +0.5, -0.5, 0,
+        -0.5, -0.5, 0,
+        -0.5, +0.5, 0
+    };
+
+    float colors[] = {
+        1, 0, 0, 1,
+        1, 0, 0, 1,
+        1, 0, 0, 1,
+        1, 0, 0, 1
+    };
+
+    /*
     static float vertices[] = {
         // pos,          col,       tex_coord
         +0.5, +0.5, 0,   1, 0, 0,   1, 1, // top right
-        +0.5, -0.5, 0,   0, 1, 0,   1, 0, // bottom right
-        -0.5, -0.5, 0,   0, 1, 1,   0, 0, // bottom left
-        -0.5, +0.5, 0,   1, 0, 1,   0, 1  // top left
+        +0.5, -0.5, 0,   1, 0, 0,   1, 0, // bottom right
+        -0.5, -0.5, 0,   1, 0, 0,   0, 0, // bottom left
+        -0.5, +0.5, 0,   1, 0, 0,   0, 1  // top left
     };
+     */
 
     static unsigned int indices[] = {
-            0, 1, 3, 1, 2, 3
+        0, 1, 3, 1, 2, 3
     };
 
-    GLNativeHandle vertex_array, vertex_buffer, element_buffer;
+    GLNativeHandle vertex_array, element_buffer;
+    GLNativeHandle position_buffer, color_buffer, tex_coord_buffer;
 
     glGenVertexArrays(1, &vertex_array);
-    glGenBuffers(1, &vertex_buffer);
-    glGenBuffers(1, &element_buffer);
-
     glBindVertexArray(vertex_array);
 
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*) 0);
+    glGenBuffers(1, &position_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, position_buffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
     glEnableVertexAttribArray(0);
 
-    // color attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*) (3 * sizeof(float)));
+    /*
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*) 0);
     glEnableVertexAttribArray(1);
+     */
 
-    // texture coord attribute
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*) (6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
+    glGenBuffers(1, &element_buffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     while (not InputHandler::exit_requested())
     {
@@ -75,9 +88,6 @@ int main()
         glUseProgram(shader.get_program_id());
 
         glBindVertexArray(vertex_array);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*) 0);
-        glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-        glEnableVertexAttribArray(0);
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         SDL_GL_SwapWindow( gWindow );

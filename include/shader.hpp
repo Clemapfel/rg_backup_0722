@@ -35,17 +35,17 @@ namespace rat
                 #version 420
 
                 layout (location = 0) in vec3 _position_3d;
-                layout (location = 1) in vec2 _tex_coord;
-                layout (location = 2) in vec3 _color_rgb;
+                layout (location = 1) in vec4 _color_rgba;
+                layout (location = 2) in vec2 _tex_coord;
 
                 out vec2 _vertex_tex_coord;
-                out vec3 _vertex_color_rgb;
+                out vec4 _vertex_color_rgba;
 
                 void main()
                 {
                     gl_Position = vec4(_position_3d.xy, 1, 1);
+                    _vertex_color_rgba = _color_rgba;
                     _vertex_tex_coord = _tex_coord;
-                    _vertex_color_rgb = _color_rgb;
                 }
             )";
 
@@ -53,13 +53,13 @@ namespace rat
                 #version 420
 
                 in vec2 _vertex_tex_coord;
-                in vec3 _vertex_color_rgb;
+                in vec4 _vertex_color_rgba;
 
                 out vec4 _fragment_color;
 
                 void main()
                 {
-                    _fragment_color = vec4(_vertex_color_rgb.xyz, 1);
+                    _fragment_color = vec4(1); //_vertex_color_rgba.rgb, 1);
                 }
             )";
 
