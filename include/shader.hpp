@@ -59,7 +59,7 @@ namespace rat
 
                 void main()
                 {
-                    _fragment_color = vec4(1); //_vertex_color_rgba.rgb, 1);
+                    _fragment_color = vec4(_vertex_color_rgba.rgb, 1);
                 }
             )";
 

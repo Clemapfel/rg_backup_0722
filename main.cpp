@@ -41,15 +41,12 @@ int main()
         1, 0, 0, 1
     };
 
-    /*
-    static float vertices[] = {
-        // pos,          col,       tex_coord
-        +0.5, +0.5, 0,   1, 0, 0,   1, 1, // top right
-        +0.5, -0.5, 0,   1, 0, 0,   1, 0, // bottom right
-        -0.5, -0.5, 0,   1, 0, 0,   0, 0, // bottom left
-        -0.5, +0.5, 0,   1, 0, 0,   0, 1  // top left
+    float tex_coords[] = {
+        0, 0,
+        1, 0,
+        1, 1,
+        0, 1
     };
-     */
 
     static unsigned int indices[] = {
         0, 1, 3, 1, 2, 3
@@ -67,12 +64,17 @@ int main()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
     glEnableVertexAttribArray(0);
 
-    /*
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glGenBuffers(1, &color_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, color_buffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*) 0);
     glEnableVertexAttribArray(1);
-     */
+
+    glGenBuffers(2, &tex_coord_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, tex_coord_buffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(tex_coords), tex_coords, GL_STATIC_DRAW);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+    glEnableVertexAttribArray(2);
 
     glGenBuffers(1, &element_buffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
