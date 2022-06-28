@@ -57,44 +57,13 @@ namespace rat
 
                 out vec4 _fragment_color;
 
-                void main()
-                {
-                    _fragment_color = vec4(_vertex_color_rgba.rgb, 1);
-                }
-            )";
-
-            /*
-            static inline std::string _noop_vertex_shader_source = R"(
-                #version 330 core
-
-                layout (location = 0) in vec3 _vertex_pos;
-                layout (location = 1) in vec3 _vertex_color_rgb;
-                layout (location = 2) in vec2 _vertex_tex_coord;
-
-                out vec2 _tex_coord;
-                out vec3 _vertex_color;
-
-                void main()
-                {
-                    gl_Position = vec4(_vertex_pos, 1.0);
-                    _vertex_color = _vertex_color_rgb;
-                    _tex_coord = _vertex_tex_coord;
-                }
-            )";
-
-            static inline std::string _noop_fragment_shader_source = R"(
-                #version 330 core
-
-                in vec2 _tex_coord;
-                out vec4 _out;
                 uniform sampler2D _texture;
 
                 void main()
                 {
-                    _out = texture2D(_texture, _tex_coord);
+                    _fragment_color = texture2D(_texture, _vertex_tex_coord) * _vertex_color_rgba;
                 }
             )";
-             */
     };
 }
 
