@@ -36,8 +36,7 @@ int main()
     };
 
     static unsigned int indices[] = {
-            0, 1, 3,
-            1, 2, 3
+            0, 1, 3, 1, 2, 3
     };
 
     GLNativeHandle vertex_array, vertex_buffer, element_buffer;
@@ -73,7 +72,12 @@ int main()
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        glUseProgram(shader.get_program_id());
+
         glBindVertexArray(vertex_array);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*) 0);
+        glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+        glEnableVertexAttribArray(0);
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         SDL_GL_SwapWindow( gWindow );
