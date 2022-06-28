@@ -21,69 +21,61 @@ int main()
 
     SDL_Window* gWindow = window.get_native();
     SDL_GLContext gContext = window.get_context();
-
     auto gProgramID = shader.get_program_id();
 
-    //Get vertex attribute location
-    auto gVertexPos2DLocation = glGetAttribLocation(gProgramID, "LVertexPos2D" );
-    if( gVertexPos2DLocation == -1 )
-    {
-        printf( "LVertexPos2D is not a valid glsl program variable!\n" );
-    }
+    auto vertex_pos_location = 0;
+    auto vertex_tex_coord_location = 1;
+    auto vertex_color_location = 2;
 
-    //Initialize clear color
-    glClearColor( 0.f, 0.f, 0.f, 1.f );
-
-    //VBO data
-    GLfloat vertexData[] =
-    {
-            -0.5f, -0.5f,
-            0.5f, -0.5f,
-            0.5f,  0.5f,
-            -0.5f,  0.5f
+    static float vertices[] = {
+        // pos,          col,       tex_coord
+        +0.5, +0.5, 0,   1, 0, 0,   1, 1, // top right
+        +0.5, -0.5, 0,   0, 1, 0,   1, 0, // bottom right
+        -0.5, -0.5, 0,   0, 1, 1,   0, 0, // bottom left
+        -0.5, +0.5, 0,   1, 0, 1,   0, 1  // top left
     };
 
-    //IBO data
-    GLuint indexData[] = { 0, 1, 2, 3 };
-    GLNativeHandle gVBO, gIBO;
+    static unsigned int indices[] = {
+            0, 1, 3,
+            1, 2, 3
+    };
 
-    //Create VBO
-    glGenBuffers( 1, &gVBO );
-    glBindBuffer( GL_ARRAY_BUFFER, gVBO );
-    glBufferData( GL_ARRAY_BUFFER, 2 * 4 * sizeof(GLfloat), vertexData, GL_STATIC_DRAW );
+    GLNativeHandle vertex_array, vertex_buffer, element_buffer;
 
-    //Create IBO
-    glGenBuffers( 1, &gIBO );
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, gIBO );
-    glBufferData( GL_ELEMENT_ARRAY_BUFFER, 4 * sizeof(GLuint), indexData, GL_STATIC_DRAW );
+    glGenVertexArrays(1, &vertex_array);
+    glGenBuffers(1, &vertex_buffer);
+    glGenBuffers(1, &element_buffer);
+
+    glBindVertexArray(vertex_array);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*) 0);
+    glEnableVertexAttribArray(0);
+
+    // color attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*) (3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    // texture coord attribute
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*) (6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
 
     while (not InputHandler::exit_requested())
     {
         InputHandler::update();
         //auto time = window.update();
+        glClearColor(0, 0, 0, 1);
+        glClear(GL_COLOR_BUFFER_BIT);
 
-        glClear( GL_COLOR_BUFFER_BIT );
+        glBindVertexArray(vertex_array);
 
-        //Bind program
-        glUseProgram( gProgramID );
-
-        //Enable vertex position
-        glEnableVertexAttribArray( gVertexPos2DLocation );
-
-        //Set vertex data
-        glBindBuffer( GL_ARRAY_BUFFER, gVBO );
-        glVertexAttribPointer( gVertexPos2DLocation, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), NULL );
-
-        //Set index data and render
-        glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, gIBO );
-        glDrawElements( GL_TRIANGLE_FAN, 4, GL_UNSIGNED_INT, NULL );
-
-        //Disable vertex position
-        glDisableVertexAttribArray( gVertexPos2DLocation );
-
-        //Unbind program
-        glUseProgram( NULL );
-
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         SDL_GL_SwapWindow( gWindow );
     }
 }

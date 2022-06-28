@@ -32,22 +32,34 @@ namespace rat
                        _program_id;
 
             static inline std::string _noop_vertex_shader_source = R"(
-                #version 140
+                #version 420
 
-                in vec2 LVertexPos2D;
+                layout (location = 0) in vec3 _position_3d;
+                layout (location = 1) in vec2 _tex_coord;
+                layout (location = 2) in vec3 _color_rgb;
+
+                out vec2 _vertex_tex_coord;
+                out vec3 _vertex_color_rgb;
+
                 void main()
                 {
-                    gl_Position = vec4( LVertexPos2D.x, LVertexPos2D.y, 0, 1 );
+                    gl_Position = vec4(_position_3d.xy, 1, 1);
+                    _vertex_tex_coord = _tex_coord;
+                    _vertex_color_rgb = _color_rgb;
                 }
             )";
 
             static inline std::string _noop_fragment_shader_source = R"(
-                #version 140
+                #version 420
 
-                out vec4 LFragment;
+                in vec2 _vertex_tex_coord;
+                in vec3 _vertex_color_rgb;
+
+                out vec4 _fragment_color;
+
                 void main()
                 {
-                    LFragment = vec4( 1.0, 1.0, 1.0, 1.0 );
+                    _fragment_color = vec4(_vertex_color_rgb.xyz, 1);
                 }
             )";
 
