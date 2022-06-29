@@ -36,11 +36,11 @@ namespace rat
             void as_triangle(Vector2f a, Vector2f b, Vector2f c);
             void as_rectangle(Vector2f top_left, Vector2f size);
             void as_circle(Vector2f center, float radius, size_t n_outer_vertices);
-            void as_line(Vector2f a, Vector2f b, float width);
+            void as_line(Vector2f a, Vector2f b);
+            void as_line_strip(std::vector<Vector2f>);
+            void as_line_loop(std::vector<Vector2f>);
             void as_frame(Vector2f top_left, Vector2f size, float width);
-
-            template<Is<Vector2f>... Vector2fs>
-            void as_polygon(Vector2fs... positions);
+            void as_polygon(std::vector<Vector2f> positions);
 
             void render(RenderTarget&, Transform = Transform(), Shader* = nullptr);
 
@@ -90,6 +90,8 @@ namespace rat
             void update_indices();
 
         private:
+            void initialize();
+
             static Vector2f sdl_to_gl_screen_position(Vector2f);
             static Vector2f gl_to_sdl_screen_position(Vector2f);
 

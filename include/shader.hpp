@@ -34,26 +34,30 @@ namespace rat
             static inline std::string _noop_vertex_shader_source = R"(
                 #version 420
 
-                layout (location = 0) in vec3 _position_3d;
-                layout (location = 1) in vec4 _color_rgba;
-                layout (location = 2) in vec2 _tex_coord;
+                layout (location = 0) in vec3 vertex_position;
+                layout (location = 1) in vec4 vertex_color;
+                layout (location = 2) in vec2 vertex_texture_coordinate;
 
-                out vec2 _vertex_tex_coord;
-                out vec4 _vertex_color_rgba;
+                out vec3 _vertex_position;
+                out vec4 _vertex_color;
+                out vec2 _vertex_texture_coordinate;
 
                 void main()
                 {
-                    gl_Position = vec4(_position_3d.xy, 1, 1);
-                    _vertex_color_rgba = _color_rgba;
-                    _vertex_tex_coord = _tex_coord;
+                    gl_Position = vec4(vertex_position.xyz, 1);
+
+                    _vertex_position = vertex_position;
+                    _vertex_color = vertex_color;
+                    _vertex_texture_coordinate = vertex_texture_coordinate;
                 }
             )";
 
             static inline std::string _noop_fragment_shader_source = R"(
                 #version 420
 
-                in vec2 _vertex_tex_coord;
-                in vec4 _vertex_color_rgba;
+                in vec3 _vertex_position;
+                in vec4 _vertex_color;
+                in vec2 _vertex_texture_coordinate;
 
                 out vec4 _fragment_color;
 
@@ -63,9 +67,9 @@ namespace rat
                 void main()
                 {
                     if (_texture_set == 0)
-                        _fragment_color = _vertex_color_rgba;
+                        _fragment_color = _vertex_color;
                     else
-                        _fragment_color = texture2D(_texture, _vertex_tex_coord) * _vertex_color_rgba;
+                        _fragment_color = texture2D(_texture, _vertex_texture_coordinate) * _vertex_color;
                 }
             )";
     };
