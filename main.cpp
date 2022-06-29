@@ -40,6 +40,7 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
         glClearColor(1, 1, 1, 1);
 
+        SDL_GL_BindTexture(texture, nullptr, nullptr);
         rect.render(window);
 
         SDL_GL_SwapWindow(window.get_native());

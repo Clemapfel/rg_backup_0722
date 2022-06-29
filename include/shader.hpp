@@ -57,11 +57,15 @@ namespace rat
 
                 out vec4 _fragment_color;
 
+                uniform int _texture_set;
                 uniform sampler2D _texture;
 
                 void main()
                 {
-                    _fragment_color = texture2D(_texture, _vertex_tex_coord) * _vertex_color_rgba;
+                    if (_texture_set == 0)
+                        _fragment_color = _vertex_color_rgba;
+                    else
+                        _fragment_color = texture2D(_texture, _vertex_tex_coord) * _vertex_color_rgba;
                 }
             )";
     };

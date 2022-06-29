@@ -42,18 +42,14 @@ namespace rat
 
     Vector2f Shape::sdl_to_gl_texture_coordinates(Vector2f in)
     {
-        auto out = Vector2f(in.y, in.x);
-        out.x = 1 - out.x;
-        out.y = 1 - out.y;
-        return out;
+        in.x = 1 - in.x;
+        return in;
     }
 
     Vector2f Shape::gl_to_sdl_texture_coordinates(Vector2f in)
     {
-        auto out = in;
-        out.x = 1 - out.x;
-        out.y = 1 - out.y;
-        return Vector2f(out.y, out.x);
+        in.x = 1 - in.x;
+        return in;
     }
 
     Shape::Shape()
@@ -97,7 +93,14 @@ namespace rat
             SDL_GL_BindTexture(_texture->get_native(), nullptr, nullptr);
 
         glUniform1i(glGetUniformLocation(program_id, "_texture"), 0);
+        glUniform1i(glGetUniformLocation(program_id, "_texture_set"), 1);//TODO_texture != nullptr);
+
         glDrawElements(_render_type, _indices.size(), GL_UNSIGNED_INT, 0);
+
+        glBindVertexArray(0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        if (_texture != nullptr)
+            SDL_GL_UnbindTexture(_texture->get_native());
     }
 
     void Shape::update_positions()
@@ -355,7 +358,7 @@ namespace rat
             Vertex{{top_left.x, top_left.y, 0}, {0, 0}, default_color},
             Vertex{{top_left.x + size.x, top_left.y, 0}, {1, 0}, default_color},
             Vertex{{top_left.x + size.x, top_left.y + size.y, 0}, {1, 1}, default_color},
-            Vertex{{top_left.x, top_left.y + size.y, 0}, {1, 1}, default_color}
+            Vertex{{top_left.x, top_left.y + size.y, 0}, {0, 1}, default_color}
         };
         _indices = {0, 1, 3, 1, 2, 3};
         _render_type = GL_TRIANGLE_FAN;

@@ -96,6 +96,8 @@ namespace rat
             static Vector2f sdl_to_gl_texture_coordinates(Vector2f);
             static Vector2f gl_to_sdl_texture_coordinates(Vector2f);
 
+            void compute_initial_texture_coordinates(); // align texture top left with aabb top left
+
             static inline bool _noop_shader_initialized = false;
             static inline Shader* _noop_shader = nullptr;
 
