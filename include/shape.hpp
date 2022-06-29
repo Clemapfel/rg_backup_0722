@@ -8,32 +8,41 @@
 #include <vector>
 #include <array>
 
+#include <.src/include_gl.hpp>
 #include <include/renderable.hpp>
 #include <include/colors.hpp>
 #include <include/vector.hpp>
 #include <include/geometric_shapes.hpp>
 #include <include/common.hpp>
 #include <include/angle.hpp>
+#include <include/shader.hpp>
 
 namespace rat
 {
     class Texture;
+    struct Vertex
+    {
+        Vector3f position;
+        Vector2f texture_coordinates;
+        RGBA color;
+    };
 
-    class Shape : public Renderable
+    class Shape //: public Renderable
     {
         public:
             Shape();
-            ~Shape();
+            virtual ~Shape();
 
             void as_triangle(Vector2f a, Vector2f b, Vector2f c);
             void as_rectangle(Vector2f top_left, Vector2f size);
             void as_circle(Vector2f center, float radius, size_t n_outer_vertices);
-            void as_line(Vector2f a, Vector2f b);
+            void as_line(Vector2f a, Vector2f b, float width);
+            void as_frame(Vector2f top_left, Vector2f size, float width);
 
             template<Is<Vector2f>... Vector2fs>
             void as_polygon(Vector2fs... positions);
 
-            void render_temp();
+            void render(RenderTarget&, Transform = Transform(), Shader* = nullptr);
 
             Rectangle get_texture_rectangle() const;
             void set_texture_rectangle(Rectangle normalized);
@@ -42,7 +51,7 @@ namespace rat
             void set_centroid(Vector2f);
 
             Vector2f get_top_left() const; // of aabb
-            void set_top_lef() const;
+            void set_top_left(Vector2f);
 
             void move(float x, float y);
 
@@ -54,7 +63,7 @@ namespace rat
             void set_vertex_texture_coordinate(size_t, Vector2f);
             Vector2f get_vertex_texture_coordinate(size_t) const;
 
-            void set_vertex_position(size_t, Vector2f);
+            void set_vertex_position(size_t, Vector3f);
             Vector2f get_vertex_position(size_t) const;
 
             void set_color(RGBA);
@@ -70,30 +79,44 @@ namespace rat
 
             void rotate(Angle);
             void scale(float x_factor, float y_factor);
+            
+        protected:
+            std::vector<Vertex> _vertices; // in sdl coordinates
+            void update_positions();
+            void update_colors();
+            void update_texture_coordinates();
+
+            std::vector<uint32_t> _indices;
+            void update_indices();
 
         private:
             static Vector2f sdl_to_gl_screen_position(Vector2f);
             static Vector2f gl_to_sdl_screen_position(Vector2f);
 
-            static Vector2f sdl_to_gl_texture_coord(Vector2f);
-            static Vector2f gl_to_sdl_texture_coord(Vector2f);
+            static Vector2f sdl_to_gl_texture_coordinates(Vector2f);
+            static Vector2f gl_to_sdl_texture_coordinates(Vector2f);
 
-            SDL_Texture* _texture;
+            static inline bool _noop_shader_initialized = false;
+            static inline Shader* _noop_shader = nullptr;
+
+            Texture* _texture = nullptr;
             Rectangle _texture_rect = Rectangle{{0, 0}, {1, 1}};
 
             size_t _n_vertices;
-            GLenum _drawing_type = GL_TRIANGLE_FAN;
+            GLenum _render_type = GL_TRIANGLE_FAN;
 
             Vector2f _origin = Vector2f(0, 0);
 
-            std::vector<float> _positions;
-            std::vector<float> _colors;
-            std::vector<float> _tex_coords;
+            std::vector<float> _positions, // in gl coordinates
+                               _colors,
+                               _texture_coordinates;
 
             GLNativeHandle _vertex_array_id,
                     _element_buffer_id,
                     _position_buffer_id,
                     _color_buffer_id,
-                    _tex_coord_buffer_id;
+                    _texture_coordinate_buffer_id;
     };
 }
+
+#include <.src/shape.inl>

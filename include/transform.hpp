@@ -9,5 +9,13 @@
 
 namespace rat
 {
-    using Transform = glm::tmat4x4<float>;
+    class Transform : public glm::tmat4x4<float>
+    {
+        public:
+            Transform();
+
+            Vector3f apply_to(Vector3f);
+    };
 }
+
+#include <.src/transform.inl>

@@ -98,6 +98,9 @@ namespace rat
         SDL_RenderSetVSync(_renderer, true);
         SDL_GL_SetSwapInterval(1);
 
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
         _is_open = true;
     }
 
@@ -162,7 +165,7 @@ namespace rat
 
     void Window::render(const Renderable *object, Transform transform)
     {
-        transform *= _global_transform;
+        //transform *= _global_transform;
         object->render(this, transform);
     }
 

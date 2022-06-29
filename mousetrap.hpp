@@ -11,3 +11,4 @@
 #include <include/geometric_shapes.hpp>
 #include <include/colors.hpp>
 #include <include/angle.hpp>
+#include <include/shape.hpp>

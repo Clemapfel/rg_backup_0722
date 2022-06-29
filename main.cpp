@@ -12,13 +12,8 @@ using namespace rat;
 
 using GLNativeHandle = GLuint;
 
-
-
 int main()
 {
-    int* test = nullptr;
-    auto a = *test;
-
     auto window = Window();
     window.create("test", 400, 300);
 
@@ -26,11 +21,32 @@ int main()
 
     SDL_Window* gWindow = window.get_native();
     SDL_GLContext gContext = window.get_context();
-    auto gProgramID = shader.get_program_id();
 
     SDL_Texture* texture = IMG_LoadTexture(window.get_renderer(), "/home/clem/Workspace/mousetrap/mole.png");
     SDL_GL_UnbindTexture(texture);
 
+    auto rect = Shape();
+
+    size_t frame = 50;
+    size_t width = window.get_size().x;
+    size_t height = window.get_size().y;
+    rect.as_rectangle(Vector2f(0 + frame, 0 + frame), Vector2f(width - 2*frame, height - 2*frame));
+
+    while (not InputHandler::exit_requested())
+    {
+        InputHandler::update();
+        auto time = window.update();
+
+        glClear(GL_COLOR_BUFFER_BIT);
+        glClearColor(1, 1, 1, 1);
+
+        rect.render(window);
+
+        SDL_GL_SwapWindow(window.get_native());
+    }
+
+    /*
+    auto gProgramID = shader.get_program_id();
     auto vertex_pos_location = 0;
     auto vertex_color_location = 1;
     auto vertex_tex_coord_location = 2;
@@ -40,7 +56,7 @@ int main()
     std::array<GLint, 4> viewport;
     glGetIntegerv(GL_VIEWPORT, viewport.data());
 
-    float frame = 0;
+    float frame = 50;
     size_t width = viewport.at(2);
     size_t height = viewport.at(3);
     Vector2ui top_left  = Vector2ui(viewport.at(0), viewport.at(1) - height);
@@ -59,6 +75,15 @@ int main()
         local_in.x /= width / 2;
         local_in.y /= height / 2;
         return local_in;
+    };
+
+    auto project_position_reverse = [&](Vector2f in) -> Vector2f {
+
+        Vector2f centroid = Vector2f(width / 2, height / 2);
+        in.x *= (width / 2);
+        in.y *= (height / 2);
+        in += centroid;
+        return in;
     };
 
     // translate to pixel coordiantes
@@ -96,6 +121,14 @@ int main()
         return out;
     };
 
+    auto project_tex_coord_reverse = [](Vector2f in) -> Vector2f {
+
+        auto out = in;
+        out.x = 1 - out.x;
+        out.y = 1 - out.y;
+        return Vector2f(out.y, out.x);
+    };
+
     for (size_t i = 0; i < tex_coords.size(); i += 2)
     {
         auto in = Vector2f(tex_coords.at(i), tex_coords.at(i+1));
@@ -103,7 +136,6 @@ int main()
         tex_coords.at(i) = out.x;
         tex_coords.at(i+1) = out.y;
     }
-
 
     for (size_t i = 0; i < tex_coords.size(); i += 2)
         std::cout << tex_coords.at(i) << " " << tex_coords.at(i+1) << std::endl;
@@ -140,6 +172,9 @@ int main()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(float), indices.data(), GL_STATIC_DRAW);
 
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
     SDL_Color sdl_colors[] = {
         SDL_Color(), SDL_Color(), SDL_Color(), SDL_Color(),
     };
@@ -157,6 +192,7 @@ int main()
 
         glUseProgram(shader.get_program_id());
         glBindVertexArray(vertex_array);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
 
         SDL_GL_BindTexture(texture, nullptr, nullptr);
         glUniform1i(glGetUniformLocation(shader.get_program_id(), "_texture"), 0);
@@ -165,4 +201,5 @@ int main()
         SDL_GL_SwapWindow(window.get_native());
 
     }
+     */
 }

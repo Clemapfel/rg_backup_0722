@@ -11,3 +11,15 @@
 #include <GL/glu.h>
 
 using GLNativeHandle = GLuint;
+
+namespace rat::detail
+{
+    Vector2ui get_viewport_size()
+    {
+        std::array<GLint, 4> viewport;
+        glGetIntegerv(GL_VIEWPORT, viewport.data());
+        size_t width = viewport.at(2);
+        size_t height = viewport.at(3);
+        return Vector2ui(width, height);
+    }
+}
