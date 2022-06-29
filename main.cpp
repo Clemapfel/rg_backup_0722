@@ -25,12 +25,16 @@ int main()
     SDL_Texture* texture = IMG_LoadTexture(window.get_renderer(), "/home/clem/Workspace/mousetrap/mole.png");
     SDL_GL_UnbindTexture(texture);
 
-    auto rect = Shape();
 
     size_t frame = 50;
     size_t width = window.get_size().x;
     size_t height = window.get_size().y;
+
+    auto rect = Shape();
     rect.as_rectangle(Vector2f(0 + frame, 0 + frame), Vector2f(width - 2*frame, height - 2*frame));
+
+    auto tri = Shape();
+    tri.as_triangle(Vector2f(0.5 * width, frame), Vector2f(frame, height - frame), Vector2f(width - frame, height - frame));
 
     while (not InputHandler::exit_requested())
     {
@@ -41,7 +45,8 @@ int main()
         glClearColor(1, 1, 1, 1);
 
         SDL_GL_BindTexture(texture, nullptr, nullptr);
-        rect.render(window);
+        //rect.render(window);
+        tri.render(window);
 
         SDL_GL_SwapWindow(window.get_native());
     }

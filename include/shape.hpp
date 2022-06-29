@@ -96,15 +96,16 @@ namespace rat
             static Vector2f sdl_to_gl_texture_coordinates(Vector2f);
             static Vector2f gl_to_sdl_texture_coordinates(Vector2f);
 
-            void compute_initial_texture_coordinates(); // align texture top left with aabb top left
+            void align_texture_rectangle_with_bounding_box(); // align texture top left with aabb top left
 
             static inline bool _noop_shader_initialized = false;
             static inline Shader* _noop_shader = nullptr;
 
+            static inline const RGBA _default_color = RGBA(1, 0, 0, 1);
+
             Texture* _texture = nullptr;
             Rectangle _texture_rect = Rectangle{{0, 0}, {1, 1}};
 
-            size_t _n_vertices;
             GLenum _render_type = GL_TRIANGLE_FAN;
 
             Vector2f _origin = Vector2f(0, 0);

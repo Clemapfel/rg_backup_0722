@@ -93,7 +93,7 @@ namespace rat
             SDL_GL_BindTexture(_texture->get_native(), nullptr, nullptr);
 
         glUniform1i(glGetUniformLocation(program_id, "_texture"), 0);
-        glUniform1i(glGetUniformLocation(program_id, "_texture_set"), 1);//TODO_texture != nullptr);
+        glUniform1i(glGetUniformLocation(program_id, "_texture_set"), _texture != nullptr);
 
         glDrawElements(_render_type, _indices.size(), GL_UNSIGNED_INT, 0);
 
@@ -106,6 +106,8 @@ namespace rat
     void Shape::update_positions()
     {
         _positions.clear();
+        _positions.reserve(_vertices.size() * 3);
+
         for (size_t i = 0; i < _vertices.size(); ++i)
         {
             const auto& v = _vertices.at(i);
@@ -128,6 +130,8 @@ namespace rat
     void Shape::update_colors()
     {
         _colors.clear();
+        _positions.reserve(_vertices.size() * 4);
+
         for (size_t i = 0; i < _vertices.size(); ++i)
         {
             const auto& col = _vertices.at(i).color;
@@ -149,6 +153,8 @@ namespace rat
     void Shape::update_texture_coordinates()
     {
         _texture_coordinates.clear();
+        _positions.reserve(_vertices.size() * 2);
+
         for (size_t i = 0; i < _vertices.size(); ++i)
         {
             const auto& pos = sdl_to_gl_texture_coordinates(_vertices.at(i).texture_coordinates);
@@ -202,32 +208,32 @@ namespace rat
         float max_y = negative_infinity<float>;
         float max_z = negative_infinity<float>;
 
-        for (size_t i = 0; i < _positions.size(); i += 3)
+        for (auto& v : _vertices)
         {
-            min_x = std::min(min_x, _positions.at(i));
-            min_y = std::min(min_y, _positions.at(i+1));
-            min_z = std::min(min_z, _positions.at(i+2));
+            min_x = std::min(min_x, v.position.x);
+            min_y = std::min(min_y, v.position.x);
+            min_z = std::min(min_z, v.position.x);
 
-            max_x = std::min(max_x, _positions.at(i));
-            max_y = std::min(max_y, _positions.at(i+1));
-            max_z = std::min(max_z, _positions.at(i+2));
+            max_x = std::max(max_x, v.position.x);
+            max_y = std::max(max_y, v.position.x);
+            max_z = std::max(max_z, v.position.x);
         }
 
-        auto aabb = Rectangle{
-                {min_x, min_y},
-                {max_x - min_x, max_y - min_y}
+        return Rectangle{
+            {min_x, min_y},
+            {max_x - min_x, max_y - min_y}
         };
-        aabb.top_left = gl_to_sdl_screen_position(aabb.top_left);
+    }
 
-        std::array<GLint, 4> viewport;
-        glGetIntegerv(GL_VIEWPORT, viewport.data());
-        size_t width = viewport.at(2);
-        size_t height = viewport.at(3);
-
-        aabb.size.x /= width;
-        aabb.size.y /= height;
-
-        return aabb;
+    void Shape::align_texture_rectangle_with_bounding_box()
+    {
+        auto aabb = get_bounding_box();
+        for (auto& v : _vertices)
+        {
+            v.texture_coordinates.x = (v.position.x - aabb.top_left.x) / aabb.size.x;
+            v.texture_coordinates.y = (v.position.y - aabb.top_left.y) / aabb.size.y;
+        }
+        update_texture_coordinates();
     }
 
     Vector2f Shape::get_top_left() const
@@ -352,13 +358,12 @@ namespace rat
 
     void Shape::as_rectangle(Vector2f top_left, Vector2f size)
     {
-        auto default_color = RGBA(1, 0, 0, 1);
-        _vertices = 
+        _vertices =
         {
-            Vertex{{top_left.x, top_left.y, 0}, {0, 0}, default_color},
-            Vertex{{top_left.x + size.x, top_left.y, 0}, {1, 0}, default_color},
-            Vertex{{top_left.x + size.x, top_left.y + size.y, 0}, {1, 1}, default_color},
-            Vertex{{top_left.x, top_left.y + size.y, 0}, {0, 1}, default_color}
+            Vertex{{top_left.x, top_left.y, 0}, {0, 0}, _default_color},
+            Vertex{{top_left.x + size.x, top_left.y, 0}, {1, 0}, _default_color},
+            Vertex{{top_left.x + size.x, top_left.y + size.y, 0}, {1, 1}, _default_color},
+            Vertex{{top_left.x, top_left.y + size.y, 0}, {0, 1}, _default_color}
         };
         _indices = {0, 1, 3, 1, 2, 3};
         _render_type = GL_TRIANGLE_FAN;
@@ -369,241 +374,23 @@ namespace rat
         update_indices();
     }
 
-
-
-
-
-
-    /*
-    void Shape::render(RenderTarget* target, Transform transform) const
+    void Shape::as_triangle(Vector2f a, Vector2f b, Vector2f c)
     {
-        if (_positions.size() == 0)
-            return;
-
-        if (_texture == nullptr)
-            SDL_SetRenderDrawBlendMode(target->get_renderer(), SDL_BLENDMODE_BLEND);
-        else
-            SDL_SetRenderDrawBlendMode(target->get_renderer(), (SDL_BlendMode) _texture->get_blend_mode());
-
-        auto xy = _positions;
-        for (size_t i = 0; i < xy.size(); i += 2)
+        _vertices =
         {
-            auto new_pos = transform.apply_to(Vector2f{xy.at(i), xy.at(i+1)});
-            xy.at(i) = new_pos.x;
-            xy.at(i+1) = new_pos.y;
-        }
+            Vertex{{a.x, a.y, 0}, {0, 0}, _default_color},
+            Vertex{{b.x, b.y, 0}, {0, 0}, _default_color},
+            Vertex{{c.x, c.y, 0}, {0, 0}, _default_color},
+        };
+        _indices = {0, 1, 2};
+        _render_type = GL_TRIANGLES;
 
+        align_texture_rectangle_with_bounding_box();
 
-        SDL_RenderGeometryRaw(
-                target->get_renderer(),
-                nullptr, //_texture != nullptr ? _texture->get_native() : nullptr,
-                xy.data(), 2 * sizeof(float),
-                _colors.data(), 4 * sizeof(float),
-                _texture_coords.data(), 2 * sizeof(float),
-                xy.size(),
-                _indices.data(), _indices.size(), sizeof(int)
-        );
-
-        SDL_SetRenderDrawBlendMode(target->get_renderer(), SDL_BLENDMODE_NONE);
-    }
-
-    void Shape::update_positions()
-    {
-        _positions.clear();
-        _positions.reserve(2 * _vertices.size());
-        for (auto& v : _vertices)
-        {
-            _positions.push_back(v.position.x);
-            _positions.push_back(v.position.y);
-        }
-    }
-
-    void Shape::update_colors()
-    {
-        _colors.clear();
-        _colors.reserve(_vertices.size());
-        for (auto& v : _vertices)
-            _colors.push_back(v.color);
-    }
-
-    void Shape::update_texture_coords()
-    {
-        _texture_coords.clear();
-        _texture_coords.reserve(2 * _vertices.size());
-        for (auto& v : _vertices)
-        {
-            _texture_coords.push_back(v.tex_coord.x);
-            _texture_coords.push_back(v.tex_coord.y);
-        }
-    }
-
-    void Shape::apply_texture_rectangle()
-    {
-        // align vertex texture coordinates such that the texture is anchored at
-        // the top left of the bound box
-
-        auto aabb = get_bounding_box();
-        for (auto& v : _vertices)
-        {
-            v.tex_coord.x = (v.position.x - aabb.top_left.x) / aabb.size.x;
-            v.tex_coord.y = (v.position.y - aabb.top_left.y) / aabb.size.y;
-        }
-
-        update_texture_coords();
-    }
-
-    void Shape::move(float x_offset, float y_offset)
-    {
-        for (auto& v : _vertices)
-        {
-            v.position.x += x_offset;
-            v.position.y += y_offset;
-        }
-
-        signal_vertices_updated();
-    }
-
-    void Shape::set_color(RGBA color)
-    {
-        auto col = color.operator SDL_Color();
-        for (auto& v : _vertices)
-            v.color = col;
-
+        update_positions();
         update_colors();
+        update_texture_coordinates();
+        update_indices();
     }
-
-    RGBA Shape::get_color(size_t vertex_index) const
-    {
-        auto& v = _vertices.at(vertex_index);
-        return RGBA(v.color);
-    }
-
-    size_t Shape::get_n_vertices() const
-    {
-        return _vertices.size();
-    }
-
-    Texture * Shape::get_texture() const
-    {
-        return _texture;
-    }
-
-    void Shape::set_texture(Texture* texture)
-    {
-        _texture = texture;
-        apply_texture_rectangle();
-    }
-
-    void Shape::set_texture_rectangle(Rectangle rect)
-    {
-        _texture_rect = rect;
-        apply_texture_rectangle();
-    }
-
-    Rectangle Shape::get_texture_rectangle()
-    {
-        return _texture_rect;
-    }
-
-    Rectangle Shape::get_bounding_box() const
-    {
-        static auto infinity = std::numeric_limits<float>::max();
-        static auto negative_infinity = std::numeric_limits<float>::min();
-
-        float min_x = infinity;
-        float min_y = infinity;
-        float max_x = negative_infinity;
-        float max_y = negative_infinity;
-
-        for (auto& v : _vertices)
-        {
-            max_x = std::max(max_x, v.position.x);
-            max_y = std::max(max_y, v.position.y);
-            min_x = std::min(min_x, v.position.x);
-            min_y = std::min(min_y, v.position.y);
-        }
-
-        return Rectangle{Vector2f{min_x, min_y}, Vector2f{max_x - min_x, max_y - min_y}};
-    }
-
-    void Shape::set_vertex_position(size_t index, Vector2f pos)
-    {
-        _vertices.at(index).position.x = pos.x;
-        _vertices.at(index).position.y = pos.y;
-
-        update_positions();
-    }
-
-    Vector2f Shape::get_centroid() const
-    {
-        auto out = Vector2f(0, 0);
-        for (auto& v : _vertices)
-        {
-            out.x += float(v.position.x);
-            out.y += float(v.position.y);
-        }
-
-        out.x /= float(_vertices.size());
-        out.y /= float(_vertices.size());
-
-        return out;
-    }
-
-    void Shape::set_centroid(Vector2f position)
-    {
-        auto delta = position - get_centroid();
-        for (auto& v : _vertices)
-        {
-            v.position.x += delta.x;
-            v.position.y += delta.y;
-        }
-
-        update_positions();
-    }
-
-
-
-    void Shape::set_origin(Vector2f relative_to_centroid)
-    {
-        _origin = relative_to_centroid;
-    }
-
-    Vector2f Shape::get_origin() const
-    {
-        return _origin;
-    }
-
-    void Shape::rotate(Angle angle)
-    {
-        auto transform = Transform();
-        transform.rotate(angle, get_centroid() + _origin);
-
-        for (auto& v : _vertices)
-        {
-            auto pos = Vector2f(v.position.x, v.position.y);
-            pos = transform.apply_to(pos);
-            v.position.x = pos.x;
-            v.position.y = pos.y;
-        }
-
-        update_positions();
-    }
-
-    void Shape::scale(float scale)
-    {
-        auto center = get_centroid() + _origin;
-
-        for (auto& v : _vertices)
-        {
-            auto point = Vector2f(v.position.x, v.position.y) - center;
-            auto distance = glm::distance(Vector2f(0, 0), point);
-            auto angle_rad = std::atan2(point.x, point.y);
-
-            v.position.x = center.x + cos(angle_rad) * distance * scale;
-            v.position.y = center.y + sin(angle_rad) * distance * scale;
-        }
-        update_positions();
-    }
-    */
 }
 
