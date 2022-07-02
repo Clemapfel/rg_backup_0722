@@ -10,6 +10,7 @@
 namespace rat
 {
     using RGBA = glm::vec<4, float>;
+
     struct HSVA
     {
         float h = 0,
@@ -26,4 +27,8 @@ namespace rat
         // hsva -> rgba
         operator RGBA();
     };
+
+    SDL_Color as_sdl_color(RGBA);
 }
+
+#include <.src/colors.inl>

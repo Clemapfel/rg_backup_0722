@@ -33,14 +33,17 @@ namespace rat
             Shape();
             virtual ~Shape();
 
+            // primitives
             void as_triangle(Vector2f a, Vector2f b, Vector2f c);
             void as_rectangle(Vector2f top_left, Vector2f size);
             void as_circle(Vector2f center, float radius, size_t n_outer_vertices);
             void as_line(Vector2f a, Vector2f b);
-            void as_line_strip(std::vector<Vector2f>);
-            void as_line_loop(std::vector<Vector2f>);
+            void as_line_strip(std::vector<Vector2f>);  // may overlap
+            void as_polygon(std::vector<Vector2f> positions); // bounding polygon
+            void as_wireframe(std::vector<Vector2f>);         // bounding polygon
+
+            // compound shapes
             void as_frame(Vector2f top_left, Vector2f size, float width);
-            void as_polygon(std::vector<Vector2f> positions);
 
             void render(RenderTarget&, Transform = Transform(), Shader* = nullptr);
 
@@ -100,10 +103,12 @@ namespace rat
 
             void align_texture_rectangle_with_bounding_box(); // align texture top left with aabb top left
 
+            std::vector<Vector2f> sort_by_angle(const std::vector<Vector2f>&);
+
             static inline bool _noop_shader_initialized = false;
             static inline Shader* _noop_shader = nullptr;
 
-            static inline const RGBA _default_color = RGBA(1, 0, 0, 1);
+            static inline const RGBA _default_color = RGBA(1, 1, 1, 1);
 
             Texture* _texture = nullptr;
             Rectangle _texture_rect = Rectangle{{0, 0}, {1, 1}};
@@ -122,6 +127,16 @@ namespace rat
                     _color_buffer_id,
                     _texture_coordinate_buffer_id;
     };
+
+    Shape TriangleShape(Vector2f a, Vector2f b, Vector2f c);
+    Shape RectangleShape(Vector2f top_left, Vector2f size);
+    Shape CircleShape(Vector2f center, float radius, size_t n_outer_vertices);
+    Shape LineShape(Vector2f a, Vector2f b);
+    Shape LineStripShape(std::vector<Vector2f>);
+    Shape PolygonShape(std::vector<Vector2f> positions);
+    Shape WireframeShape(std::vector<Vector2f>);
+    Shape FrameShape(Vector2f top_left, Vector2f size, float width);
+
 }
 
 #include <.src/shape.inl>

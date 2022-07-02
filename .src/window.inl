@@ -82,16 +82,16 @@ namespace rat
         _window = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, sdl_options);
 
         if (_window == nullptr)
-        {}
+            std::cerr << "In Window::create: failed to create window: " << SDL_GetError() << std::endl;
 
         _gl_context = SDL_GL_CreateContext(_window);
         if (_gl_context == nullptr)
-        {}
+            std::cerr << "In Window::create: failed to create OpenGL context: " << SDL_GetError() << std::endl;
 
         glewExperimental = GL_TRUE;
         GLenum glewError = glewInit();
         if(glewError != GLEW_OK)
-        {}
+            std::cerr << "In Window::create: failed to initialize GLEW: " << SDL_GetError() << std::endl;
 
         _renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC |
                                                     SDL_RENDERER_TARGETTEXTURE);

@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD 20)
 find_library(SDL2 REQUIRED NAMES SDL2)
 find_library(SDL2_image REQUIRED NAMES SDL2_image)
 find_library(SDL2_mixer REQUIRED NAMES SDL2_mixer)
+find_library(SDL2_ttf REQUIRED NAMES SDL2_ttf)
 find_library(OpenGL REQUIRED NAMES GL)
 find_library(GLEW REQUIRED NAMES GLEW)
 
@@ -25,7 +26,7 @@ add_library(mousetrap SHARED
     .src/input_handler.inl
     include/time.hpp
     .src/time.inl
-        include/window.hpp include/renderable.hpp include/transform.hpp include/render_target.hpp include/vector.hpp .src/window.inl include/image.hpp include/colors.hpp .src/colors.inl include/geometric_shapes.hpp include/angle.hpp .src/angle.inl include/shader.hpp include/common.hpp include/texture.hpp .src/texture.inl .src/transform.inl)
+        include/window.hpp include/renderable.hpp include/transform.hpp include/render_target.hpp include/vector.hpp .src/window.inl include/image.hpp include/colors.hpp .src/colors.inl include/geometric_shapes.hpp include/angle.hpp .src/angle.inl include/shader.hpp include/common.hpp include/texture.hpp .src/texture.inl .src/transform.inl .src/image.inl)
 set_target_properties(mousetrap PROPERTIES
     LINKER_LANGUAGE CXX
     CXX_STANDARD 20
@@ -38,6 +39,7 @@ target_link_libraries(mousetrap PUBLIC
     ${SDL2}
     ${SDL2_image}
     ${SDL2_mixer}
+    ${SDL2_ttf}
     ${OpenGL}
     ${GLEW}
 )

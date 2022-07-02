@@ -68,7 +68,7 @@ namespace rat
         auto h = this->h;
 
         h *= 360;
-        float c = value * saturation;
+        float c = v * s;
         float h_2 = h / 60;
         float x = c * (1 - std::fabs(std::fmod(h_2, 2) - 1));
 
@@ -99,12 +99,23 @@ namespace rat
             rgb = Vector3f(c, 0, x);
         }
 
-        auto m = value - c;
+        auto m = v - c;
 
         rgb.r += m;
         rgb.g += m;
         rgb.b += m;
 
-        return RGBA(rgb.r, rgb.g, rgb.b, alpha);
+        return RGBA(rgb.r, rgb.g, rgb.b, a);
+    }
+
+
+    SDL_Color as_sdl_color(RGBA color)
+    {
+        auto out = SDL_Color();
+        out.r = color.r * 255;
+        out.g = color.g * 255;
+        out.b = color.b * 255;
+        out.a = color.a * 255;
+        return out;
     }
 }

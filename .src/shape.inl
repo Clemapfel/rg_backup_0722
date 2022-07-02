@@ -4,6 +4,7 @@
 //
 
 #include <stdexcept>
+#include <algorithm>
 
 #include <glm/glm.hpp>
 #include <SDL2/SDL_render.h>
@@ -21,8 +22,8 @@ namespace rat
         auto size = detail::get_viewport_size();
         Vector2f centroid = Vector2f(size.x / 2, size.y / 2);
 
-        auto out = in;
-        out = centroid - out;
+        auto out = centroid - in;
+        out.x = 1 - out.x;
         out.x /= size.x / 2;
         out.y /= size.y / 2;
         return out;
@@ -36,13 +37,14 @@ namespace rat
         auto out = in;
         out.x *= size.x / 2;
         out.y *= size.y / 2;
-        out = centroid + out;
+        out.x = 1 - out.x;
+        out = centroid - out;
         return out;
     }
 
     Vector2f Shape::sdl_to_gl_texture_coordinates(Vector2f in)
     {
-        in.x = 1 - in.x;
+        in.x = 1 - in.x; // sdl texture are x-flipped
         return in;
     }
 
@@ -99,6 +101,7 @@ namespace rat
 
         glBindVertexArray(0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
         if (_texture != nullptr)
             SDL_GL_UnbindTexture(_texture->get_native());
     }
@@ -211,12 +214,12 @@ namespace rat
         for (auto& v : _vertices)
         {
             min_x = std::min(min_x, v.position.x);
-            min_y = std::min(min_y, v.position.x);
-            min_z = std::min(min_z, v.position.x);
+            min_y = std::min(min_y, v.position.y);
+            min_z = std::min(min_z, v.position.z);
 
             max_x = std::max(max_x, v.position.x);
-            max_y = std::max(max_y, v.position.x);
-            max_z = std::max(max_z, v.position.x);
+            max_y = std::max(max_y, v.position.y);
+            max_z = std::max(max_z, v.position.z);
         }
 
         return Rectangle{
@@ -227,11 +230,26 @@ namespace rat
 
     void Shape::align_texture_rectangle_with_bounding_box()
     {
+        set_texture_rectangle(Rectangle{{0, 0}, {1, 1}});
+    }
+
+    void Shape::set_texture_rectangle(Rectangle normalized)
+    {
         auto aabb = get_bounding_box();
         for (auto& v : _vertices)
         {
-            v.texture_coordinates.x = (v.position.x - aabb.top_left.x) / aabb.size.x;
+            // scale into [0, 1]
+            v.texture_coordinates.x = 1 - (v.position.x - aabb.top_left.x) / aabb.size.x;
             v.texture_coordinates.y = (v.position.y - aabb.top_left.y) / aabb.size.y;
+
+            // scale into correct size
+            v.texture_coordinates.x *= (normalized.size.x - normalized.top_left.x);
+            v.texture_coordinates.y *= (normalized.size.y - normalized.top_left.y);
+
+            // anchor at correct top left
+            v.texture_coordinates.x += normalized.top_left.x;
+            v.texture_coordinates.y += normalized.top_left.y;
+
         }
         update_texture_coordinates();
     }
@@ -354,6 +372,42 @@ namespace rat
             v.position.y = center.y + sin(angle_rad) * distance * y_factor;
         }
         update_positions();
+        }
+
+    std::vector<Vector2f> Shape::sort_by_angle(const std::vector<Vector2f>& in)
+    {
+        auto center = Vector2f(0, 0);
+        for (const auto& pos : in)
+            center += pos;
+
+        size_t n = in.size();
+        center /= Vector2f(n, n);
+
+        std::vector<std::pair<Vector2f, Angle>> by_angle;
+        for (const auto& pos : in)
+            by_angle.emplace_back(pos, radians(std::atan2(pos.x - center.x, pos.y - center.y)));
+
+        std::sort(by_angle.begin(), by_angle.end(), [](const std::pair<Vector2f, Angle>& a, const std::pair<Vector2f, Angle>& b)
+        {
+            return a.second.as_degrees() < b.second.as_degrees();
+        });
+
+        auto out = std::vector<Vector2f>();
+        out.reserve(in.size());
+
+        for (auto& pair : by_angle)
+            out.push_back(pair.first);
+
+        return out;
+    }
+
+    void Shape::initialize()
+    {
+        // order matters:
+        update_positions();
+        update_colors();
+        align_texture_rectangle_with_bounding_box();
+        update_indices();
     }
 
     void Shape::as_rectangle(Vector2f top_left, Vector2f size)
@@ -367,11 +421,7 @@ namespace rat
         };
         _indices = {0, 1, 3, 1, 2, 3};
         _render_type = GL_TRIANGLE_FAN;
-
-        update_positions();
-        update_colors();
-        update_texture_coordinates();
-        update_indices();
+        initialize();
     }
 
     void Shape::as_triangle(Vector2f a, Vector2f b, Vector2f c)
@@ -384,13 +434,206 @@ namespace rat
         };
         _indices = {0, 1, 2};
         _render_type = GL_TRIANGLES;
-
-        align_texture_rectangle_with_bounding_box();
-
-        update_positions();
-        update_colors();
-        update_texture_coordinates();
-        update_indices();
+        initialize();
     }
+
+    void Shape::as_line(Vector2f a, Vector2f b)
+    {
+        _vertices =
+        {
+            Vertex{{a.x, a.y, 0}, {0, 0}, _default_color},
+            Vertex{{b.x, b.y, 0}, {0, 0}, _default_color}
+        };
+        _indices = {0, 1};
+        _render_type = GL_LINES;
+        initialize();
+    }
+
+    void Shape::as_circle(Vector2f center, float radius, size_t n_outer_vertices)
+    {
+        const float step = 360.f / n_outer_vertices;
+
+        _vertices.clear();
+        _vertices.push_back(Vertex{{center.x, center.y, 0}, {0, 0}, _default_color});
+
+        for (float angle = 0; angle < 360; angle += step)
+        {
+            auto as_radians = angle * M_PI / 180.f;
+            _vertices.push_back(Vertex{
+                {
+                    center.x + cos(as_radians) * radius,
+                    center.y + sin(as_radians) * radius,
+                    0
+                },
+                {0, 0},
+                _default_color}
+            );
+        }
+
+        _indices.clear();
+        for (size_t i = 0; i < _vertices.size(); ++i)
+            _indices.push_back(i);
+
+        _indices.push_back(1);
+
+        _render_type = GL_TRIANGLE_FAN;
+        initialize();
+    }
+
+    void Shape::as_line_strip(std::vector<Vector2f> positions)
+    {
+        _vertices.clear();
+        _indices.clear();
+
+        size_t i = 0;
+        for (auto& position : positions)
+        {
+            _vertices.push_back(Vertex{{position.x, position.y, 0}, {0, 0}, _default_color});
+            _indices.push_back(i++);
+        }
+
+        _render_type = GL_LINE_STRIP;
+        initialize();
+    }
+
+    void Shape::as_wireframe(std::vector<Vector2f> positions)
+    {
+        _vertices.clear();
+        _indices.clear();
+
+        positions = sort_by_angle(positions);
+
+        size_t i = 0;
+        for (auto& position : positions)
+        {
+            _vertices.push_back(Vertex{{position.x, position.y, 0}, {0, 0}, _default_color});
+            _indices.push_back(i++);
+        }
+
+        _render_type = GL_LINE_LOOP;
+        initialize();
+    }
+
+    void Shape::as_polygon(std::vector<Vector2f> positions)
+    {
+        _vertices.clear();
+        _indices.clear();
+
+        positions = sort_by_angle(positions);
+
+        size_t i = 0;
+        for (auto& position : positions)
+        {
+            _vertices.push_back(Vertex{{position.x, position.y, 0}, {0, 0}, _default_color});
+            _indices.push_back(i++);
+        }
+
+        _render_type = GL_TRIANGLE_FAN;
+        initialize();
+    }
+
+    void Shape::as_frame(Vector2f top_left, Vector2f size, float width)
+    {
+        _vertices.clear();
+        _indices.clear();
+
+        // hard-coded minimum vertex decomposition
+
+        auto push_vertex = [&](float x, float y) {
+            _vertices.push_back(Vertex{{x, y, 0}, {0, 0}, _default_color});
+        };
+
+        float x = top_left.x;
+        float y = top_left.y;
+        float w = size.x;
+        float h = size.y;
+        float l = width;
+
+        // in order: left to right, top to bottom
+
+        push_vertex(x, y);         // 0
+        push_vertex(x+w-l, y);     // 1
+        push_vertex(x+w, y);       // 2
+
+        push_vertex(x, y+l);       // 3
+        push_vertex(x+l, y+l);     // 4
+        push_vertex(x+w-l, y+l);   // 5
+
+        push_vertex(x+l, y+h-l);   // 6
+        push_vertex(x+w-l, y+h-l); // 7
+        push_vertex(x+w, y+h-l);   // 8
+
+        push_vertex(x, y+h);       // 9
+        push_vertex(x+l, y+h);     // 10
+        push_vertex(x+w, y+h);     // 11
+
+        _indices = {
+            0, 1, 5, 0, 5, 3,
+            1, 2, 7, 2, 7, 8,
+            6, 11, 10, 6, 8, 11,
+            3, 9, 10, 3, 4, 10
+        };
+
+        _render_type = GL_TRIANGLES;
+        initialize();
+    }
+
+    Shape TriangleShape(Vector2f a, Vector2f b, Vector2f c)
+    {
+        auto out = Shape();
+        out.as_triangle(a, b, c);
+        return out;
+    }
+
+    Shape RectangleShape(Vector2f top_left, Vector2f size)
+    {
+        auto out = Shape();
+        out.as_rectangle(top_left, size);
+        return out;
+    }
+
+    Shape CircleShape(Vector2f center, float radius, size_t n_outer_vertices)
+    {
+        auto out = Shape();
+        out.as_circle(center, radius, n_outer_vertices);
+        return out;
+    }
+
+    Shape LineShape(Vector2f a, Vector2f b)
+    {
+        auto out = Shape();
+        out.as_line(a, b);
+        return out;
+    }
+
+    Shape LineStripShape(std::vector<Vector2f> vertices)
+    {
+        auto out = Shape();
+        out.as_line_strip(vertices);
+        return out;
+    }
+
+    Shape PolygonShape(std::vector<Vector2f> positions)
+    {
+        auto out = Shape();
+        out.as_polygon(positions);
+        return out;
+    }
+
+    Shape WireframeShape(std::vector<Vector2f> positions)
+    {
+        auto out = Shape();
+        out.as_wireframe(positions);
+        return out;
+    }
+
+    Shape FrameShape(Vector2f top_left, Vector2f size, float width)
+    {
+        auto out = Shape();
+        out.as_frame(top_left, size, width);
+        return out;
+    }
+
+
 }
 
