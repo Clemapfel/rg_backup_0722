@@ -14,7 +14,10 @@ namespace rat
         public:
             Transform();
 
+            Vector2f apply_to(Vector2f);
             Vector3f apply_to(Vector3f);
+
+            void rotate();
     };
 }
 
