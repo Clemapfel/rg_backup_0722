@@ -29,26 +29,26 @@ int main()
     auto window = Window();
     window.create("test", 400, 300);
 
-    const size_t frame = 50;
-    auto shape = RectangleShape(Vector2f(50, 50), Vector2f(window.get_size()) - Vector2f(2 * 50, 2 * 50));
+    auto text = Text(75, "Roboto");
+    text.create(window, {50, 50}, "text");
 
-    auto image = Image();
-    image.create(10, 10, RGBA(0, 0, 0, 1));
-
-    auto texture = Texture(window.get_renderer());
-    texture.create(image);
-
-    shape.set_texture(&texture);
+    auto align_dot = CircleShape({50, 50}, 3, 4);
+    align_dot.set_color(RGBA(1, 0, 0, 1));
 
     while (not InputHandler::exit_requested())
     {
         InputHandler::update();
         auto time = window.update();
 
-        glClear(GL_COLOR_BUFFER_BIT);
-        glClearColor(1, 1, 1, 1);
+        if (InputHandler::was_pressed(ESCAPE))
+            break;
 
-        shape.render(window);
+        glClear(GL_COLOR_BUFFER_BIT);
+        glClearColor(0, 0, 0, 1);
+
+        align_dot.render(window);
+
+        //glyph.render(window);
 
         SDL_GL_SwapWindow(window.get_native());
         SDL_Delay(1000 / 15);

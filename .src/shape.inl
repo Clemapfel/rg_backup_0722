@@ -78,7 +78,7 @@ namespace rat
         glDeleteBuffers(1, &_element_buffer_id);
     }
 
-    void Shape::render(RenderTarget& target, Transform transform, Shader* shader)
+    void Shape::render(RenderTarget& target, Transform transform, Shader* shader) const
     {
         GLNativeHandle program_id;
 
@@ -127,7 +127,9 @@ namespace rat
         glBufferData(GL_ARRAY_BUFFER, _positions.size() * sizeof(float), _positions.data(), GL_STATIC_DRAW);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
         glEnableVertexAttribArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        //glBindBuffer(GL_ARRAY_BUFFER, 0);
+        //glBindVertexArray(0);
     }
 
     void Shape::update_colors()
@@ -150,7 +152,9 @@ namespace rat
         glBufferData(GL_ARRAY_BUFFER, _colors.size() * sizeof(float), _colors.data(), GL_STATIC_DRAW);
         glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*) 0);
         glEnableVertexAttribArray(1);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        //glBindBuffer(GL_ARRAY_BUFFER, 0);
+        //glBindVertexArray(0);
     }
 
     void Shape::update_texture_coordinates()
@@ -170,14 +174,19 @@ namespace rat
         glBufferData(GL_ARRAY_BUFFER, _texture_coordinates.size() * sizeof(float), _texture_coordinates.data(), GL_STATIC_DRAW);
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*) 0);
         glEnableVertexAttribArray(2);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        //glBindBuffer(GL_ARRAY_BUFFER, 0);
+        //glBindVertexArray(0);
     }
 
     void Shape::update_indices()
     {
+        glBindVertexArray(_vertex_array_id);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _element_buffer_id);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, _indices.size() * sizeof(float), _indices.data(), GL_STATIC_DRAW);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+        //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        //glBindVertexArray(0);
     }
 
     Vector2f Shape::get_centroid() const
@@ -259,6 +268,11 @@ namespace rat
         return get_bounding_box().top_left;
     }
 
+    Vector2f Shape::get_size() const
+    {
+        return get_bounding_box().size;
+    }
+
     void Shape::set_top_left(Vector2f position)
     {
         auto delta = position - get_bounding_box().top_left;
@@ -304,7 +318,7 @@ namespace rat
         update_positions();
     }
 
-    Vector2f Shape::get_vertex_position(size_t i) const
+    Vector3f Shape::get_vertex_position(size_t i) const
     {
         return _vertices.at(i).position;
     }

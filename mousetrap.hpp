@@ -12,3 +12,4 @@
 #include <include/colors.hpp>
 #include <include/angle.hpp>
 #include <include/shape.hpp>
+#include <include/text.hpp>

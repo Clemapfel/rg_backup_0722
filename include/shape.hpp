@@ -27,7 +27,7 @@ namespace rat
         RGBA color;
     };
 
-    class Shape //: public Renderable
+    class Shape : public Renderable
     {
         public:
             Shape();
@@ -45,7 +45,7 @@ namespace rat
             // compound shapes
             void as_frame(Vector2f top_left, Vector2f size, float width);
 
-            void render(RenderTarget&, Transform = Transform(), Shader* = nullptr);
+            void render(RenderTarget&, Transform = Transform(), Shader* = nullptr) const override;
 
             Rectangle get_texture_rectangle() const;
             void set_texture_rectangle(Rectangle normalized);
@@ -67,7 +67,7 @@ namespace rat
             Vector2f get_vertex_texture_coordinate(size_t) const;
 
             void set_vertex_position(size_t, Vector3f);
-            Vector2f get_vertex_position(size_t) const;
+            Vector3f get_vertex_position(size_t) const;
 
             void set_color(RGBA);
             RGBA get_color() const; // average of all vertices
@@ -76,6 +76,7 @@ namespace rat
             void set_texture(Texture*);
 
             Rectangle get_bounding_box() const;
+            Vector2f get_size() const;
 
             void set_origin(Vector2f relative_to_centroid);
             Vector2f get_origin() const;
