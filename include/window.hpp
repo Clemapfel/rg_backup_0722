@@ -73,7 +73,7 @@ namespace rat
 
             WindowID get_id() const;
             SDL_Window* get_native();
-            SDL_Renderer* get_renderer();
+            SDL_Renderer* get_renderer() override;
             SDL_GLContext* get_context();
 
         private:

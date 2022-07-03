@@ -8,13 +8,15 @@
 
 namespace rat
 {
-    Texture::Texture(SDL_Renderer* renderer, bool mipmap_enabled)
-        : _renderer(renderer), _mipmap_enabled(mipmap_enabled)
+    Texture::Texture(RenderTarget& renderer, bool mipmap_enabled)
+        : _renderer(renderer.get_renderer()), _mipmap_enabled(mipmap_enabled)
     {}
 
     Texture::~Texture()
     {
-        SDL_DestroyTexture(_native);
+        if (_initialized)
+            SDL_DestroyTexture(_native);
+
         _renderer = nullptr;
     }
 
@@ -23,28 +25,24 @@ namespace rat
         return _native;
     }
 
-    void Texture::create(SDL_Surface* surface)
+    void Texture::create_from(SDL_Surface* surface)
     {
         _native = SDL_CreateTextureFromSurface(_renderer, surface);
+        _initialized = true;
     }
 
-    void Texture::create(const std::string &path)
+    void Texture::load(const std::string &path)
     {
         _native = IMG_LoadTexture(_renderer, path.c_str());
-    }
-
-    void Texture::create(Image& image)
-    {
-        auto* surface = SDL_CreateRGBSurfaceFrom(image._data.data(), image._width, image._height, 32, 4*image._width, image.r_mask, image.g_mask, image.b_mask, image.a_mask);
-        _native = SDL_CreateTextureFromSurface(_renderer, surface);
-        SDL_FreeSurface(surface);
+        _initialized = true;
     }
 
     void Texture::create(size_t width, size_t height, RGBA color)
     {
         auto image = Image();
         image.create(width, height, color);
-        create(image);
+        create_from(image);
+        _initialized = true;
     }
 
     void Texture::bind()

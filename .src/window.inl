@@ -166,7 +166,7 @@ namespace rat
     void Window::render(const Renderable *object, Transform transform)
     {
         //transform *= _global_transform;
-        object->render(this, transform);
+        object->render((*this), transform);
     }
 
     SDL_Window *Window::get_native()

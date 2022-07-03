@@ -31,13 +31,13 @@ namespace rat
     class Texture
     {
         public:
-            Texture(SDL_Renderer*, bool enable_mipmap = false);
+            Texture(RenderTarget&, bool enable_mipmap = false);
             ~Texture();
 
             void create(size_t width, size_t height, RGBA color = RGBA(1, 1, 1, 1));
-            void create(const std::string& path);
-            void create(Image&);
-            void create(SDL_Surface*);
+            void create_from(SDL_Surface*); // rat::Image implicitly converted to SDL_Surface
+
+            void load(const std::string& path);
 
             Vector2ui get_size() const;
             SDL_Texture* get_native();
@@ -52,6 +52,7 @@ namespace rat
             void unbind();
 
         private:
+            bool _initialized = false;
             SDL_Renderer* _renderer;
             SDL_Texture* _native;
 
