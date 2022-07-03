@@ -54,6 +54,84 @@ namespace rat
         return in;
     }
 
+    Shape::Shape(const Shape& other)
+    {
+        glGenVertexArrays(1, &_vertex_array_id);
+        glGenBuffers(1, &_position_buffer_id);
+        glGenBuffers(1, &_color_buffer_id);
+        glGenBuffers(1, &_texture_coordinate_buffer_id);
+        glGenBuffers(1, &_element_buffer_id);
+
+        _vertices = other._vertices;
+        _texture = other._texture;
+        _texture_rect = other._texture_rect;
+        _render_type = other._render_type;
+        _origin = other._origin;
+        _indices = other._indices;
+
+        initialize();
+    }
+
+    Shape &Shape::operator=(const Shape& other)
+    {
+        if (&other == this)
+            return *this;
+
+        glGenVertexArrays(1, &_vertex_array_id);
+        glGenBuffers(1, &_position_buffer_id);
+        glGenBuffers(1, &_color_buffer_id);
+        glGenBuffers(1, &_texture_coordinate_buffer_id);
+        glGenBuffers(1, &_element_buffer_id);
+
+        _vertices = other._vertices;
+        _texture = other._texture;
+        _texture_rect = other._texture_rect;
+        _render_type = other._render_type;
+        _origin = other._origin;
+        _indices = other._indices;
+
+        initialize();
+    }
+
+    Shape::Shape(Shape&& other)
+    {
+        glGenVertexArrays(1, &_vertex_array_id);
+        glGenBuffers(1, &_position_buffer_id);
+        glGenBuffers(1, &_color_buffer_id);
+        glGenBuffers(1, &_texture_coordinate_buffer_id);
+        glGenBuffers(1, &_element_buffer_id);
+
+        _vertices = std::move(other._vertices);
+        _texture = std::move(other._texture);
+        _texture_rect = std::move(other._texture_rect);
+        _render_type = std::move(other._render_type);
+        _origin = std::move(other._origin);
+        _indices = std::move(other._indices);
+
+        initialize();
+    }
+
+    Shape &Shape::operator=(Shape&& other)
+    {
+        if (&other == this)
+            return *this;
+
+        glGenVertexArrays(1, &_vertex_array_id);
+        glGenBuffers(1, &_position_buffer_id);
+        glGenBuffers(1, &_color_buffer_id);
+        glGenBuffers(1, &_texture_coordinate_buffer_id);
+        glGenBuffers(1, &_element_buffer_id);
+
+        _vertices = std::move(other._vertices);
+        _texture = std::move(other._texture);
+        _texture_rect = std::move(other._texture_rect);
+        _render_type = std::move(other._render_type);
+        _origin = std::move(other._origin);
+        _indices = std::move(other._indices);
+
+        initialize();
+    }
+
     Shape::Shape()
     {
         if (not _noop_shader_initialized)
@@ -89,6 +167,22 @@ namespace rat
 
         glUseProgram(program_id);
         glBindVertexArray(_vertex_array_id);
+
+        glBindBuffer(GL_ARRAY_BUFFER, _position_buffer_id);
+        glBufferData(GL_ARRAY_BUFFER, _positions.size() * sizeof(float), _positions.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+        glEnableVertexAttribArray(0);
+
+        glBindBuffer(GL_ARRAY_BUFFER, _color_buffer_id);
+        glBufferData(GL_ARRAY_BUFFER, _colors.size() * sizeof(float), _colors.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+        glEnableVertexAttribArray(1);
+
+        glBindBuffer(GL_ARRAY_BUFFER, _texture_coordinate_buffer_id);
+        glBufferData(GL_ARRAY_BUFFER, _texture_coordinates.size() * sizeof(float), _texture_coordinates.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+        glEnableVertexAttribArray(2);
+
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _element_buffer_id);
 
         if (_texture != nullptr)
@@ -100,6 +194,7 @@ namespace rat
         glDrawElements(_render_type, _indices.size(), GL_UNSIGNED_INT, 0);
 
         glBindVertexArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
         if (_texture != nullptr)
@@ -128,8 +223,8 @@ namespace rat
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
         glEnableVertexAttribArray(0);
 
-        //glBindBuffer(GL_ARRAY_BUFFER, 0);
-        //glBindVertexArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
     }
 
     void Shape::update_colors()
@@ -153,8 +248,8 @@ namespace rat
         glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*) 0);
         glEnableVertexAttribArray(1);
 
-        //glBindBuffer(GL_ARRAY_BUFFER, 0);
-        //glBindVertexArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
     }
 
     void Shape::update_texture_coordinates()
@@ -175,8 +270,8 @@ namespace rat
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*) 0);
         glEnableVertexAttribArray(2);
 
-        //glBindBuffer(GL_ARRAY_BUFFER, 0);
-        //glBindVertexArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
     }
 
     void Shape::update_indices()
@@ -185,8 +280,8 @@ namespace rat
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _element_buffer_id);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, _indices.size() * sizeof(float), _indices.data(), GL_STATIC_DRAW);
 
-        //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-        //glBindVertexArray(0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
     }
 
     Vector2f Shape::get_centroid() const

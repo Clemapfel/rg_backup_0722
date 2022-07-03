@@ -35,6 +35,12 @@ int main()
     auto align_dot = CircleShape({50, 50}, 3, 4);
     align_dot.set_color(RGBA(1, 0, 0, 1));
 
+    auto glyph = text._glyphs.at(0)._shape;
+
+    std::vector<Text::Glyph> glyphs;
+    glyphs.emplace_back(window);
+    glyphs.back()._shape.as_rectangle(glyph.get_top_left(), glyph.get_size());
+
     while (not InputHandler::exit_requested())
     {
         InputHandler::update();
@@ -47,8 +53,7 @@ int main()
         glClearColor(0, 0, 0, 1);
 
         align_dot.render(window);
-
-        //glyph.render(window);
+        text.render(window);
 
         SDL_GL_SwapWindow(window.get_native());
         SDL_Delay(1000 / 15);

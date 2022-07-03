@@ -117,7 +117,7 @@ namespace rat
 
             static void set_glyph_position(Glyph&, Vector2f); // north-west
 
-            std::vector<Glyph> glyphs;
+            std::vector<Glyph> _glyphs = {};
     };
 }
 
@@ -156,7 +156,7 @@ namespace rat
 
     void Text::render(RenderTarget& target, Transform transform, Shader* shader) const
     {
-        for (auto& glyph : glyphs)
+        for (auto& glyph : _glyphs)
             glyph._shape.render(target, transform, shader);
     }
 
@@ -176,8 +176,8 @@ namespace rat
 
         auto push_glyph = [&](const std::string& raw, Vector2f position)
         {
-            glyphs.emplace_back(target);
-            auto& glyph = glyphs.back();
+            _glyphs.emplace_back(target);
+            auto& glyph = _glyphs.back();
             glyph._is_bold = bold_active;
             glyph._is_italic = italic_active;
             glyph._is_underlined = underlined_active;
@@ -244,7 +244,6 @@ namespace rat
                 surface = TTF_RenderText_Shaded(current_font, raw.c_str(), as_sdl_color(foreground), as_sdl_color(background));
 
             glyph._texture.create_from(surface);
-            glyph._shape = Shape();
             glyph._shape = RectangleShape(position, Vector2f(surface->w, surface->h));
             glyph._shape.set_texture(&glyph._texture);
 

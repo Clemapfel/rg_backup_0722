@@ -33,6 +33,13 @@ namespace rat
             Shape();
             virtual ~Shape();
 
+            // prevent sharing of gl buffers on copy / move
+            Shape(const Shape&);
+            Shape& operator=(const Shape&);
+
+            Shape(Shape&&);
+            Shape& operator=(Shape&&);
+
             // primitives
             void as_triangle(Vector2f a, Vector2f b, Vector2f c);
             void as_rectangle(Vector2f top_left, Vector2f size);
