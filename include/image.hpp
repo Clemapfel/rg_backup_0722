@@ -12,37 +12,36 @@
 
 namespace rat
 {
-    // image living in RAM, 8-bit colors
+    // image living in RAM
     class Image
     {
         friend class Texture;
         template<bool> class Iterator;
-        using NonConstIterator = Iterator<false>;
-        using ConstIterator = Iterator<true>;
 
         public:
             Image();
+            ~Image();
 
             void create(size_t width, size_t height, RGBA color = RGBA(0, 0, 0, 1));
-
-            RGBA get(size_t x, size_t y) const;
-            void set(size_t x, size_t y, RGBA);
+            void load(const std::string& path);
 
             Vector2ui get_size() const;
 
-            NonConstIterator at(size_t, size_t);
-            NonConstIterator begin();
-            NonConstIterator end();
+            auto at(size_t, size_t);
+            auto begin();
+            auto end();
 
-            ConstIterator at(size_t, size_t) const;
-            ConstIterator begin() const;
-            ConstIterator end() const;
+            auto at(size_t, size_t) const;
+            auto begin() const;
+            auto end() const;
+
+            operator SDL_Surface*();
 
         private:
             using Value_t = uint32_t;
 
             size_t _width, _height;
-            std::vector<uint32_t> _data; // RGBA, 8 bytes per element
+            SDL_Surface* _data; // RGBA, 8 bytes per element stored in 32-bit int
 
             static RGBA bit_to_color(Value_t);
             static Value_t color_to_bit(RGBA);
@@ -53,6 +52,9 @@ namespace rat
             static const Value_t b_mask = 0x0000FF00;
             static const Value_t a_mask = 0x000000FF;
 
+            static inline const bool NOT_CONST = false;
+            static inline const bool CONST = true;
+
             template<bool is_const>
             class Iterator
             {
@@ -60,7 +62,7 @@ namespace rat
                     Iterator(Image*, size_t, size_t);
 
                     using iterator_category = std::bidirectional_iterator_tag;
-                    using value_type = RGBA;//typename std::conditional<is_const, const Value_t, Value_t>::type;
+                    using value_type = Iterator<is_const>; // sic
                     using difference_type = int;
                     using pointer = typename std::conditional<is_const, const value_type*, value_type*>::type;
                     using reference = typename std::conditional<is_const, const value_type&, value_type&>::type;
@@ -73,7 +75,8 @@ namespace rat
                     auto operator++();
                     auto operator--();
 
-                    RGBA operator*() const;
+                    operator RGBA() const;
+                    Iterator<is_const> operator*() const;
 
                 private:
                     mutable Image* _image;
