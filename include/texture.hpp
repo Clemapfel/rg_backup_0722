@@ -11,7 +11,6 @@
 
 namespace rat
 {
-
     enum WrapMode
     {
         ZERO = 0, // GL_CLAMP_TO_BORDER with 0 padding
@@ -33,6 +32,12 @@ namespace rat
         public:
             Texture(RenderTarget&, bool enable_mipmap = false);
             ~Texture();
+
+            Texture(const Texture&) = delete;
+            Texture& operator=(const Texture&) = delete;
+
+            Texture(Texture&&);
+            Texture& operator=(Texture&&);
 
             void create(size_t width, size_t height, RGBA color = RGBA(1, 1, 1, 1));
             void create_from(SDL_Surface*); // rat::Image implicitly converted to SDL_Surface

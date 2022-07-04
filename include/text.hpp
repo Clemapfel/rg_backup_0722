@@ -32,10 +32,10 @@ namespace rat
                                       font_bold_italic_suffix = "-BoldItalic";
 
             // control sequence start/end
-            static inline std::string tag_open_prefix = "<",
-                                      tag_open_suffix = ">",
-                                      tag_close_prefix = "</", // has to be different from tag_open_prefix
-                                      tag_close_suffix = ">";
+            static inline std::string tag_prefix = "<",
+                                      tag_suffix = ">",
+                                      tag_close_marker = "/"; // has to be different from tag_open_prefix
+                                      // example: <a> opens, </a> closes same region
 
             /// \brief basic format tags
             /// \note will be parsed as: \<tag_open_prefix>\<tag>\<tag_open_suffix> text \<tag_close_prefix>\<tag>\<tag_close_suffix>
@@ -123,6 +123,7 @@ namespace rat
                 std::string _content;
                 Texture _texture;
                 Shape _shape;
+                Shape _background_shape;
             };
 
             static void set_glyph_position(Glyph&, Vector2f); // north-west

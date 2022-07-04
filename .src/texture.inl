@@ -14,10 +14,24 @@ namespace rat
 
     Texture::~Texture()
     {
-        if (_initialized)
+        if (_initialized && _native != nullptr)
             SDL_DestroyTexture(_native);
 
         _renderer = nullptr;
+    }
+
+    Texture::Texture(Texture&& other)
+    {
+        _native = other._native;
+        _initialized = other._initialized;
+        _renderer = other._renderer;
+        _mipmap_enabled = other._mipmap_enabled;
+        _wrap_mode = other._wrap_mode;
+        _filter_mode = other._filter_mode;
+
+        other._initialized = false;
+        other._native = nullptr;
+        other._renderer = nullptr;
     }
 
     SDL_Texture* Texture::get_native()

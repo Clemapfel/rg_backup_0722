@@ -29,10 +29,10 @@ int main()
     auto window = Window();
     window.create("test", 400, 300);
 
-    auto px = 48 * 2;
+    auto px = 48;
 
     auto text = Text(px, "Roboto");
-    text.create(window, {50, 50}, "Texyz");
+    text.create(window, {50, 50}, "<col=(1, 0.5, 1)><i>\\\\\\</i></col>");
 
     auto align_dot = CircleShape({50, 50}, px / 2, 4);
     align_dot.set_color(RGBA(1, 0, 0, 1));
