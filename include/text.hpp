@@ -57,16 +57,22 @@ namespace rat
                                       color_background_tag = "col_bg";
 
             /// \brief initialize a text by loading the font
+            /// \param font_size: native size of he font, scaling the font by using a non-native size is usually discouraged, see notes
             /// \param font_id: id of the font, example: "roboto"
             /// \param font_path: absolute path to the font, example: "/home/workspace/resources/fonts" (no trailing /)
             /// \note the function will look in `font_path` for files of the following names:<br>
-            ///  \<font_id><font_regular_suffix>.ttf<br>
-            ///  \<font_id><font_bold_suffix>.ttf<br>
-            ///  \<font_id><font_italic_suffix>.ttf<br>
-            ///  \<font_id><font_bold_italic_suffix>.ttf<br>
+            ///  "\<font_path>/\<font_id>\<font_regular_suffix>.ttf"<br>
+            ///  "\<font_path>/\\<font_id>\<font_bold_suffix>.ttf"<br>
+            ///  "\<font_path>/\\<font_id>\<font_italic_suffix>.ttf"<br>
+            ///  "\<font_path>/\\<font_id>\<font_bold_italic_suffix>.ttf"<br>
+            ///  Only the regular version is required, providing additional version of the fonts may improve kerning.
+            ///  <br><br>For best result, the font size should by an even integer multiple of the native glyph size, for example, if the .ttf file contains a truetype font at 23px, then the font size should be 23px, (23*2)px, (23*4)px, etc.
             Text(size_t font_size, const std::string& font_id, const std::string& font_path = "/home/clem/Workspace/mousetrap/resources/fonts/");
 
-            //
+            /// \brief create the text, with wrapping
+            /// \param render_target: render target in whose context the glyphs textures will be created
+            /// \param formatted_text: text containing the format tags, will be parsed
+            /// \param width: maximum width per line, or -1 for no wrapping
             void create(RenderTarget&, Vector2f position, const std::string formatted_text, size_t width_px = -1);
 
             /// \brief update the texts animations
@@ -84,7 +90,7 @@ namespace rat
             /// \copydoc rat::Renderable::render
             void render(RenderTarget& target, Transform transform = Transform(), Shader* shader = nullptr) const override;
 
-        //private:
+        private:
             struct Font
             {
                 TTF_Font* regular;
@@ -107,6 +113,10 @@ namespace rat
                      _is_underlined = false,
                      _is_strikethrough = false;
 
+                bool _is_shaking = false,
+                     _is_rainbow = false,
+                     _is_wave = false;
+
                 RGBA _foreground_color = RGBA(1, 1, 1, 1),
                      _background_color = RGBA(0, 0, 0, 0);
 
@@ -122,140 +132,3 @@ namespace rat
 }
 
 #include <.src/text.inl>
-
-namespace rat
-{
-    Text::Text(size_t font_size, const std::string &font_id, const std::string &font_path)
-        : _font_id(font_id)
-    {
-        if (not TTF_WasInit())
-            TTF_Init();
-
-        if (_fonts.find(font_id) == _fonts.end())
-        {
-            _fonts.emplace(font_id, Font{nullptr, nullptr, nullptr, nullptr});
-            auto& element = _fonts.at(font_id);
-
-            static auto load = [&](const std::string suffix) -> TTF_Font*
-            {
-                auto path = font_path + font_id + suffix + ".ttf";
-                auto* out = TTF_OpenFont(path.c_str(), font_size);
-
-                if (out == nullptr)
-                    std::cerr << "[WARNING] Unable to load font at " << path << std::endl;
-
-                return out;
-            };
-
-            element.regular = load(font_regular_suffix);
-            element.bold = load(font_bold_suffix);
-            element.italic = load(font_italic_suffix);
-            element.bold_italic = load(font_bold_italic_suffix);
-        }
-    }
-
-    void Text::render(RenderTarget& target, Transform transform, Shader* shader) const
-    {
-        for (auto& glyph : _glyphs)
-            glyph._shape.render(target, transform, shader);
-    }
-
-    void Text::create(RenderTarget& target, Vector2f position, const std::string formatted_text, size_t width_px)
-    {
-        static const bool blend = true;
-
-        bool bold_active = false,
-             italic_active = false,
-             underlined_active = false,
-             strikethrough_active = false;
-
-        RGBA foreground = RGBA(1, 1, 1, 1),
-             background = RGBA(0, 0, 0, 0);
-
-        const auto& font = _fonts.at(_font_id);
-
-        auto push_glyph = [&](const std::string& raw, Vector2f position)
-        {
-            _glyphs.emplace_back(target);
-            auto& glyph = _glyphs.back();
-            glyph._is_bold = bold_active;
-            glyph._is_italic = italic_active;
-            glyph._is_underlined = underlined_active;
-            glyph._is_strikethrough = strikethrough_active;
-            glyph._foreground_color = foreground;
-            glyph._background_color = background;
-            glyph._content = raw;
-
-            TTF_Font* current_font = nullptr;
-            uint32_t style = TTF_STYLE_NORMAL;
-
-            // use specialized font unless unavailable
-            if (bold_active and italic_active)
-            {
-                if (font.bold_italic == nullptr)
-                {
-                    current_font = font.regular;
-                    style |= TTF_STYLE_BOLD;
-                    style |= TTF_STYLE_ITALIC;
-                }
-                else
-                    current_font = font.bold_italic;
-            }
-            else if (bold_active)
-            {
-                if (font.bold == nullptr)
-                {
-                    current_font = font.regular;
-                    style |= TTF_STYLE_BOLD;
-                }
-                else
-                    current_font = font.bold;
-            }
-            else if (italic_active)
-            {
-                if (font.italic == nullptr)
-                {
-                    current_font = font.regular;
-                    style |= TTF_STYLE_ITALIC;
-                }
-                else
-                    current_font = font.italic;
-            }
-            else
-                current_font = font.regular;
-
-            if (underlined_active)
-                style |= TTF_STYLE_ITALIC;
-
-            if (strikethrough_active)
-                style |= TTF_STYLE_STRIKETHROUGH;
-
-            TTF_SetFontStyle(current_font, style);
-            SDL_Surface* surface = nullptr;
-
-            if (background.a == 0)
-            {
-                if (blend)
-                    surface = TTF_RenderText_Blended(current_font, raw.c_str(), as_sdl_color(foreground));
-                else
-                    surface = TTF_RenderText_Solid(current_font, raw.c_str(), as_sdl_color(foreground));
-            }
-            else
-                surface = TTF_RenderText_Shaded(current_font, raw.c_str(), as_sdl_color(foreground), as_sdl_color(background));
-
-            glyph._texture.create_from(surface);
-            glyph._shape = RectangleShape(position, Vector2f(surface->w, surface->h));
-            glyph._shape.set_texture(&glyph._texture);
-
-            // reset
-            SDL_FreeSurface(surface);
-            for (auto* f : {font.regular, font.bold, font.italic, font.bold_italic})
-            {
-                if (f != nullptr)
-                    TTF_SetFontStyle(f, TTF_STYLE_NORMAL);
-            }
-        };
-
-        push_glyph(formatted_text, position);
-    }
-}

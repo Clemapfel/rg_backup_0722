@@ -29,17 +29,13 @@ int main()
     auto window = Window();
     window.create("test", 400, 300);
 
-    auto text = Text(75, "Roboto");
-    text.create(window, {50, 50}, "text");
+    auto px = 48 * 2;
 
-    auto align_dot = CircleShape({50, 50}, 3, 4);
+    auto text = Text(px, "Roboto");
+    text.create(window, {50, 50}, "Texyz");
+
+    auto align_dot = CircleShape({50, 50}, px / 2, 4);
     align_dot.set_color(RGBA(1, 0, 0, 1));
-
-    auto glyph = text._glyphs.at(0)._shape;
-
-    std::vector<Text::Glyph> glyphs;
-    glyphs.emplace_back(window);
-    glyphs.back()._shape.as_rectangle(glyph.get_top_left(), glyph.get_size());
 
     while (not InputHandler::exit_requested())
     {
