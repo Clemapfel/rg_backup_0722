@@ -34,8 +34,8 @@ namespace rat
             // control sequence start/end
             static inline std::string tag_prefix = "<",
                                       tag_suffix = ">",
-                                      tag_close_marker = "/"; // has to be different from tag_open_prefix
-                                      // example: <a> opens, </a> closes same region
+                                      tag_close_marker = "/";
+                                      // example: <a> opens, </a> closes same region with tag a
 
             /// \brief basic format tags
             /// \note will be parsed as: \<tag_open_prefix>\<tag>\<tag_open_suffix> text \<tag_close_prefix>\<tag>\<tag_close_suffix>
@@ -73,7 +73,8 @@ namespace rat
             /// \param render_target: render target in whose context the glyphs textures will be created
             /// \param formatted_text: text containing the format tags, will be parsed
             /// \param width: maximum width per line, or -1 for no wrapping
-            void create(RenderTarget&, Vector2f position, const std::string formatted_text, size_t width_px = -1);
+            /// \param line_spacer: vertical distance between lines, can be negative
+            void create(RenderTarget&, Vector2f position, const std::string formatted_text, size_t width_px = -1, int line_spacer = 1);
 
             /// \brief update the texts animations
             /// \param time: time elapsed since last frame, usually return value of `rat::Window::update`

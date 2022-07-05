@@ -45,9 +45,12 @@ namespace rat
         }
     }
 
-    void Text::create(RenderTarget& target, Vector2f position, const std::string formatted_text, size_t width_px)
+    void Text::create(RenderTarget& target, Vector2f position, const std::string formatted_text, size_t width_px, int line_spacer)
     {
         static const bool blend = true;
+
+        const auto original_position = position;
+        size_t font_height = TTF_FontAscent(_fonts.at(_font_id).bold) + -1 * TTF_FontDescent(_fonts.at(_font_id).bold);
 
         bool bold_active = false,
              italic_active = false,
@@ -132,11 +135,7 @@ namespace rat
                 surface = TTF_RenderText_Solid(current_font, raw.c_str(), as_sdl_color(RGBA(foreground.r, foreground.g, foreground.b, 1)));
 
             glyph._texture.create_from(surface);
-
-            auto ascend = TTF_FontAscent(current_font);
-            auto descend = -1 * TTF_FontDescent(current_font);
-
-            position.y -= (ascend + descend) * 0.5;
+            position.y -= (font_height * 0.5);
 
             glyph._shape = RectangleShape(position, Vector2f(surface->w, surface->h));
             glyph._shape.set_color(RGBA(1, 1, 1, 1));
@@ -166,7 +165,6 @@ namespace rat
                 msg.push_back('`');
                 throw std::invalid_argument(msg);
             }
-
 
             std::stringstream red, green, blue;
 
@@ -440,7 +438,27 @@ namespace rat
                 push_glyph(to_push, position);
 
                 i += 1;
-                position.x += _glyphs.back()._shape.get_size().x;
+
+                // apply wrapping
+                const auto line_height = TTF_FontAscent(_fonts.at(_font_id).regular);// + -1 * TTF_FontDescent(_fonts.at(_font_id).regular);
+
+                auto is_wrap_char = [](char in) -> bool
+                {
+                    for (auto c : {' ', ',', '.', ';', '\n', '\t'})
+                        if (c == in)
+                            return true;
+
+                    return false;
+                };
+
+                auto& back = _glyphs.back();
+                if ((back._content.back() == '\n') or (position.x + back._shape.get_size().x > width_px and is_wrap_char(back._content.back())))
+                {
+                    position.x = original_position.x;
+                    position.y += line_height + line_spacer;
+                }
+                else
+                    position.x += back._shape.get_size().x;
             }
         }
         catch (std::invalid_argument& exc)

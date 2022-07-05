@@ -31,10 +31,11 @@ int main()
 
     auto px = 48;
 
+    float width = 250;
     auto text = Text(px, "Roboto");
-    text.create(window, {50, 50}, "<col=(1, 0.5, 1)><i>\\\\\\</i></col>");
+    text.create(window, {50, 50}, "|alsdylasi| |l| |dalis| |bai| |baqqsl| |sbzalis| |bdali| |dyqqlszbvalsizb| |al| |ba| |aa|.", width);
 
-    auto align_dot = CircleShape({50, 50}, px / 2, 4);
+    auto align_dot = RectangleShape({50, 50},{width, 9000});
     align_dot.set_color(RGBA(1, 0, 0, 1));
 
     while (not InputHandler::exit_requested())
