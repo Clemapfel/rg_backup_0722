@@ -134,6 +134,12 @@ namespace rat
             else
                 surface = TTF_RenderText_Solid(current_font, raw.c_str(), as_sdl_color(RGBA(foreground.r, foreground.g, foreground.b, 1)));
 
+            if (surface == nullptr)
+            {
+                std::cerr << "[WARNING] In Text::create: Unable to render char `" << raw << "`" << std::endl;
+                return;
+            }
+
             glyph._texture.create_from(surface);
             position.y -= (font_height * 0.5);
 
@@ -451,14 +457,7 @@ namespace rat
                     return false;
                 };
 
-                auto& back = _glyphs.back();
-                if ((back._content.back() == '\n') or (position.x + back._shape.get_size().x > width_px and is_wrap_char(back._content.back())))
-                {
-                    position.x = original_position.x;
-                    position.y += line_height + line_spacer;
-                }
-                else
-                    position.x += back._shape.get_size().x;
+                position.x += _glyphs.back()._shape.get_size().x;
             }
         }
         catch (std::invalid_argument& exc)
@@ -521,6 +520,53 @@ namespace rat
 
         for (auto& g : _glyphs)
             g._shape.set_texture(&g._texture);
+
+        auto is_delimiter_char = [](char in) -> bool {
+            for (auto c : {' ', ',', '.', ';', '\t', '\n'})
+                if (in == c)
+                    return true;
+
+            return false;
+        };
+
+        // apply wrapping
+        const auto line_height = TTF_FontAscent(_fonts.at(_font_id).bold) + line_spacer;
+
+        position = original_position;
+        float current_line_width = 0;
+        for (size_t i = 0; i < _glyphs.size(); ++i)
+        {
+            std::vector<Glyph*> word;
+            float word_width = 0;
+            while ((i < _glyphs.size()))
+            {
+                word.push_back(&_glyphs.at(i));
+                word_width += _glyphs.at(i)._shape.get_size().x;
+
+                if (is_delimiter_char(_glyphs.at(i)._content.back()))
+                {
+                    word_width -= word.back()->_shape.get_size().x;
+                    break;
+                }
+
+                i += 1;
+            }
+
+            if (current_line_width + word_width > width_px)
+            {
+                position.y += line_height;
+                position.x = original_position.x;
+                current_line_width = 0;
+            }
+
+            for (auto* glyph : word)
+            {
+                glyph->_shape.set_top_left(position);
+                const auto glyph_width = glyph->_shape.get_size().x;
+                current_line_width += glyph_width;
+                position.x += glyph_width;
+            }
+        }
     }
 
     void Text::update(Time time)

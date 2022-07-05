@@ -521,7 +521,6 @@ namespace rat
     bool InputHandler::exit_requested()
     {
         initialize();
-
         return _exit_requested;
     }
 }

@@ -27,15 +27,18 @@ float rng()
 int main()
 {
     auto window = Window();
-    window.create("test", 400, 300);
+
+    float width = 1600;
+    window.create("test", width, 1200);
 
     auto px = 48;
 
-    float width = 250;
     auto text = Text(px, "Roboto");
-    text.create(window, {50, 50}, "|alsdylasi| |l| |dalis| |bai| |baqqsl| |sbzalis| |bdali| |dyqqlszbvalsizb| |al| |ba| |aa|.", width);
 
-    auto align_dot = RectangleShape({50, 50},{width, 9000});
+    auto str = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum";
+
+    text.create(window, {0, 0}, str, width / 2);
+    auto align_dot = RectangleShape({0, 0}, {width / 2, 9000});
     align_dot.set_color(RGBA(1, 0, 0, 1));
 
     while (not InputHandler::exit_requested())
