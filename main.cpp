@@ -33,7 +33,7 @@ int main()
     auto text = Text(px, "Roboto");
     auto str = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur...";
 
-    text.set_alignment(Text::FLUSH_RIGHT);
+    text.set_alignment(Text::CENTERED);
     text.create(window, {50, 25}, str, window.get_size().x - 2 * 50);
 
     Vector2f align_point = {200, 150};
@@ -42,7 +42,7 @@ int main()
 
     auto aabb = text.get_bounding_box();
     auto rect = RectangleShape(aabb.top_left, aabb.size);
-    rect.set_color(RGBA(1, 1, 1, 1));
+    rect.set_color(RGBA(0.1, 0.1, 0.1, 1));
 
     while (not InputHandler::exit_requested())
     {

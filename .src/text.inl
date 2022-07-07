@@ -637,8 +637,6 @@ namespace rat
             for (auto& glyph : _glyphs)
                 right_x = std::max(right_x, glyph._shape.get_top_left().x);
 
-            std::set<size_t> already;
-
             for (size_t i = 0; i < _glyphs.size(); ++i)
             {
                 auto line = std::vector<Glyph*>{&_glyphs.at(i)};
@@ -647,14 +645,10 @@ namespace rat
                 i += 1;
                 while (i < _glyphs.size() and _glyphs.at(i)._shape.get_top_left().y == line_y)
                 {
-                    if (already.find(i) == already.end())
-                        line.push_back(&_glyphs.at(i));
-
+                    line.push_back(&_glyphs.at(i));
                     i += 1;
                 }
-
-                if (i != 0)
-                    i -= 1;
+                i -= 1;
 
                 auto& last_glyph = line.back();
                 float offset = right_x - (last_glyph->_shape.get_top_left().x + last_glyph->_shape.get_size().x);
@@ -675,6 +669,12 @@ namespace rat
             }
 
             return;
+        }
+
+        if (_alignment_type == CENTERED)
+        {
+            auto aabb = get_bounding_box();
+
         }
     }
 
