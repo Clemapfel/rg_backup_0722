@@ -7,11 +7,17 @@
 
 #include <random>
 
-namespace rat
+namespace rat::rng
 {
     namespace detail
     {
+        static inline auto device = std::random_device();
         static inline auto engine = std::mt19937();
+    }
+
+    void seed()
+    {
+        detail::engine.seed(detail::device());
     }
 
     float rand()

@@ -43,7 +43,7 @@ int main()
     auto rect = RectangleShape(aabb.top_left, aabb.size);
     rect.set_color(RGBA(0.1, 0.1, 0.1, 1));
 
-    text.set_alignment(Text::CENTERED);
+    text.set_alignment(Text::JUSTIFIED);
 
     while (not InputHandler::exit_requested())
     {

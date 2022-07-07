@@ -91,6 +91,7 @@ namespace rat
         _indices = other._indices;
 
         initialize();
+        return *this;
     }
 
     Shape::Shape(Shape&& other)
@@ -130,6 +131,7 @@ namespace rat
         _indices = std::move(other._indices);
 
         initialize();
+        return *this;
     }
 
     Shape::Shape()

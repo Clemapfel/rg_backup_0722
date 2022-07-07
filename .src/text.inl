@@ -474,18 +474,6 @@ namespace rat
 
                 i += 1;
 
-                // apply wrapping
-                const auto line_height = TTF_FontAscent(_fonts.at(_font_id).regular);// + -1 * TTF_FontDescent(_fonts.at(_font_id).regular);
-
-                auto is_wrap_char = [](char in) -> bool
-                {
-                    for (auto c : {' ', ',', '.', ';', '\n', '\t'})
-                        if (c == in)
-                            return true;
-
-                    return false;
-                };
-
                 if (not _glyphs.empty())
                     position.x += _glyphs.back()._shape.get_size().x;
             }
@@ -631,6 +619,10 @@ namespace rat
         if (_alignment_type == FLUSH_LEFT)
             return;
 
+        int width = 0, height = 0;
+        TTF_SizeText(_fonts.at(_font_id).bold, " ", &width, &height);
+        const int width_of_space = width;
+
         if (_alignment_type == FLUSH_RIGHT)
         {
             float right_x = negative_infinity<float>;
@@ -654,11 +646,7 @@ namespace rat
                 float offset = right_x - (last_glyph->_shape.get_top_left().x + last_glyph->_shape.get_size().x);
 
                 if (last_glyph->_content.back() == ' ')
-                {
-                    int width = 0, height = 0;
-                    TTF_SizeText(_fonts.at(_font_id).bold, " ", &width, &height);
-                    offset += width;
-                }
+                    offset += width_of_space;
 
                 for (auto* glyph : line)
                     glyph->set_top_left(glyph->_shape.get_top_left() + Vector2f(offset, 0));
@@ -689,23 +677,104 @@ namespace rat
                 auto line_right = line.back()->_shape.get_top_left().x + line.back()->_shape.get_size().x;
 
                 if (line.back()->_content.back() == ' ')
-                {
-                    int width = 0, height = 0;
-                    TTF_SizeText(_fonts.at(_font_id).bold, " ", &width, &height);
-                    line_right -= width;
-                }
+                    line_right -= width_of_space;
 
                 auto line_center = line_left + (line_right - line_left) * 0.5;
                 auto offset = text_center - line_center;
 
-                float hue = rat::rand();
                 for (auto* glyph : line)
-                {
-                    glyph->_shape.set_color(HSVA(hue, 1, 1, 1));
                     glyph->set_top_left(glyph->_shape.get_top_left() + Vector2f(offset, 0));
-                }
             }
 
+            return;
+        }
+
+        if (_alignment_type == JUSTIFIED)
+        {
+            auto aabb = get_bounding_box();
+            auto text_left = aabb.top_left.x;
+            auto text_center = aabb.top_left.x + aabb.size.x * 0.5;
+            auto text_right = aabb.top_left.x + aabb.size.x;
+
+            for (size_t i = 0; i < _glyphs.size(); ++i)
+            {
+                auto line = std::vector<Glyph *>{&_glyphs.at(i)};
+                const float line_y = line.front()->_shape.get_top_left().y;
+
+                i += 1;
+                while (i < _glyphs.size() and _glyphs.at(i)._shape.get_top_left().y == line_y)
+                {
+                    line.push_back(&_glyphs.at(i));
+                    i += 1;
+                }
+                i -= 1;
+
+                std::deque<std::vector<Glyph*>> words;
+                std::deque<float> word_lengths;
+
+                words.emplace_back();
+                word_lengths.push_back(0);
+
+                rng::seed();
+                auto hue = HSVA(rng::rand(), rng::rand(), 1, 1);
+
+                for (size_t i = 0; i < line.size(); ++i)
+                {
+                    auto* glyph = line.at(i);
+
+                    words.back().push_back(glyph);
+                    word_lengths.back() += glyph->_shape.get_size().x;
+
+                    if (glyph->_content.back() == ' ')
+                    {
+                        word_lengths.back() -= width_of_space;
+
+                        if (i < line.size()-1)
+                        {
+                            word_lengths.push_back(0);
+                            words.emplace_back();
+                        }
+                    }
+
+                    glyph->_shape.set_color(hue); //TODO
+                }
+
+                // first word left already aligned left
+                // align last word right
+                Vector2f position = Vector2f(text_right - word_lengths.back(), words.back().front()->_shape.get_top_left().y);
+                for (auto* g : words.back())
+                {
+                    g->set_top_left(position);
+                    position.x += g->_shape.get_size().x;
+                }
+
+                // calculate spacing for other words
+                float free_space = aabb.size.x;
+                for (auto w : word_lengths)
+                    free_space -= w;
+
+                words.pop_front();
+                words.pop_back();
+
+                if (words.empty())
+                   continue;
+
+                float free_space_per_word = free_space / (words.size() + 1);
+                position.x = text_left + word_lengths.front() + free_space_per_word;
+
+                for (auto& word : words)
+                {
+                    for (auto* glyph : word)
+                    {
+                        glyph->set_top_left(position);
+                        position.x += glyph->_shape.get_size().x;
+                        if (glyph->_content.back() == ' ')
+                            position.x -= width_of_space;
+                    }
+
+                    position.x += free_space_per_word;
+                }
+            }
         }
     }
 
