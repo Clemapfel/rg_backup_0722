@@ -8,6 +8,7 @@
 #include <vector>
 #include <array>
 #include <random>
+#include <chrono>
 
 #include <SDL2/SDL_ttf.h>
 
@@ -29,9 +30,40 @@ int main()
     auto window = Window();
     window.create("test", 800, 600);
 
+    auto shape = RectangleShape({100, 100}, {400, 300});
+
+    auto transform = Transform();
+
+    while (not InputHandler::exit_requested())
+    {
+        InputHandler::update();
+        auto time = window.update();
+
+        if (InputHandler::was_pressed(ESCAPE))
+            break;
+
+        glClear(GL_COLOR_BUFFER_BIT);
+        glClearColor(0, 0, 0, 1);
+
+        if (InputHandler::was_pressed(RIGHT))
+            transform.rotate(degrees(1), {0, 0});
+
+        if (InputHandler::was_pressed(LEFT))
+            transform.rotate(degrees(-1), {0, 0});
+
+        shape.render(window, transform);
+
+        SDL_GL_SwapWindow(window.get_native());
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 20));
+    }
+
+    return 0;
+
+    /*
+
     auto px = 48;
     auto text = Text(px, "Roboto");
-    auto str = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur...";
+    auto str = "Lorem ipsum dolor sit amet, <col=(1, 0, 1)>consectetur</col> adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur...";
 
     text.create(window, {50, 25}, str, window.get_size().x - 2 * 50);
 
@@ -59,6 +91,15 @@ int main()
         rect.render(window);
         text.render(window);
         align_dot.render(window);
+
+        if (InputHandler::was_pressed(UP))
+            text.set_alignment(Text::CENTERED);
+        if (InputHandler::was_pressed(LEFT))
+            text.set_alignment(Text::FLUSH_LEFT);
+        if (InputHandler::was_pressed(RIGHT))
+            text.set_alignment(Text::FLUSH_RIGHT);
+        if (InputHandler::was_pressed(DOWN))
+            text.set_alignment(Text::JUSTIFIED);
 
         SDL_GL_SwapWindow(window.get_native());
         SDL_Delay(1000 / 15);

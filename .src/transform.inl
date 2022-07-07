@@ -4,12 +4,4 @@
 //
 
 
-namespace rat
-{
-    Transform::Transform()
-        : glm::tmat4x4<float>(0.f)
-    {
-        for (size_t i = 0; i < 4; ++i)
-            (*this)[i][i] = 1.f;
-    }
-}
+

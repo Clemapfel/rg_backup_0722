@@ -14,6 +14,7 @@
 #include <include/render_target.hpp>
 #include <include/shape.hpp>
 #include <include/texture.hpp>
+#include <include/transform.hpp>
 
 namespace rat
 {
@@ -167,11 +168,24 @@ namespace rat
         else
             program_id = shader->get_program_id();
 
+        auto positions = _positions;
+
+
+        for (size_t i = 2; i < positions.size(); i += 3)
+        {
+            auto point = Vector3f(positions.at(i-2), positions.at(i-1), positions.at(0));
+            point = transform.apply_to(point);
+
+            positions.at(i-2) = point.x;
+            positions.at(i-1) = point.y;
+            positions.at(i) = point.z;
+        }
+
         glUseProgram(program_id);
         glBindVertexArray(_vertex_array_id);
 
         glBindBuffer(GL_ARRAY_BUFFER, _position_buffer_id);
-        glBufferData(GL_ARRAY_BUFFER, _positions.size() * sizeof(float), _positions.data(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, positions.size() * sizeof(float), positions.data(), GL_STATIC_DRAW);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
         glEnableVertexAttribArray(0);
 

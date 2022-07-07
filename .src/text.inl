@@ -3,8 +3,6 @@
 // Created on 7/3/22 by clem (mail@clemens-cords.com)
 //
 
-#include <include/rng.hpp> //TODO
-
 namespace rat
 {
     Text::Text(size_t font_size, const std::string &font_id, const std::string &font_path)
@@ -43,16 +41,23 @@ namespace rat
             glyph._background_shape.render(target, transform, shader);
         }
 
-        for (auto& glyph : _glyphs)
+        for (size_t i = 0; i < _glyphs.size(); ++i)
         {
-            glyph._shape.render(target, transform, shader);
+            _glyphs.at(i)._shape.render(target, transform, shader);
         }
     }
 
     void Text::create(RenderTarget& target, Vector2f position, const std::string& formatted_text, size_t width_px, int line_spacer)
     {
+
+        _position = position;
         _width = width_px;
         _line_spacer = line_spacer;
+
+        _glyphs.clear();
+        _shake_indices.clear();
+        _wave_indices.clear();
+        _rainbow_indices.clear();
 
         const auto original_position = position;
         size_t font_height = TTF_FontAscent(_fonts.at(_font_id).bold) + -1 * TTF_FontDescent(_fonts.at(_font_id).bold);
@@ -472,6 +477,15 @@ namespace rat
                 to_push.push_back(formatted_text.at(i));
                 push_glyph(to_push, position);
 
+                if (shaking_active)
+                    _shake_indices.insert(i);
+
+                if (wave_active)
+                    _wave_indices.insert(i);
+
+                if (rainbow_active)
+                    _rainbow_indices.insert(i);
+
                 i += 1;
 
                 if (not _glyphs.empty())
@@ -539,7 +553,7 @@ namespace rat
         for (auto& g : _glyphs)
             g._shape.set_texture(&g._texture);
 
-        apply_wrapping(original_position);
+        apply_wrapping();
 
         for (auto& g : _glyphs)
         {
@@ -550,10 +564,12 @@ namespace rat
         }
     }
 
-    void Text::apply_wrapping(Vector2f original_position)
+    void Text::apply_wrapping()
     {
         if (_glyphs.empty())
             return;
+
+        const auto original_position = _position;
 
         auto is_delimiter_char = [](char in) -> bool
         {
@@ -715,9 +731,6 @@ namespace rat
                 words.emplace_back();
                 word_lengths.push_back(0);
 
-                rng::seed();
-                auto hue = HSVA(rng::rand(), rng::rand(), 1, 1);
-
                 for (size_t i = 0; i < line.size(); ++i)
                 {
                     auto* glyph = line.at(i);
@@ -735,8 +748,6 @@ namespace rat
                             words.emplace_back();
                         }
                     }
-
-                    glyph->_shape.set_color(hue); //TODO
                 }
 
                 // first word left already aligned left
@@ -785,7 +796,7 @@ namespace rat
             _alignment_type = type;
 
             if (not _glyphs.empty())
-                apply_wrapping(_glyphs.at(0)._shape.get_top_left());
+                apply_wrapping();
         }
     }
 
@@ -795,7 +806,7 @@ namespace rat
         {
             _line_spacer = may_be_negative;
             if (not _glyphs.empty())
-                apply_wrapping(_glyphs.at(0)._shape.get_top_left());
+                apply_wrapping();
         }
     }
 
@@ -805,12 +816,16 @@ namespace rat
         {
             _width = width;
             if (not _glyphs.empty())
-                apply_wrapping(_glyphs.at(0)._shape.get_top_left());
+                apply_wrapping();
         }
     }
 
     void Text::update(Time time)
-    {}
+    {
+        _wave_offset += time.as_milliseconds();
+        _shake_offset += time.as_milliseconds();
+        _rainbow_offset += time.as_milliseconds();
+    }
 
     Rectangle Text::get_bounding_box() const
     {
@@ -847,6 +862,7 @@ namespace rat
     void Text::set_top_left(Vector2f position)
     {
         auto offset = position - _glyphs.at(0)._shape.get_top_left();
+        _position += offset;
         for (auto& glyph : _glyphs)
         {
             auto current_pos = glyph._shape.get_top_left();
@@ -863,6 +879,7 @@ namespace rat
     {
         const auto aabb = get_bounding_box();
         auto offset = position - (aabb.top_left + aabb.size * Vector2f(0.5, 0.5));
+        _position += offset;
 
         for (auto& glyph : _glyphs)
         {
@@ -889,7 +906,7 @@ namespace rat
 
         auto offset = point - center;
         offset.x += aabb.size.x * 0.5;
-
+        _position += offset;
         for (auto &glyph: _glyphs)
         {
             auto current_pos = glyph._shape.get_top_left();
@@ -901,8 +918,8 @@ namespace rat
     {
         auto aabb = get_bounding_box();
         auto center = get_centroid();
-
         auto offset = point - center;
+        _position += offset;
 
         for (auto &glyph: _glyphs)
         {
@@ -915,9 +932,9 @@ namespace rat
     {
         auto aabb = get_bounding_box();
         auto center = get_centroid();
-
         auto offset = point - center;
         offset.x -= aabb.size.x * 0.5;
+        _position += offset;
 
         for (auto &glyph: _glyphs)
         {
@@ -925,4 +942,5 @@ namespace rat
             glyph.set_top_left(current_pos + offset);
         }
     }
+
 }

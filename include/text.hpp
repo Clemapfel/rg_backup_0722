@@ -32,7 +32,7 @@ namespace rat
                                       font_italic_suffix = "-Italic",
                                       font_bold_italic_suffix = "-BoldItalic";
 
-            // control sequence start/end
+            /// \brief control sequence start/end
             static inline std::string tag_prefix = "<",
                                       tag_suffix = ">",
                                       tag_close_marker = "/";
@@ -76,10 +76,6 @@ namespace rat
             /// \param width: maximum width per line, or -1 for no wrapping
             /// \param line_spacer: vertical distance between lines, can be negative
             void create(RenderTarget&, Vector2f position, const std::string& formatted_text, size_t width_px = -1, int line_spacer = 1);
-
-            /// \brief update the texts animations
-            /// \param time: time elapsed since last frame, usually return value of `rat::Window::update`
-            void update(Time);
 
             /// \brief align the center of the texts bounding box with point
             /// \param point
@@ -137,12 +133,24 @@ namespace rat
             /// \param width: in pixels
             void set_width(size_t);
 
+            /// \brief align the north west center of entire text with point
+            /// \param point
             void align_left_with(Vector2f);
+
+            /// \brief align the center of first line with point
+            /// \param point
             void align_center_with(Vector2f);
+
+            /// \brief align north east center of enire text with poin
+            /// \param point
             void align_right_with(Vector2f);
 
             /// \copydoc rat::Renderable::render
             void render(RenderTarget& target, Transform transform = Transform(), Shader* shader = nullptr) const override;
+
+            /// \brief update the texts animations
+            /// \param time: time elapsed since last frame, usually return value of `rat::Window::update`
+            void update(Time);
 
         private:
             struct Font
@@ -156,6 +164,7 @@ namespace rat
             static inline std::map<std::string, Font> _fonts;
             std::string _font_id;
             size_t _n_lines;
+            Vector2f _position; // top left
 
             struct Glyph
             {
@@ -193,8 +202,16 @@ namespace rat
             int _line_spacer = 1;
             size_t _width = -1;
 
-            void apply_wrapping(Vector2f top_left);
+            void apply_wrapping();
             std::deque<Glyph> _glyphs = {};
+
+            std::set<size_t> _shake_indices,
+                                _wave_indices,
+                                _rainbow_indices;
+
+            float _shake_offset = 0;
+            float _wave_offset = 0;
+            float _rainbow_offset = 0;
     };
 }
 

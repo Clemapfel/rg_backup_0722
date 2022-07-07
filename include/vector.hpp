@@ -20,4 +20,11 @@ namespace rat
     using Vector3f = glm::vec<3, float>;
     using Vector3ui = glm::vec<3, size_t>;
     using Vector3i = glm::vec<3, int64_t>;
+
+    template<typename T>
+    using Vector4 = glm::vec<4, T>;
+
+    using Vector4f = glm::vec<4, float>;
+    using Vector4ui = glm::vec<4, size_t>;
+    using Vector4i = glm::vec<4, int64_t>;
 }

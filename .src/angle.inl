@@ -11,7 +11,7 @@ namespace rat
 
     Angle degrees(float dg)
     {
-        return Angle(dg * (180.f / M_PI));
+        return Angle(dg * (M_PI / 180.f));
     }
 
     Angle radians(float rad)
@@ -26,7 +26,7 @@ namespace rat
 
     float Angle::as_radians() const
     {
-        return _rads * (M_PI / 180.f);
+        return _rads;
     }
 
     Angle Angle::operator+(const Angle& other)
