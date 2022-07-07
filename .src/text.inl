@@ -465,7 +465,7 @@ namespace rat
 
                 skip_control_tags:
 
-                if (i >= formatted_text.size() - 1)
+                if (i >= formatted_text.size())
                     break;
 
                 std::string to_push;
