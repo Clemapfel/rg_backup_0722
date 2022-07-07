@@ -660,12 +660,8 @@ namespace rat
                     offset += width;
                 }
 
-                float hue = rat::rand();
                 for (auto* glyph : line)
-                {
-                    glyph->_shape.set_color(HSVA(hue, 1, 1, 1));
                     glyph->set_top_left(glyph->_shape.get_top_left() + Vector2f(offset, 0));
-                }
             }
 
             return;
@@ -674,6 +670,41 @@ namespace rat
         if (_alignment_type == CENTERED)
         {
             auto aabb = get_bounding_box();
+            auto text_center = aabb.top_left.x + aabb.size.x * 0.5;
+
+            for (size_t i = 0; i < _glyphs.size(); ++i)
+            {
+                auto line = std::vector<Glyph *>{&_glyphs.at(i)};
+                const float line_y = line.front()->_shape.get_top_left().y;
+
+                i += 1;
+                while (i < _glyphs.size() and _glyphs.at(i)._shape.get_top_left().y == line_y)
+                {
+                    line.push_back(&_glyphs.at(i));
+                    i += 1;
+                }
+                i -= 1;
+
+                auto line_left = line.front()->_shape.get_top_left().x;
+                auto line_right = line.back()->_shape.get_top_left().x + line.back()->_shape.get_size().x;
+
+                if (line.back()->_content.back() == ' ')
+                {
+                    int width = 0, height = 0;
+                    TTF_SizeText(_fonts.at(_font_id).bold, " ", &width, &height);
+                    line_right -= width;
+                }
+
+                auto line_center = line_left + (line_right - line_left) * 0.5;
+                auto offset = text_center - line_center;
+
+                float hue = rat::rand();
+                for (auto* glyph : line)
+                {
+                    glyph->_shape.set_color(HSVA(hue, 1, 1, 1));
+                    glyph->set_top_left(glyph->_shape.get_top_left() + Vector2f(offset, 0));
+                }
+            }
 
         }
     }
