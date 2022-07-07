@@ -13,3 +13,4 @@
 #include <include/angle.hpp>
 #include <include/shape.hpp>
 #include <include/text.hpp>
+#include <include/rng.hpp>

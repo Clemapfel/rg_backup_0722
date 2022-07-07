@@ -61,12 +61,23 @@ namespace rat
 
     void Texture::bind()
     {
+        if (not valid())
+            return;
+
         SDL_GL_BindTexture(_native, nullptr, nullptr);
     }
 
     void Texture::unbind()
     {
+        if (not valid())
+            return;
+
         SDL_GL_UnbindTexture(_native);
+    }
+
+    bool Texture::valid() const
+    {
+        return _initialized and _renderer != nullptr and _native != nullptr;
     }
 
     Vector2ui Texture::get_size() const

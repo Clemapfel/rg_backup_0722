@@ -3,6 +3,8 @@
 // Created on 7/3/22 by clem (mail@clemens-cords.com)
 //
 
+#include <include/rng.hpp> //TODO
+
 namespace rat
 {
     Text::Text(size_t font_size, const std::string &font_id, const std::string &font_path)
@@ -38,16 +40,19 @@ namespace rat
     {
         for (auto& glyph : _glyphs)
         {
-            if (glyph._background_color.a != 0)
-                glyph._background_shape.render(target, transform, shader);
+            glyph._background_shape.render(target, transform, shader);
+        }
 
+        for (auto& glyph : _glyphs)
+        {
             glyph._shape.render(target, transform, shader);
         }
     }
 
-    void Text::create(RenderTarget& target, Vector2f position, const std::string formatted_text, size_t width_px, int line_spacer)
+    void Text::create(RenderTarget& target, Vector2f position, const std::string& formatted_text, size_t width_px, int line_spacer)
     {
-        static const bool blend = true;
+        _width = width_px;
+        _line_spacer = line_spacer;
 
         const auto original_position = position;
         size_t font_height = TTF_FontAscent(_fonts.at(_font_id).bold) + -1 * TTF_FontDescent(_fonts.at(_font_id).bold);
@@ -63,12 +68,29 @@ namespace rat
              color_background_active = false;
 
         RGBA foreground = RGBA(1, 1, 1, 1),
-             background = RGBA(0, 0, 0, 1);
+             background = RGBA(0, 0, 0, 0);
 
         const auto& font = _fonts.at(_font_id);
 
+        // exclude certain ascii chars
+        std::set<uint8_t> do_not_render = {
+            '\t',  // tab
+            '\n',  // newline
+            uint8_t(256 - 83) // soft hyphen acts weird on some OS
+        };
+
+        for (uint8_t i = 0; i <= 31; ++i) // deprecated control chars
+            do_not_render.insert(i);
+
+        for (uint8_t i = 127; i <= 160; ++i) // extended control chars
+            do_not_render.insert(i);
+
         auto push_glyph = [&](const std::string& raw, Vector2f position)
         {
+            for (auto& c : raw)
+                if (do_not_render.find(c) != do_not_render.end())
+                    return;
+
             _glyphs.emplace_back(target);
             auto& glyph = _glyphs.back();
             glyph._is_bold = bold_active;
@@ -129,14 +151,11 @@ namespace rat
             TTF_SetFontStyle(current_font, style);
             SDL_Surface* surface = nullptr;
 
-            if (blend)
-                surface = TTF_RenderText_Blended(current_font, raw.c_str(), as_sdl_color(RGBA(foreground.r, foreground.g, foreground.b, 1)));
-            else
-                surface = TTF_RenderText_Solid(current_font, raw.c_str(), as_sdl_color(RGBA(foreground.r, foreground.g, foreground.b, 1)));
-
-            if (surface == nullptr)
+            surface = TTF_RenderText_Blended(current_font, raw.data(), as_sdl_color(foreground));
+            if (surface == nullptr or surface->w == 0 or surface->h == 0)
             {
-                std::cerr << "[WARNING] In Text::create: Unable to render char `" << raw << "`" << std::endl;
+                std::cerr << "[WARNING] In Text::create: Unable to render char `" << raw << "` (" << int(raw.back()) << ")" << std::endl;
+                _glyphs.pop_back();
                 return;
             }
 
@@ -144,13 +163,9 @@ namespace rat
             position.y -= (font_height * 0.5);
 
             glyph._shape = RectangleShape(position, Vector2f(surface->w, surface->h));
-            glyph._shape.set_color(RGBA(1, 1, 1, 1));
-
-            if (color_background_active)
-            {
-                glyph._background_shape = RectangleShape(position, Vector2f(surface->w, surface->h));
-                glyph._background_shape.set_color(glyph._background_color);
-            }
+            glyph._shape.set_color(glyph._foreground_color);
+            glyph._background_shape = RectangleShape(position, Vector2f(surface->w, surface->h));
+            glyph._background_shape.set_color(glyph._background_color);
 
             // reset
             SDL_FreeSurface(surface);
@@ -265,6 +280,13 @@ namespace rat
 
                         underlined_active = true;
                         i += underlined_tag.size();
+                    }
+                    else if (substr_is(i, strikethrough_tag) and substr_is(i + strikethrough_tag.size(), tag_suffix))
+                    {
+                        assert_not_open(strikethrough_active);
+
+                        strikethrough_active = true;
+                        i += strikethrough_tag.size();
                     }
                     else if (substr_is(i, shaking_tag) and substr_is(i + shaking_tag.size(), tag_suffix))
                     {
@@ -381,6 +403,13 @@ namespace rat
                         underlined_active = false;
                         i += underlined_tag.size();
                     }
+                    else if (substr_is(i, strikethrough_tag) and substr_is(i + strikethrough_tag.size(), tag_suffix))
+                    {
+                        assert_open(strikethrough_active);
+
+                        strikethrough_active = false;
+                        i += underlined_tag.size();
+                    }
                     else if (substr_is(i, shaking_tag) and substr_is(i + shaking_tag.size(), tag_suffix))
                     {
                         assert_open(shaking_active);
@@ -457,7 +486,8 @@ namespace rat
                     return false;
                 };
 
-                position.x += _glyphs.back()._shape.get_size().x;
+                if (not _glyphs.empty())
+                    position.x += _glyphs.back()._shape.get_size().x;
             }
         }
         catch (std::invalid_argument& exc)
@@ -521,7 +551,24 @@ namespace rat
         for (auto& g : _glyphs)
             g._shape.set_texture(&g._texture);
 
-        auto is_delimiter_char = [](char in) -> bool {
+        apply_wrapping(original_position);
+
+        for (auto& g : _glyphs)
+        {
+            g._background_shape = g._shape;
+            g._background_shape.set_texture(nullptr);
+            g._background_shape.set_color(g._background_color);
+            g._background_shape.set_color(g._background_color);
+        }
+    }
+
+    void Text::apply_wrapping(Vector2f original_position)
+    {
+        if (_glyphs.empty())
+            return;
+
+        auto is_delimiter_char = [](char in) -> bool
+        {
             for (auto c : {' ', ',', '.', ';', '\t', '\n'})
                 if (in == c)
                     return true;
@@ -529,11 +576,12 @@ namespace rat
             return false;
         };
 
-        // apply wrapping
-        const auto line_height = TTF_FontAscent(_fonts.at(_font_id).bold) + line_spacer;
+        const auto line_height = TTF_FontAscent(_fonts.at(_font_id).bold) + _line_spacer;
 
-        position = original_position;
+        auto position = original_position;
+
         float current_line_width = 0;
+        _n_lines = 1; // sic
         for (size_t i = 0; i < _glyphs.size(); ++i)
         {
             std::vector<Glyph*> word;
@@ -541,36 +589,240 @@ namespace rat
             while ((i < _glyphs.size()))
             {
                 word.push_back(&_glyphs.at(i));
-                word_width += _glyphs.at(i)._shape.get_size().x;
+
+                auto glyph_width = _glyphs.at(i)._shape.get_size().x;
+                word_width += glyph_width;
 
                 if (is_delimiter_char(_glyphs.at(i)._content.back()))
                 {
                     word_width -= word.back()->_shape.get_size().x;
                     break;
                 }
-
                 i += 1;
             }
 
-            if (current_line_width + word_width > width_px)
+            // put word on next line if it doesn't fit
+            if ((current_line_width + word_width > _width))
             {
                 position.y += line_height;
+                _n_lines += 1;
                 position.x = original_position.x;
                 current_line_width = 0;
             }
 
             for (auto* glyph : word)
             {
-                glyph->_shape.set_top_left(position);
+                glyph->set_top_left(position);
                 const auto glyph_width = glyph->_shape.get_size().x;
                 current_line_width += glyph_width;
                 position.x += glyph_width;
             }
+
+            // hard wrap next line
+            if (word.back()->_content.back() == '\n')
+            {
+                position.y += line_height;
+                _n_lines += 1;
+                position.x = original_position.x;
+                current_line_width = 0;
+            }
+        }
+
+        if (_alignment_type == FLUSH_LEFT)
+            return;
+
+        if (_alignment_type == FLUSH_RIGHT)
+        {
+            float right_x = negative_infinity<float>;
+            for (auto& glyph : _glyphs)
+                right_x = std::max(right_x, glyph._shape.get_top_left().x);
+
+            std::set<size_t> already;
+
+            for (size_t i = 0; i < _glyphs.size(); ++i)
+            {
+                auto line = std::vector<Glyph*>{&_glyphs.at(i)};
+                const float line_y = line.front()->_shape.get_top_left().y;
+
+                i += 1;
+                while (i < _glyphs.size() and _glyphs.at(i)._shape.get_top_left().y == line_y)
+                {
+                    if (already.find(i) == already.end())
+                        line.push_back(&_glyphs.at(i));
+
+                    i += 1;
+                }
+
+                if (i != 0)
+                    i -= 1;
+
+                auto& last_glyph = line.back();
+                float offset = right_x - (last_glyph->_shape.get_top_left().x + last_glyph->_shape.get_size().x);
+
+                if (last_glyph->_content.back() == ' ')
+                {
+                    int width = 0, height = 0;
+                    TTF_SizeText(_fonts.at(_font_id).bold, " ", &width, &height);
+                    offset += width;
+                }
+
+                float hue = rat::rand();
+                for (auto* glyph : line)
+                {
+                    glyph->_shape.set_color(HSVA(hue, 1, 1, 1));
+                    glyph->set_top_left(glyph->_shape.get_top_left() + Vector2f(offset, 0));
+                }
+            }
+
+            return;
+        }
+    }
+
+    void Text::set_alignment(AlignmentType type)
+    {
+        if (_alignment_type != type)
+        {
+            _alignment_type = type;
+
+            if (not _glyphs.empty())
+                apply_wrapping(_glyphs.at(0)._shape.get_top_left());
+        }
+    }
+
+    void Text::set_line_spacing(int may_be_negative)
+    {
+        if (_line_spacer != may_be_negative)
+        {
+            _line_spacer = may_be_negative;
+            if (not _glyphs.empty())
+                apply_wrapping(_glyphs.at(0)._shape.get_top_left());
+        }
+    }
+
+    void Text::set_width(size_t width)
+    {
+        if (_width != width)
+        {
+            _width = width;
+            if (not _glyphs.empty())
+                apply_wrapping(_glyphs.at(0)._shape.get_top_left());
         }
     }
 
     void Text::update(Time time)
+    {}
+
+    Rectangle Text::get_bounding_box() const
     {
-        // todo: rainbow text is always white, change vertex color to color it
+        auto out = Rectangle();
+        auto first_glyph = _glyphs.at(0)._shape;
+
+        // x bounds
+        float max_x = negative_infinity<float>;
+        float min_x = infinity<float>;
+        float max_y = negative_infinity<float>;
+        float min_y = infinity<float>;
+
+        for (auto& glyph : _glyphs)
+        {
+            max_x = std::max(max_x, glyph._shape.get_top_left().x + glyph._shape.get_size().x);
+            min_x = std::min(min_x, glyph._shape.get_top_left().x);
+            max_y = std::max(max_y, glyph._shape.get_top_left().y + glyph._shape.get_size().y);
+            min_y = std::min(min_y, glyph._shape.get_top_left().y);
+        }
+
+        out.size.x = max_x - min_x;
+        out.size.y = max_y - min_y;
+        out.top_left.x = min_x;
+        out.top_left.y = min_y;
+
+        return out;
+    }
+
+    Vector2f Text::get_size() const
+    {
+        return get_bounding_box().size;
+    }
+
+    void Text::set_top_left(Vector2f position)
+    {
+        auto offset = position - _glyphs.at(0)._shape.get_top_left();
+        for (auto& glyph : _glyphs)
+        {
+            auto current_pos = glyph._shape.get_top_left();
+            glyph.set_top_left(current_pos + offset);
+        }
+    }
+
+    Vector2f Text::get_top_left() const
+    {
+        return _glyphs.at(0)._shape.get_top_left();
+    }
+
+    void Text::set_centroid(Vector2f position)
+    {
+        const auto aabb = get_bounding_box();
+        auto offset = position - (aabb.top_left + aabb.size * Vector2f(0.5, 0.5));
+
+        for (auto& glyph : _glyphs)
+        {
+            auto current_pos = glyph._shape.get_top_left();
+            glyph.set_top_left(current_pos + offset);
+        }
+    }
+
+    Vector2f Text::get_centroid() const
+    {
+        const auto aabb = get_bounding_box();
+        return aabb.top_left + aabb.size * Vector2f(0.5, 0.5);
+    }
+
+    size_t Text::get_n_lines() const
+    {
+        return _n_lines;
+    }
+
+    void Text::align_left_with(Vector2f point)
+    {
+        auto aabb = get_bounding_box();
+        auto center = get_centroid();
+
+        auto offset = point - center;
+        offset.x += aabb.size.x * 0.5;
+
+        for (auto &glyph: _glyphs)
+        {
+            auto current_pos = glyph._shape.get_top_left();
+            glyph.set_top_left(current_pos + offset);
+        }
+    }
+
+    void Text::align_center_with(Vector2f point)
+    {
+        auto aabb = get_bounding_box();
+        auto center = get_centroid();
+
+        auto offset = point - center;
+
+        for (auto &glyph: _glyphs)
+        {
+            auto current_pos = glyph._shape.get_top_left();
+            glyph.set_top_left(current_pos + offset);
+        }
+    }
+
+    void Text::align_right_with(Vector2f point)
+    {
+        auto aabb = get_bounding_box();
+        auto center = get_centroid();
+
+        auto offset = point - center;
+        offset.x -= aabb.size.x * 0.5;
+
+        for (auto &glyph: _glyphs)
+        {
+            auto current_pos = glyph._shape.get_top_left();
+            glyph.set_top_left(current_pos + offset);
+        }
     }
 }

@@ -56,6 +56,8 @@ namespace rat
             void bind();
             void unbind();
 
+            bool valid() const;
+
         private:
             bool _initialized = false;
             SDL_Renderer* _renderer;

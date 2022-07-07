@@ -186,7 +186,7 @@ namespace rat
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _element_buffer_id);
 
         if (_texture != nullptr)
-            SDL_GL_BindTexture(_texture->get_native(), nullptr, nullptr);
+            _texture->bind();
 
         glUniform1i(glGetUniformLocation(program_id, "_texture"), 0);
         glUniform1i(glGetUniformLocation(program_id, "_texture_set"), _texture != nullptr);
@@ -198,7 +198,7 @@ namespace rat
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
         if (_texture != nullptr)
-            SDL_GL_UnbindTexture(_texture->get_native());
+            _texture->unbind();
     }
 
     void Shape::update_positions()

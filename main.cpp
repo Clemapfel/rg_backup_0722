@@ -27,19 +27,22 @@ float rng()
 int main()
 {
     auto window = Window();
-
-    float width = 1600;
-    window.create("test", width, 1200);
+    window.create("test", 800, 600);
 
     auto px = 48;
-
     auto text = Text(px, "Roboto");
+    auto str = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur...";
 
-    auto str = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum";
+    text.set_alignment(Text::FLUSH_RIGHT);
+    text.create(window, {50, 25}, str, window.get_size().x - 2 * 50);
 
-    text.create(window, {0, 0}, str, width / 2);
-    auto align_dot = RectangleShape({0, 0}, {width / 2, 9000});
+    Vector2f align_point = {200, 150};
+    auto align_dot = CircleShape(align_point + Vector2f(0.5, 0.5), 3, 4);//RectangleShape(aabb.top_left, aabb.size);
     align_dot.set_color(RGBA(1, 0, 0, 1));
+
+    auto aabb = text.get_bounding_box();
+    auto rect = RectangleShape(aabb.top_left, aabb.size);
+    rect.set_color(RGBA(1, 1, 1, 1));
 
     while (not InputHandler::exit_requested())
     {
@@ -52,8 +55,9 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
         glClearColor(0, 0, 0, 1);
 
-        align_dot.render(window);
+        rect.render(window);
         text.render(window);
+        align_dot.render(window);
 
         SDL_GL_SwapWindow(window.get_native());
         SDL_Delay(1000 / 15);

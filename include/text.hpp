@@ -10,6 +10,7 @@
 #include <map>
 #include <string>
 #include <memory>
+#include <deque>
 
 #include <include/colors.hpp>
 #include <include/shape.hpp>
@@ -74,19 +75,71 @@ namespace rat
             /// \param formatted_text: text containing the format tags, will be parsed
             /// \param width: maximum width per line, or -1 for no wrapping
             /// \param line_spacer: vertical distance between lines, can be negative
-            void create(RenderTarget&, Vector2f position, const std::string formatted_text, size_t width_px = -1, int line_spacer = 1);
+            void create(RenderTarget&, Vector2f position, const std::string& formatted_text, size_t width_px = -1, int line_spacer = 1);
 
             /// \brief update the texts animations
             /// \param time: time elapsed since last frame, usually return value of `rat::Window::update`
             void update(Time);
 
-            /// \brief align the west center of the first line of the text with a point
-            /// \param point
-            void set_position(Vector2f);
-
-            /// \brief align centroid, uses entire bounds of text
+            /// \brief align the center of the texts bounding box with point
             /// \param point
             void set_centroid(Vector2f);
+
+            /// \brief align top left of the first glyphs bounding box with point
+            /// \param point
+            void set_top_left(Vector2f);
+
+            /// \brief get centroid of text bounding box
+            /// \returns centroid
+            Vector2f get_centroid() const;
+
+            /// \brief get top left of bounding box
+            /// \returns position
+            Vector2f get_top_left() const;
+
+            /// \brief get bounding box
+            /// \returns bounding box
+            Rectangle get_bounding_box() const;
+
+            /// \brief get dimensions of bounding box
+            /// \returns bounding box
+            Vector2f get_size() const;
+
+            /// \brief get number of lines, depends on wrapping
+            /// \returns size_t
+            size_t get_n_lines() const;
+
+            /// \brief text alignment type
+            enum AlignmentType
+            {
+                /// \brief aligned with left margin
+                FLUSH_LEFT,
+
+                /// \brief aligned with right margin
+                FLUSH_RIGHT,
+
+                /// \brief aligned such that there is an even gap on both margins
+                CENTERED,
+
+                /// \brief aligned such that there is no gap on both margins
+                JUSTIFIED
+            };
+
+            /// \brief set text alignment
+            /// \param type
+            void set_alignment(AlignmentType);
+
+            /// \brief set line spacing
+            /// \param may_be_negative: spacing, in pixels. Negative values are allowed.
+            void set_line_spacing(int may_be_negative);
+
+            /// \brief set maximum width, or -1 for inifinite width
+            /// \param width: in pixels
+            void set_width(size_t);
+
+            void align_left_with(Vector2f);
+            void align_center_with(Vector2f);
+            void align_right_with(Vector2f);
 
             /// \copydoc rat::Renderable::render
             void render(RenderTarget& target, Transform transform = Transform(), Shader* shader = nullptr) const override;
@@ -102,12 +155,21 @@ namespace rat
 
             static inline std::map<std::string, Font> _fonts;
             std::string _font_id;
+            size_t _n_lines;
 
             struct Glyph
             {
                 Glyph(RenderTarget& target)
                     : _texture(target)
                 {}
+
+                void set_top_left(Vector2f pos)
+                {
+                    pos.x = round(pos.x);
+                    pos.y = round(pos.y);
+                    _shape.set_top_left(pos);
+                    _background_shape.set_top_left(pos);
+                }
 
                 bool _is_bold = false,
                      _is_italic = false,
@@ -127,9 +189,12 @@ namespace rat
                 Shape _background_shape;
             };
 
-            static void set_glyph_position(Glyph&, Vector2f); // north-west
+            AlignmentType _alignment_type = FLUSH_LEFT;
+            int _line_spacer = 1;
+            size_t _width = -1;
 
-            std::vector<Glyph> _glyphs = {};
+            void apply_wrapping(Vector2f top_left);
+            std::deque<Glyph> _glyphs = {};
     };
 }
 
