@@ -14,3 +14,4 @@
 #include <include/shape.hpp>
 #include <include/text.hpp>
 #include <include/rng.hpp>
+#include <include/camera.hpp>

@@ -174,14 +174,19 @@ namespace rat
         return _window;
     }
 
-    SDL_Renderer *Window::get_renderer()
+    SDL_Renderer* Window::get_renderer()
     {
         return _renderer;
     }
 
-    SDL_GLContext *Window::get_context()
+    SDL_GLContext* Window::get_context()
     {
         return &_gl_context;
+    }
+
+    Transform Window::get_global_transform() const
+    {
+        return _global_transform;
     }
 
     void Window::close()

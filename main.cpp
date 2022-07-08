@@ -30,10 +30,17 @@ int main()
     auto window = Window();
     window.create("test", 800, 600);
 
+    auto camera = Camera(&window);
+
     auto shape = RectangleShape({100, 100}, {400, 300});
+    shape.set_centroid(Vector2f(window.get_size().x * 0.5, window.get_size().y * 0.5));
+
+    auto target = CircleShape({80, 80}, 5, 4);
+    target.set_color(RGBA(1, 0, 0, 1));
 
     auto transform = Transform();
 
+    float scale = 1;
     while (not InputHandler::exit_requested())
     {
         InputHandler::update();
@@ -45,13 +52,43 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
         glClearColor(0, 0, 0, 1);
 
-        if (InputHandler::was_pressed(RIGHT))
-            transform.rotate(degrees(1), {0, 0});
+        if (InputHandler::is_down(KeyboardKey::UP))
+        {
+            camera.move(0, -10);
+        }
 
-        if (InputHandler::was_pressed(LEFT))
-            transform.rotate(degrees(-1), {0, 0});
+        if (InputHandler::is_down(KeyboardKey::DOWN))
+        {
+            camera.move(0, +10);
+        }
 
-        shape.render(window, transform);
+        if (InputHandler::is_down(KeyboardKey::LEFT))
+        {
+            camera.move(-10, 0);
+        }
+
+        if (InputHandler::is_down(KeyboardKey::RIGHT))
+        {
+            camera.move(+10, 0);
+        }
+
+        if (InputHandler::is_down(KeyboardKey::X))
+        {
+            camera.rotate(degrees(10));
+        }
+
+        if (InputHandler::is_down(KeyboardKey::Y))
+        {
+            camera.rotate(degrees(-10));
+        }
+
+        if (InputHandler::was_pressed(KeyboardKey::SPACE))
+        {
+            camera.center_on(target.get_centroid());
+        }
+
+        const float offset = 10;
+        target.render(window);
 
         SDL_GL_SwapWindow(window.get_native());
         std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 20));

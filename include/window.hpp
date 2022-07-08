@@ -76,7 +76,9 @@ namespace rat
             SDL_Renderer* get_renderer() override;
             SDL_GLContext* get_context();
 
-        private:
+            Transform get_global_transform() const override;
+
+        //private:
             static inline bool _sdl_initialized = false;
 
             SDL_Window* _window = nullptr;

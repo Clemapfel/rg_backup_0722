@@ -17,16 +17,15 @@ namespace rat
         public:
             Transform();
 
-            Vector2f apply_to(Vector2f);
-            Vector3f apply_to(Vector3f);
+            Vector2f apply_to(Vector2f gl_coords);
+            Vector3f apply_to(Vector3f gl_coords);
 
             Transform combine_with(Transform);
 
-            void rotate(Angle, Vector2f);
+            void rotate(Angle, Vector2f gl_coords);
             void set_rotation(Angle);
-            void translate(Vector2f);
-            void set_translation(Vector2f);
-            void scale(float x, float y, Vector2f origin);
+            void translate(Vector2f gl_offset);
+            void scale(float x, float y);
 
         private:
             glm::mat4x4 _transform;
@@ -62,20 +61,18 @@ namespace rat
 
     void Transform::translate(Vector2f vec)
     {
-        _transform = glm::translate(_transform, Vector3f(0, 0, 0));
+        _transform = glm::translate(_transform, Vector3f(vec.x, vec.y, 0));
     }
 
     void Transform::rotate(Angle angle, Vector2f origin)
     {
-        _transform = glm::translate(_transform, Vector3f(origin.x, origin.y, 0));
-        _transform = glm::rotate(_transform, angle.as_radians(), glm::vec3(0, 0, 1));
         _transform = glm::translate(_transform, Vector3f(-origin.x, -origin.y, 0));
+        _transform = glm::rotate(_transform, angle.as_radians(), glm::vec3(0, 0, 1));
+        _transform = glm::translate(_transform, Vector3f(origin.x, origin.y, 0));
     }
 
-    void Transform::scale(float x, float y, Vector2f origin)
+    void Transform::scale(float x, float y)
     {
-        _transform = glm::translate(_transform, Vector3f(origin.x, origin.y, 0));
         _transform = glm::scale(_transform, Vector3f(x, y, 1));
-        _transform = glm::translate(_transform, Vector3f(-origin.x, -origin.y, 0));
     }
 }

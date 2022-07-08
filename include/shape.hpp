@@ -102,13 +102,6 @@ namespace rat
 
         private:
             void initialize();
-
-            static Vector2f sdl_to_gl_screen_position(Vector2f);
-            static Vector2f gl_to_sdl_screen_position(Vector2f);
-
-            static Vector2f sdl_to_gl_texture_coordinates(Vector2f);
-            static Vector2f gl_to_sdl_texture_coordinates(Vector2f);
-
             void align_texture_rectangle_with_bounding_box(); // align texture top left with aabb top left
 
             std::vector<Vector2f> sort_by_angle(const std::vector<Vector2f>&);

@@ -18,43 +18,6 @@
 
 namespace rat
 {
-    Vector2f Shape::sdl_to_gl_screen_position(Vector2f in)
-    {
-        auto size = detail::get_viewport_size();
-        Vector2f centroid = Vector2f(size.x / 2, size.y / 2);
-
-        auto out = centroid - in;
-        out.x = 1 - out.x;
-        out.x /= size.x / 2;
-        out.y /= size.y / 2;
-        return out;
-    }
-
-    Vector2f Shape::gl_to_sdl_screen_position(Vector2f in)
-    {
-        auto size = detail::get_viewport_size();
-        Vector2f centroid = Vector2f(size.x / 2, size.y / 2);
-
-        auto out = in;
-        out.x *= size.x / 2;
-        out.y *= size.y / 2;
-        out.x = 1 - out.x;
-        out = centroid - out;
-        return out;
-    }
-
-    Vector2f Shape::sdl_to_gl_texture_coordinates(Vector2f in)
-    {
-        in.x = 1 - in.x; // sdl texture are x-flipped
-        return in;
-    }
-
-    Vector2f Shape::gl_to_sdl_texture_coordinates(Vector2f in)
-    {
-        in.x = 1 - in.x;
-        return in;
-    }
-
     Shape::Shape(const Shape& other)
     {
         glGenVertexArrays(1, &_vertex_array_id);
@@ -162,6 +125,7 @@ namespace rat
     void Shape::render(RenderTarget& target, Transform transform, Shader* shader) const
     {
         GLNativeHandle program_id;
+        transform = transform.combine_with(target.get_global_transform());
 
         if (shader == nullptr)
             program_id = _noop_shader->get_program_id();
@@ -169,7 +133,6 @@ namespace rat
             program_id = shader->get_program_id();
 
         auto positions = _positions;
-
 
         for (size_t i = 2; i < positions.size(); i += 3)
         {
@@ -302,7 +265,7 @@ namespace rat
 
     Vector2f Shape::get_centroid() const
     {
-        Vector3f sum;
+        Vector3f sum = Vector3f(0);
         for (auto& v : _vertices)
             sum += v.position;
 
