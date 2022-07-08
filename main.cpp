@@ -32,13 +32,36 @@ int main()
 
     auto camera = Camera(&window);
 
-    auto shape = RectangleShape({100, 100}, {400, 300});
-    shape.set_centroid(Vector2f(window.get_size().x * 0.5, window.get_size().y * 0.5));
 
-    auto target = CircleShape({80, 80}, 5, 4);
-    target.set_color(RGBA(1, 0, 0, 1));
 
-    auto transform = Transform();
+    std::vector<Shape> shapes;
+
+    shapes.push_back(CircleShape({80, 80}, 5, 4));
+    shapes.back().set_color(RGBA(1, 0, 0, 1));
+
+    shapes.push_back(FrameShape({100, 100}, {400, 300}, 50));
+    shapes.back().set_centroid(Vector2f(window.get_size().x * 0.5, window.get_size().y * 0.5));
+
+    shapes.push_back(CircleShape(Vector2f(window.get_size().x * 0.5, window.get_size().y * 0.5), 10, 16));
+    shapes.back().set_color(RGBA(0, 1, 0, 1));
+
+    auto transform = Transform()._transform;
+
+    glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  2.0f);
+    glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+    glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
+
+    transform = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+
+    for (size_t i = 0; i < 3; ++i)
+    {
+        for (size_t j = 0; j < 3; ++j)
+            std::cout << transform[i][j] << " ";
+
+        std::cout << std::endl;
+    }
+
+    return 0;
 
     float scale = 1;
     while (not InputHandler::exit_requested())
@@ -82,13 +105,25 @@ int main()
             camera.rotate(degrees(-10));
         }
 
+        static float zoom = 3;
+        if (InputHandler::was_pressed(KeyboardKey::PLUS))
+        {
+            camera.set_zoom(zoom);
+        }
+
+        if (InputHandler::was_pressed(KeyboardKey::MINUS))
+        {
+            camera.set_zoom(1);
+        }
+
         if (InputHandler::was_pressed(KeyboardKey::SPACE))
         {
-            camera.center_on(target.get_centroid());
+            camera.center_on(shapes.front().get_centroid());
         }
 
         const float offset = 10;
-        target.render(window);
+        for (auto& shape : shapes)
+            shape.render(window);
 
         SDL_GL_SwapWindow(window.get_native());
         std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 20));

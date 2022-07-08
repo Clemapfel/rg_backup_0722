@@ -27,7 +27,6 @@ namespace rat
             void translate(Vector2f gl_offset);
             void scale(float x, float y);
 
-        private:
             glm::mat4x4 _transform;
     };
 }

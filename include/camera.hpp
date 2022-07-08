@@ -25,6 +25,7 @@ namespace rat
         private:
             float _zoom = 1;
             Angle _angle = degrees(0);
+            Vector2f _translation_offset = Vector2f(0, 0);
 
             Window* _window;
     };
@@ -40,21 +41,44 @@ namespace rat
 
     void Camera::move(float x, float y)
     {
-        _window->_global_transform.rotate(degrees(-1 * _angle.as_degrees()), sdl_to_gl_screen_position(get_center()));
-        _window->_global_transform.translate(sdl_to_gl_distance(Vector2f(x, y)));
-        _window->_global_transform.rotate(degrees(+1 * _angle.as_degrees()), sdl_to_gl_screen_position(get_center()));
+        static glm::vec3 position = glm::vec3(0.0f, 0.0f,  1.0f);
+        static glm::vec3 direction = glm::vec3(0.0f, 0.0f, -1.0f);
+        static glm::vec3 up_normal = glm::vec3(0.0f, 1.0f,  0.0f);
+
+        //_window->_global_transform.translate(Vector2f(x, y));
+        //_translation_offset += Vector2f(x, y);
     }
 
     void Camera::center_on(Vector2f position)
     {
         auto size = get_viewport_size();
-        _window->_global_transform.translate(sdl_to_gl_distance(Vector2f(-1 * position.x + 0.5 * size.x, -1 * position.y + 0.5 * size.y)));
+        auto screen_pos = apply_to(position);
+        auto offset = Vector2f(-1 * screen_pos.x + 0.5 * size.x, -1 * screen_pos.y + 0.5 * size.y);
+        _window->_global_transform.translate(offset);
+        _translation_offset += offset;
     }
 
     void Camera::set_zoom(float zoom)
     {
-        _window->_global_transform.scale(1 / _zoom, 1 / _zoom);
-        _window->_global_transform.scale(zoom, zoom);
+        auto size = get_viewport_size();
+        _window->_global_transform._transform = glm::lookAt(
+                glm::vec3(0.5 * size.x, 0.5 * size.y, 0),
+                glm::vec3(0.5 * size.x, 0.5 * size.y, 0),
+                glm::vec3(0, 0, 1));
+        //auto size = get_viewport_size();
+
+        //auto& transform = _window->_global_transform._transform;
+
+        // reset to origin
+        //_window->_global_transform.translate(Vector2f(-1, -1) * _translation_offset);
+        //_window->_global_transform.translate(Vector2f(-0.5, -0.5) * size);
+
+        //_window->_global_transform.scale(1 / _zoom, 1 / _zoom);
+        //_window->_global_transform.scale(zoom, zoom);
+
+        //_window->_global_transform.translate(Vector2f(+0.5, +0.5) * size);
+        //_window->_global_transform.translate(_translation_offset);
+
         _zoom = zoom;
     }
 
@@ -62,22 +86,18 @@ namespace rat
     {
         auto size = get_viewport_size();
         Vector2f center = Vector2f(size.x * 0.5, size.y * 0.5);
-        auto center_gl = sdl_to_gl_screen_position(center);
-        center_gl = _window->_global_transform.apply_to(center_gl);
-        return gl_to_sdl_screen_position(center_gl);
+        center = _window->_global_transform.apply_to(center);
+        return center;
     }
 
     void Camera::rotate(Angle angle)
     {
-        _window->_global_transform.rotate(angle, sdl_to_gl_screen_position(get_center()));
+        _window->_global_transform.rotate(angle, get_center());
         _angle += angle;
     }
 
-    Vector2f Camera::apply_to(Vector2f sdl_point)
+    Vector2f Camera::apply_to(Vector2f point)
     {
-        auto gl_point = sdl_to_gl_screen_position(sdl_point);
-        gl_point = _window->_global_transform.apply_to(gl_point);
-        return gl_to_sdl_screen_position(gl_point);
+        return _window->_global_transform.apply_to(point);
     }
-
 }

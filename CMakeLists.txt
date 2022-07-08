@@ -11,6 +11,7 @@ find_library(SDL2_mixer REQUIRED NAMES SDL2_mixer)
 find_library(SDL2_ttf REQUIRED NAMES SDL2_ttf)
 find_library(OpenGL REQUIRED NAMES GL)
 find_library(GLEW REQUIRED NAMES GLEW)
+find_library(GLU REQUIRED NAMES GLU)
 
 include(CheckIncludeFileCXX)
 CHECK_INCLUDE_FILE_CXX("glm/glm.hpp" GLM_FOUND)
@@ -42,6 +43,7 @@ target_link_libraries(mousetrap PUBLIC
     ${SDL2_ttf}
     ${OpenGL}
     ${GLEW}
+    ${GLU}
 )
 
 ### Tests

@@ -136,12 +136,14 @@ namespace rat
 
         for (size_t i = 2; i < positions.size(); i += 3)
         {
-            auto point = Vector3f(positions.at(i-2), positions.at(i-1), positions.at(0));
-            point = transform.apply_to(point);
+            auto gl_point = Vector3f(positions.at(i-2), positions.at(i-1), positions.at(0));
+            auto sdl_point = gl_to_sdl_screen_position(gl_point);
+            sdl_point = transform.apply_to(sdl_point);
+            gl_point = sdl_to_gl_screen_position(sdl_point);
 
-            positions.at(i-2) = point.x;
-            positions.at(i-1) = point.y;
-            positions.at(i) = point.z;
+            positions.at(i-2) = gl_point.x;
+            positions.at(i-1) = gl_point.y;
+            positions.at(i) = gl_point.z;
         }
 
         glUseProgram(program_id);
