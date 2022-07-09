@@ -3,6 +3,8 @@
 // Created on 7/3/22 by clem (mail@clemens-cords.com)
 //
 
+#include <include/rng.hpp>
+
 namespace rat
 {
     Text::Text(size_t font_size, const std::string &font_id, const std::string &font_path)
@@ -10,6 +12,8 @@ namespace rat
     {
         if (not TTF_WasInit())
             TTF_Init();
+
+        _font_size = font_size;
 
         if (_fonts.find(font_id) == _fonts.end())
         {
@@ -41,19 +45,31 @@ namespace rat
             glyph._background_shape.render(target, transform, shader);
         }
 
+        static auto wave_f = [&](float x){
+            x *= _wave_speed_factor;
+            return sin(x * M_PI / 100);
+        };
+
         for (size_t i = 0; i < _glyphs.size(); ++i)
         {
-            auto transform = Transform();
+            auto current = transform;
             if (_shake_indices.find(i) != _shake_indices.end())
             {
+                current.translate(Vector2f(
+                    seed_to_rand(floor(_shake_offset) + i, -_shake_distance_factor * _font_size, +_shake_distance_factor * _font_size),
+                    seed_to_rand(floor(_shake_offset) + seed_to_rand(_shake_offset) + i, -_shake_distance_factor * _font_size, +_shake_distance_factor * _font_size)
+                ));
             }
 
             if (_wave_indices.find(i) != _wave_indices.end())
             {
-
+                current.translate(Vector2f(
+                    0,
+                    wave_f(_wave_offset + i) * _wave_distance_factor * _font_size
+                ));
             }
 
-            _glyphs.at(i)._shape.render(target, transform, shader);
+            _glyphs.at(i)._shape.render(target, current, shader);
         }
     }
 
@@ -64,9 +80,6 @@ namespace rat
         _line_spacer = line_spacer;
 
         _glyphs.clear();
-        _shake_indices.clear();
-        _wave_indices.clear();
-        _rainbow_indices.clear();
 
         const auto original_position = position;
         size_t font_height = TTF_FontAscent(_fonts.at(_font_id).bold) + -1 * TTF_FontDescent(_fonts.at(_font_id).bold);
@@ -486,15 +499,6 @@ namespace rat
                 to_push.push_back(formatted_text.at(i));
                 push_glyph(to_push, position);
 
-                if (shaking_active)
-                    _shake_indices.insert(i);
-
-                if (wave_active)
-                    _wave_indices.insert(i);
-
-                if (rainbow_active)
-                    _rainbow_indices.insert(i);
-
                 i += 1;
 
                 if (not _glyphs.empty())
@@ -504,7 +508,6 @@ namespace rat
         catch (std::invalid_argument& exc)
         {
             // pretty printing parsing error
-
             std::cerr << "[ERROR] In Text::create: Error parsing text at position " << i << std::endl;
 
             size_t count = 0;
@@ -564,12 +567,26 @@ namespace rat
 
         apply_wrapping();
 
-        for (auto& g : _glyphs)
+        _shake_indices.clear();
+        _wave_indices.clear();
+        _rainbow_indices.clear();
+
+        for (size_t i = 0; i < _glyphs.size(); ++i)
         {
-            g._background_shape = g._shape;
-            g._background_shape.set_texture(nullptr);
-            g._background_shape.set_color(g._background_color);
-            g._background_shape.set_color(g._background_color);
+            auto& glyph = _glyphs.at(i);
+
+            if (glyph._is_shaking)
+                _shake_indices.insert(i);
+
+            if (glyph._is_wave)
+                _wave_indices.insert(i);
+
+            if (glyph._is_rainbow)
+                _rainbow_indices.insert(i);
+
+            glyph._background_shape = glyph._shape;
+            glyph._background_shape.set_texture(nullptr);
+            glyph._background_shape.set_color(glyph._background_color);
         }
     }
 
@@ -831,21 +848,19 @@ namespace rat
 
     void Text::update(Time time)
     {
-        _wave_offset += time.as_milliseconds();
-        _shake_offset += time.as_milliseconds();
-        _rainbow_offset += time.as_seconds();
+        _wave_offset += time.as_seconds() * _wave_speed_factor;
+        _shake_offset += time.as_seconds() * _shake_speed_factor;
+        _rainbow_offset += time.as_seconds() * _rainbow_speed_factor;
 
-        static const float rainbow_speed = 1 / 4.f;
-
-        auto rainbow_f = [&](float x) -> float
+        static auto rainbow_f = [&](float x) -> float
         {
             // sine ramp in x = [0, 1], repeats instead of cycling
             // desmos: \left(\left(\sin\left(\pi\left(\operatorname{mod}\left(x,\ 1\right)\ +\ 1.5\right)\right)+1\right)\ \cdot0.5\right)
-            x *= rainbow_speed;
+            x *= _rainbow_speed_factor;
             return (sin(M_PI * std::fmod(x, 1) + 1.5) + 1) * 0.5;
         };
 
-        for (size_t i = 0; i < _rainbow_indices.size(); ++i)
+        for (auto i : _rainbow_indices)
         {
             _glyphs.at(i)._shape.set_color(HSVA(rainbow_f(i / 4.f + _rainbow_offset), 1, 1, 1));
         }

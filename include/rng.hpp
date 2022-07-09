@@ -7,7 +7,7 @@
 
 #include <random>
 
-namespace rat::rng
+namespace rat
 {
     namespace detail
     {
@@ -20,9 +20,31 @@ namespace rat::rng
         detail::engine.seed(detail::device());
     }
 
+    float rand(float lower, float upper)
+    {
+        auto dist = std::uniform_real_distribution<float>(lower, upper);
+        return dist(detail::engine);
+    }
+
     float rand()
     {
-        static auto dist = std::uniform_real_distribution<float>(0, 1);
+        auto dist = std::uniform_real_distribution<float>();
         return dist(detail::engine);
+    }
+
+    float seed_to_rand(size_t x)
+    {
+        auto dist = std::uniform_real_distribution<float>();
+        auto engine = std::mt19937();
+        engine.seed(x);
+        return dist(engine);
+    }
+
+    float seed_to_rand(size_t x, float lower, float upper)
+    {
+        auto dist = std::uniform_real_distribution<float>(lower, upper);
+        auto engine = std::mt19937();
+        engine.seed(x);
+        return dist(engine);
     }
 }

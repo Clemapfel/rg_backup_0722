@@ -201,6 +201,7 @@ namespace rat
             AlignmentType _alignment_type = FLUSH_LEFT;
             int _line_spacer = 1;
             size_t _width = -1;
+            float _font_size;
 
             void apply_wrapping();
             std::deque<Glyph> _glyphs = {};
@@ -209,8 +210,17 @@ namespace rat
                              _wave_indices,
                              _rainbow_indices;
 
-            float _shake_offset = 0;
-            float _wave_offset = 0;
+            // speed factors per second:
+
+            static inline const float _shake_distance_factor = 0.05; // factor of font size
+            static inline const float _shake_speed_factor = 10; // n ticks per second, upper limit is fps
+            static inline float _shake_offset = 0;
+
+            static inline const float _wave_distance_factor = 0.1;
+            static inline const float _wave_speed_factor = 15;
+            static inline float _wave_offset = 0;
+
+            static inline const float _rainbow_speed_factor = 1 / 3.5; // n cycles per second
             float _rainbow_offset = 0;
     };
 }
