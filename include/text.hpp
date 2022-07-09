@@ -57,6 +57,10 @@ namespace rat
             static inline std::string color_foreground_tag = "col",
                                       color_background_tag = "col_bg";
 
+
+            /// \brief pause during text scroll. Pause duration is equal to that of normal markers such as `.`
+            static inline std::string scrolling_pause_marker = "|";
+
             /// \brief initialize a text by loading the font
             /// \param font_size: native size of he font, scaling the font by using a non-native size is usually discouraged, see notes
             /// \param font_id: id of the font, example: "roboto"
@@ -150,7 +154,7 @@ namespace rat
 
             /// \brief update the texts animations
             /// \param time: time elapsed since last frame, usually return value of `rat::Window::update`
-            void update(Time);
+            virtual void update(Time);
 
         private:
             struct Font
