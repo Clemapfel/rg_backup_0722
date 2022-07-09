@@ -74,12 +74,19 @@ namespace rat
             ///  <br><br>For best result, the font size should by an even integer multiple of the native glyph size, for example, if the .ttf file contains a truetype font at 23px, then the font size should be 23px, (23*2)px, (23*4)px, etc.
             Text(size_t font_size, const std::string& font_id, const std::string& font_path = "/home/clem/Workspace/mousetrap/resources/fonts/");
 
-            /// \brief create the text, with wrapping
+            /// \brief create the text, with wrapping, without scrolling
             /// \param render_target: render target in whose context the glyphs textures will be created
             /// \param formatted_text: text containing the format tags, will be parsed
             /// \param width: maximum width per line, or -1 for no wrapping
             /// \param line_spacer: vertical distance between lines, can be negative
             void create(RenderTarget&, Vector2f position, const std::string& formatted_text, size_t width_px = -1, int line_spacer = 1);
+
+            /// \brief create the text, with wrapping, with scrolling
+            /// \param render_target: render target in whose context the glyphs textures will be created
+            /// \param formatted_text: text containing the format tags, will be parsed
+            /// \param width: maximum width per line, or -1 for no wrapping
+            /// \param line_spacer: vertical distance between lines, can be negative
+            void create_as_scrolling(RenderTarget&, Vector2f position, const std::string& formatted_text, size_t width_px = -1, int line_spacer = 1);
 
             /// \brief align the center of the texts bounding box with point
             /// \param point
@@ -214,7 +221,7 @@ namespace rat
                              _wave_indices,
                              _rainbow_indices;
 
-            // speed factors per second:
+            // fx config:
 
             static inline const float _shake_distance_factor = 0.05; // factor of font size
             static inline const float _shake_speed_factor = 10; // n ticks per second, upper limit is fps
@@ -226,6 +233,16 @@ namespace rat
 
             static inline const float _rainbow_speed_factor = 1 / 3.5; // n cycles per second
             float _rainbow_offset = 0;
+
+            // scrolling:
+
+            Time _scrolling_time = seconds(0);
+            std::deque<size_t> _visibility_queue = {};
+
+            std::multiset<size_t> _marker_pause_indices;
+
+            float _scroll_letters_per_seconds = 15;
+            static inline const float _scroll_pause_factor = 5; // times duration of single letter
     };
 }
 

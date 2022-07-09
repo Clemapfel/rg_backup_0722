@@ -59,6 +59,62 @@ namespace rat
         return _ns.count();
     }
 
+    Time Time::operator+(const Time& other)
+    {
+        auto out = *this;
+        out._ns += other._ns;
+        return out;
+    }
+
+    Time& Time::operator+=(const Time& other)
+    {
+        _ns += other._ns;
+        return *this;
+    }
+
+    Time Time::operator-(const Time& other)
+    {
+        auto out = *this;
+        out._ns -= other._ns;
+        return out;
+    }
+
+    Time& Time::operator-=(const Time& other)
+    {
+        _ns -= other._ns;
+        return *this;
+    }
+
+    bool Time::operator==(const Time& other)
+    {
+        return _ns == other._ns;
+    }
+
+    bool Time::operator!=(const Time& other)
+    {
+        return _ns != other._ns;
+    }
+
+    bool Time::operator<(const Time& other)
+    {
+        return _ns < other._ns;
+    }
+
+    bool Time::operator<=(const Time& other)
+    {
+        return _ns <= other._ns;
+    }
+
+    bool Time::operator>(const Time& other)
+    {
+        return _ns > other._ns;
+    }
+
+    bool Time::operator>=(const Time& other)
+    {
+        return _ns >= other._ns;
+    }
+
     Clock::Clock()
             : _start(std::chrono::steady_clock::now())
     {}

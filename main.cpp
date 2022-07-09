@@ -42,9 +42,9 @@ int main()
     shapes.push_back(CircleShape(Vector2f(window.get_size().x * 0.5, window.get_size().y * 0.5), 10, 16));
     shapes.back().set_color(RGBA(0, 1, 0, 1));
 
-    auto str = "<b>test <fx_s><fx_r>test</fx_r></fx_s></b>";//"Lorem ipsum dolor sit amet, <b><fx_w>consectetu adipiscing elit</fx_w></b>, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. <b><fx_w><fx_r>Ut enim ad minim veniam, quis</fx_r></fx_w></b> nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur...";
+    auto str = "Lorem||||| ipsum dolor sit amet, <b><fx_w>consectetu adipiscing elit</fx_w></b>, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. <b><fx_w><fx_r>Ut enim ad minim veniam, quis</fx_r></fx_w></b> nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur...";
     auto text = Text(48, "Roboto");
-    text.create(window, {50, 50}, str, window.get_size().x - 2 * 50);
+    text.create_as_scrolling(window, {50, 50}, str, window.get_size().x - 2 * 50);
 
     auto transform = Transform()._transform;
 

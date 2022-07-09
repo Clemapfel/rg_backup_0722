@@ -40,9 +40,10 @@ namespace rat
 
     void Text::render(RenderTarget& target, Transform transform, Shader* shader) const
     {
-        for (auto& glyph : _glyphs)
+        for (size_t i = 0; i < _glyphs.size(); ++i)
         {
-            glyph._background_shape.render(target, transform, shader);
+            if (_visibility_queue.empty() or i < _visibility_queue.front())
+                _glyphs.at(i)._background_shape.render(target, transform, shader);
         }
 
         static auto wave_f = [&](float x){
@@ -52,6 +53,9 @@ namespace rat
 
         for (size_t i = 0; i < _glyphs.size(); ++i)
         {
+            if (not _visibility_queue.empty() and i >= _visibility_queue.front())
+                continue;
+
             auto current = transform;
             if (_shake_indices.find(i) != _shake_indices.end())
             {
@@ -281,6 +285,13 @@ namespace rat
                 {
                     i += 1;
                     goto skip_control_tags;
+                }
+
+                if (substr_is(i, scrolling_pause_marker) && not _glyphs.empty())
+                {
+                    _marker_pause_indices.insert(_glyphs.size());
+                    i += 1;
+                    continue;
                 }
 
                 // start open
@@ -590,6 +601,59 @@ namespace rat
         }
     }
 
+    void Text::create_as_scrolling(RenderTarget & target, Vector2f position, const std::string &formatted_text, size_t width_px, int line_spacer)
+    {
+        create(target, position, formatted_text, width_px, line_spacer);
+
+        static auto is_pause_char = [](char in) -> bool {
+            for (char c : {'.', ',', '?', '!'})
+                if (in == c)
+                    return true;
+
+            return false;
+        };
+
+        for (auto& i : _marker_pause_indices)
+            std::cout << i << " ";
+
+        std::cout << std::endl;
+
+        // visiblity queue holds indices of glyphs. Front of queue is popped during update if enough time has passed
+        // by pushing the same index multiple times, the same glyph may not show up for multiple ticks
+        // only glyphs with an index lower than the front of the queue will be rendered
+
+        size_t n_extra_indices = 0;
+        for (size_t i = 0; i < _glyphs.size(); ++i)
+        {
+            auto& glyph = _glyphs.at(i);
+            _visibility_queue.push_back(i);
+
+            while (n_extra_indices > 0)
+            {
+                for (size_t n = 0; n < ceil(_scroll_pause_factor); ++n)
+                    _visibility_queue.push_back(i);
+
+                n_extra_indices -= 1;
+            }
+
+            if (_marker_pause_indices.find(i) != _marker_pause_indices.end())
+            {
+                n_extra_indices += _marker_pause_indices.count(i);
+                _marker_pause_indices.erase(i);
+            }
+
+            if (is_pause_char(glyph._content.back()))
+            {
+                n_extra_indices += 1;
+            }
+        }
+
+        for (auto& c : _visibility_queue)
+            std::cout << c << " ";
+
+        std::cout << std::endl;
+    }
+
     void Text::apply_wrapping()
     {
         if (_glyphs.empty())
@@ -863,6 +927,18 @@ namespace rat
         for (auto i : _rainbow_indices)
         {
             _glyphs.at(i)._shape.set_color(HSVA(rainbow_f(i / 4.f + _rainbow_offset), 1, 1, 1));
+        }
+
+        if (_visibility_queue.empty())
+            return;
+
+        _scrolling_time += time;
+        auto letter_duration = seconds(1.f / _scroll_letters_per_seconds);
+
+        while (_scrolling_time >= letter_duration)
+        {
+            _visibility_queue.pop_front();
+            _scrolling_time -= letter_duration;
         }
     }
 

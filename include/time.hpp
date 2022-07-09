@@ -33,6 +33,19 @@ namespace rat
             /// \returns number of nanoseconds, size_t
             size_t as_nanoseconds() const;
 
+            Time operator+(const Time&);
+            Time& operator+=(const Time&);
+
+            Time operator-(const Time&);
+            Time& operator-=(const Time&);
+
+            bool operator==(const Time&);
+            bool operator!=(const Time&);
+            bool operator<(const Time&);
+            bool operator<=(const Time&);
+            bool operator>(const Time&);
+            bool operator>=(const Time&);
+
         private:
             friend Time minutes(double);
             friend Time seconds(double);
