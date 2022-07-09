@@ -504,10 +504,10 @@ namespace rat
     {
         _vertices =
         {
-            Vertex{{top_left.x, top_left.y, 0}, {0, 0}, _default_color},
-            Vertex{{top_left.x + size.x, top_left.y, 0}, {1, 0}, _default_color},
-            Vertex{{top_left.x + size.x, top_left.y + size.y, 0}, {1, 1}, _default_color},
-            Vertex{{top_left.x, top_left.y + size.y, 0}, {0, 1}, _default_color}
+            Vertex{{top_left.x, top_left.y, _default_z}, {0, 0}, _default_color},
+            Vertex{{top_left.x + size.x, top_left.y, _default_z}, {1, 0}, _default_color},
+            Vertex{{top_left.x + size.x, top_left.y + size.y, _default_z}, {1, 1}, _default_color},
+            Vertex{{top_left.x, top_left.y + size.y, _default_z}, {0, 1}, _default_color}
         };
         _indices = {0, 1, 3, 1, 2, 3};
         _render_type = GL_TRIANGLE_FAN;
@@ -518,9 +518,9 @@ namespace rat
     {
         _vertices =
         {
-            Vertex{{a.x, a.y, 0}, {0, 0}, _default_color},
-            Vertex{{b.x, b.y, 0}, {0, 0}, _default_color},
-            Vertex{{c.x, c.y, 0}, {0, 0}, _default_color},
+            Vertex{{a.x, a.y, _default_z}, {0, 0}, _default_color},
+            Vertex{{b.x, b.y, _default_z}, {0, 0}, _default_color},
+            Vertex{{c.x, c.y, _default_z}, {0, 0}, _default_color},
         };
         _indices = {0, 1, 2};
         _render_type = GL_TRIANGLES;
@@ -531,8 +531,8 @@ namespace rat
     {
         _vertices =
         {
-            Vertex{{a.x, a.y, 0}, {0, 0}, _default_color},
-            Vertex{{b.x, b.y, 0}, {0, 0}, _default_color}
+            Vertex{{a.x, a.y, _default_z}, {0, 0}, _default_color},
+            Vertex{{b.x, b.y, _default_z}, {0, 0}, _default_color}
         };
         _indices = {0, 1};
         _render_type = GL_LINES;
@@ -544,7 +544,7 @@ namespace rat
         const float step = 360.f / n_outer_vertices;
 
         _vertices.clear();
-        _vertices.push_back(Vertex{{center.x, center.y, 0}, {0, 0}, _default_color});
+        _vertices.push_back(Vertex{{center.x, center.y, _default_z}, {0, 0}, _default_color});
 
         for (float angle = 0; angle < 360; angle += step)
         {
@@ -553,7 +553,7 @@ namespace rat
                 {
                     center.x + cos(as_radians) * radius,
                     center.y + sin(as_radians) * radius,
-                    0
+                    _default_z
                 },
                 {0, 0},
                 _default_color}
@@ -578,7 +578,7 @@ namespace rat
         size_t i = 0;
         for (auto& position : positions)
         {
-            _vertices.push_back(Vertex{{position.x, position.y, 0}, {0, 0}, _default_color});
+            _vertices.push_back(Vertex{{position.x, position.y, _default_z}, {0, 0}, _default_color});
             _indices.push_back(i++);
         }
 
@@ -596,7 +596,7 @@ namespace rat
         size_t i = 0;
         for (auto& position : positions)
         {
-            _vertices.push_back(Vertex{{position.x, position.y, 0}, {0, 0}, _default_color});
+            _vertices.push_back(Vertex{{position.x, position.y, _default_z}, {0, 0}, _default_color});
             _indices.push_back(i++);
         }
 
@@ -614,7 +614,7 @@ namespace rat
         size_t i = 0;
         for (auto& position : positions)
         {
-            _vertices.push_back(Vertex{{position.x, position.y, 0}, {0, 0}, _default_color});
+            _vertices.push_back(Vertex{{position.x, position.y, _default_z}, {0, 0}, _default_color});
             _indices.push_back(i++);
         }
 
@@ -630,7 +630,7 @@ namespace rat
         // hard-coded minimum vertex decomposition
 
         auto push_vertex = [&](float x, float y) {
-            _vertices.push_back(Vertex{{x, y, 0}, {0, 0}, _default_color});
+            _vertices.push_back(Vertex{{x, y, _default_z}, {0, 0}, _default_color});
         };
 
         float x = top_left.x;
@@ -723,7 +723,5 @@ namespace rat
         out.as_frame(top_left, size, width);
         return out;
     }
-
-
 }
 

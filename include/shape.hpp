@@ -127,6 +127,8 @@ namespace rat
                     _position_buffer_id,
                     _color_buffer_id,
                     _texture_coordinate_buffer_id;
+
+            static inline const float _default_z = 1;
     };
 
     Shape TriangleShape(Vector2f a, Vector2f b, Vector2f c);

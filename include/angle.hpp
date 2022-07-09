@@ -12,7 +12,7 @@ namespace rat
     struct Angle
     {
         public:
-            Angle(float radians);
+            explicit Angle(float radians);
 
             float as_degrees() const;
             float as_radians() const;

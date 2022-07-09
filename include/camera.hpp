@@ -14,20 +14,32 @@ namespace rat
         public:
             Camera(Window*);
 
-            void move(float x, float y);
+            // set
             void center_on(Vector2f);
             void set_zoom(float);
+            void set_rotation(Angle);
+
+            // add
+            void move(float x, float y);
             void rotate(Angle);
+            void zoom_in(float);
+            void zoom_out(float);
 
             Vector2f get_center() const;
             Vector2f apply_to(Vector2f sdl_coords);
 
         private:
             float _zoom = 1;
-            Angle _angle = degrees(0);
-            Vector2f _translation_offset = Vector2f(0, 0);
+            Angle _rotation = degrees(0);
 
             Window* _window;
+
+            glm::vec3 _position = glm::vec3(0.0f, 0.0f, 0.0f);
+            static inline const glm::vec3 _direction = glm::vec3(0.0f, 0.0f, -1.0f);
+            static inline const glm::vec3 _up_normal = glm::vec3(0.0f, 1.0f,  0.0f);
+
+            void update();
+
     };
 }
 
@@ -39,47 +51,56 @@ namespace rat
         : _window(window)
     {}
 
+    void Camera::update()
+    {
+        std::cout << _rotation.as_degrees() << std::endl;
+
+        auto size = get_viewport_size();
+
+        auto& transform = _window->_global_transform._transform;
+        transform = glm::mat4x4(1);
+
+        transform = glm::translate(transform, Vector3f(0.5 * size.x, 0.5 * size.y, 0));
+        transform = glm::rotate(transform, _rotation.as_radians(), glm::vec3(0, 0, 1));
+        transform = glm::scale(transform, Vector3f(_zoom, _zoom, 1));
+        transform = glm::translate(transform, Vector3f(-0.5 * size.x, -0.5 * size.y, 0));
+
+        transform = glm::translate(transform, Vector3f(-_position.x, -_position.y, -_position.z));
+    }
+
     void Camera::move(float x, float y)
     {
-        static glm::vec3 position = glm::vec3(0.0f, 0.0f,  1.0f);
-        static glm::vec3 direction = glm::vec3(0.0f, 0.0f, -1.0f);
-        static glm::vec3 up_normal = glm::vec3(0.0f, 1.0f,  0.0f);
+        _position.x -= x;
+        _position.y -= y;
 
-        //_window->_global_transform.translate(Vector2f(x, y));
-        //_translation_offset += Vector2f(x, y);
+        update();
     }
 
     void Camera::center_on(Vector2f position)
     {
         auto size = get_viewport_size();
-        auto screen_pos = apply_to(position);
-        auto offset = Vector2f(-1 * screen_pos.x + 0.5 * size.x, -1 * screen_pos.y + 0.5 * size.y);
-        _window->_global_transform.translate(offset);
-        _translation_offset += offset;
+        _position.x = position.x - 0.5 * size.x;
+        _position.y = position.y - 0.5 * size.y;
+
+        update();
     }
 
     void Camera::set_zoom(float zoom)
     {
-        auto size = get_viewport_size();
-        _window->_global_transform._transform = glm::lookAt(
-                glm::vec3(0.5 * size.x, 0.5 * size.y, 0),
-                glm::vec3(0.5 * size.x, 0.5 * size.y, 0),
-                glm::vec3(0, 0, 1));
-        //auto size = get_viewport_size();
-
-        //auto& transform = _window->_global_transform._transform;
-
-        // reset to origin
-        //_window->_global_transform.translate(Vector2f(-1, -1) * _translation_offset);
-        //_window->_global_transform.translate(Vector2f(-0.5, -0.5) * size);
-
-        //_window->_global_transform.scale(1 / _zoom, 1 / _zoom);
-        //_window->_global_transform.scale(zoom, zoom);
-
-        //_window->_global_transform.translate(Vector2f(+0.5, +0.5) * size);
-        //_window->_global_transform.translate(_translation_offset);
-
         _zoom = zoom;
+        update();
+    }
+
+    void Camera::zoom_in(float factor)
+    {
+        _zoom *= factor;
+        update();
+    }
+
+    void Camera::zoom_out(float factor)
+    {
+        _zoom /= factor;
+        update();
     }
 
     Vector2f Camera::get_center() const
@@ -90,10 +111,16 @@ namespace rat
         return center;
     }
 
+    void Camera::set_rotation(Angle angle)
+    {
+        _rotation = angle;
+        update();
+    }
+
     void Camera::rotate(Angle angle)
     {
-        _window->_global_transform.rotate(angle, get_center());
-        _angle += angle;
+        _rotation += angle;
+        update();
     }
 
     Vector2f Camera::apply_to(Vector2f point)
