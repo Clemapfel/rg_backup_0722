@@ -45,9 +45,9 @@ namespace rat
                                       italic_tag = "i",
                                       underlined_tag = "u",
                                       strikethrough_tag = "s",
-                                      shaking_tag = "fx_sh",
-                                      wave_tag = "fx_wv",
-                                      rainbow_tag = "fx_rb";
+                                      shaking_tag = "fx_s",
+                                      wave_tag = "fx_w",
+                                      rainbow_tag = "fx_r";
 
             /// \brief color format tags, need to be followed by a color value
             /// \note will be parsed as: \<tag_open_prefix>\<tag=(r, g, b)> text \<tag_close_prefix>\<tag>\<tag_close_suffix><br>
@@ -206,8 +206,8 @@ namespace rat
             std::deque<Glyph> _glyphs = {};
 
             std::set<size_t> _shake_indices,
-                                _wave_indices,
-                                _rainbow_indices;
+                             _wave_indices,
+                             _rainbow_indices;
 
             float _shake_offset = 0;
             float _wave_offset = 0;

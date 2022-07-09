@@ -43,13 +43,22 @@ namespace rat
 
         for (size_t i = 0; i < _glyphs.size(); ++i)
         {
+            auto transform = Transform();
+            if (_shake_indices.find(i) != _shake_indices.end())
+            {
+            }
+
+            if (_wave_indices.find(i) != _wave_indices.end())
+            {
+
+            }
+
             _glyphs.at(i)._shape.render(target, transform, shader);
         }
     }
 
     void Text::create(RenderTarget& target, Vector2f position, const std::string& formatted_text, size_t width_px, int line_spacer)
     {
-
         _position = position;
         _width = width_px;
         _line_spacer = line_spacer;
@@ -824,7 +833,22 @@ namespace rat
     {
         _wave_offset += time.as_milliseconds();
         _shake_offset += time.as_milliseconds();
-        _rainbow_offset += time.as_milliseconds();
+        _rainbow_offset += time.as_seconds();
+
+        static const float rainbow_speed = 1 / 4.f;
+
+        auto rainbow_f = [&](float x) -> float
+        {
+            // sine ramp in x = [0, 1], repeats instead of cycling
+            // desmos: \left(\left(\sin\left(\pi\left(\operatorname{mod}\left(x,\ 1\right)\ +\ 1.5\right)\right)+1\right)\ \cdot0.5\right)
+            x *= rainbow_speed;
+            return (sin(M_PI * std::fmod(x, 1) + 1.5) + 1) * 0.5;
+        };
+
+        for (size_t i = 0; i < _rainbow_indices.size(); ++i)
+        {
+            _glyphs.at(i)._shape.set_color(HSVA(rainbow_f(i / 4.f + _rainbow_offset), 1, 1, 1));
+        }
     }
 
     Rectangle Text::get_bounding_box() const
@@ -942,5 +966,4 @@ namespace rat
             glyph.set_top_left(current_pos + offset);
         }
     }
-
 }
