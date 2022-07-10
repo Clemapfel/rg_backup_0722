@@ -86,4 +86,21 @@ namespace rat
         SDL_QueryTexture(_native, nullptr, nullptr, &width, &height);
         return Vector2f(width, height);
     }
+
+    GLNativeHandle Texture::get_native_handle() const
+    {
+        if (_native_handle != 0)
+            return _native_handle;
+
+        GLint id;
+        SDL_GL_BindTexture(_native, nullptr, nullptr);
+
+        glGetIntegerv(GL_TEXTURE_BINDING_2D, &id);
+        _native_handle = id;
+
+        SDL_GL_UnbindTexture(_native);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        return id;
+    }
 }

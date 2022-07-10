@@ -163,6 +163,12 @@ namespace rat
             /// \param time: time elapsed since last frame, usually return value of `rat::Window::update`
             virtual void update(Time);
 
+            /// \returns characters per second
+            float get_scrolling_speed() const;
+
+            /// \param value: words per second
+            void set_scrolling_speed(float);
+
         private:
             struct Font
             {
@@ -224,7 +230,7 @@ namespace rat
             // fx config:
 
             static inline const float _shake_distance_factor = 0.05; // factor of font size
-            static inline const float _shake_speed_factor = 10; // n ticks per second, upper limit is fps
+            static inline const float _shake_speed_factor = 15; // n ticks per second, upper limit is fps
             static inline float _shake_offset = 0;
 
             static inline const float _wave_distance_factor = 0.1;
@@ -241,8 +247,8 @@ namespace rat
 
             std::multiset<size_t> _marker_pause_indices;
 
-            float _scroll_letters_per_seconds = 15;
-            static inline const float _scroll_pause_factor = 5; // times duration of single letter
+            float _scroll_letters_per_seconds = 40;
+            static inline const float _scroll_pause_factor = 15; // times duration of single letter
     };
 }
 

@@ -55,13 +55,15 @@ namespace rat
 
             void bind();
             void unbind();
-
             bool valid() const;
+
+            GLNativeHandle get_native_handle() const;
 
         private:
             bool _initialized = false;
             SDL_Renderer* _renderer;
             SDL_Texture* _native;
+            mutable GLNativeHandle _native_handle;
 
             bool _mipmap_enabled;
             WrapMode _wrap_mode = WrapMode::REPEAT;

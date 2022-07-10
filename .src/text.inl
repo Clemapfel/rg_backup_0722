@@ -59,10 +59,19 @@ namespace rat
             auto current = transform;
             if (_shake_indices.find(i) != _shake_indices.end())
             {
-                current.translate(Vector2f(
-                    seed_to_rand(floor(_shake_offset) + i, -_shake_distance_factor * _font_size, +_shake_distance_factor * _font_size),
-                    seed_to_rand(floor(_shake_offset) + seed_to_rand(_shake_offset) + i, -_shake_distance_factor * _font_size, +_shake_distance_factor * _font_size)
-                ));
+                float x_offset = seed_to_rand(
+                    floor(_shake_offset) + i,
+                    std::min(-(_shake_distance_factor * 0.75) * _font_size, 0.25 * -_shake_distance_factor * 0.5 * _font_size),
+                    std::max(+(_shake_distance_factor * 0.75) * _font_size, 0.25 * +_shake_distance_factor * 0.5 * _font_size)
+                );
+
+                float y_offset = seed_to_rand(
+                    floor(_shake_offset) + i + _glyphs.size(),
+                    std::min(-(_shake_distance_factor * 1.0) * _font_size, 0.25 * -_shake_distance_factor * 1.0 * _font_size),
+                    std::max(+(_shake_distance_factor * 1.0) * _font_size, 0.25 * +_shake_distance_factor * 1.0 * _font_size)
+                );
+
+                current.translate(Vector2f(x_offset, y_offset));
             }
 
             if (_wave_indices.find(i) != _wave_indices.end())
@@ -118,10 +127,6 @@ namespace rat
 
         auto push_glyph = [&](const std::string& raw, Vector2f position)
         {
-            for (auto& c : raw)
-                if (do_not_render.find(c) != do_not_render.end())
-                    return;
-
             _glyphs.emplace_back(target);
             auto& glyph = _glyphs.back();
             glyph._is_bold = bold_active;
@@ -134,6 +139,11 @@ namespace rat
             glyph._foreground_color = foreground;
             glyph._background_color = background;
             glyph._content = raw;
+
+            bool should_render = true;
+            for (auto& c : raw)
+                if (do_not_render.find(c) != do_not_render.end())
+                    should_render = false;
 
             TTF_Font* current_font = nullptr;
             uint32_t style = TTF_STYLE_NORMAL;
@@ -180,22 +190,27 @@ namespace rat
                 style |= TTF_STYLE_STRIKETHROUGH;
 
             TTF_SetFontStyle(current_font, style);
+
             SDL_Surface* surface = nullptr;
 
-            surface = TTF_RenderText_Blended(current_font, raw.data(), as_sdl_color(foreground));
-            if (surface == nullptr or surface->w == 0 or surface->h == 0)
+            if (should_render)
             {
-                std::cerr << "[WARNING] In Text::create: Unable to render char `" << raw << "` (" << int(raw.back()) << ")" << std::endl;
-                _glyphs.pop_back();
-                return;
+                surface = TTF_RenderText_Blended(current_font, raw.data(), as_sdl_color(foreground));
+                if (surface == nullptr or surface->w == 0 or surface->h == 0)
+                {
+                    std::cerr << "[WARNING] In Text::create: Unable to render char `" << raw << "` (" << int(raw.back())
+                              << ")" << std::endl;
+                    _glyphs.pop_back();
+                    return;
+                }
             }
 
             glyph._texture.create_from(surface);
             position.y -= (font_height * 0.5);
 
-            glyph._shape = RectangleShape(position, Vector2f(surface->w, surface->h));
+            glyph._shape = RectangleShape(position, surface != nullptr ? Vector2f(surface->w, surface->h) : Vector2f(0, 0));
             glyph._shape.set_color(glyph._foreground_color);
-            glyph._background_shape = RectangleShape(position, Vector2f(surface->w, surface->h));
+            glyph._background_shape = RectangleShape(position, glyph._shape.get_size());
             glyph._background_shape.set_color(glyph._background_color);
 
             // reset
@@ -606,17 +621,12 @@ namespace rat
         create(target, position, formatted_text, width_px, line_spacer);
 
         static auto is_pause_char = [](char in) -> bool {
-            for (char c : {'.', ',', '?', '!'})
+            for (char c : {'.', '?', '!'})
                 if (in == c)
                     return true;
 
             return false;
         };
-
-        for (auto& i : _marker_pause_indices)
-            std::cout << i << " ";
-
-        std::cout << std::endl;
 
         // visiblity queue holds indices of glyphs. Front of queue is popped during update if enough time has passed
         // by pushing the same index multiple times, the same glyph may not show up for multiple ticks
@@ -647,11 +657,6 @@ namespace rat
                 n_extra_indices += 1;
             }
         }
-
-        for (auto& c : _visibility_queue)
-            std::cout << c << " ";
-
-        std::cout << std::endl;
     }
 
     void Text::apply_wrapping()

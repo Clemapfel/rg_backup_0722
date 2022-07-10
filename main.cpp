@@ -42,13 +42,29 @@ int main()
     shapes.push_back(CircleShape(Vector2f(window.get_size().x * 0.5, window.get_size().y * 0.5), 10, 16));
     shapes.back().set_color(RGBA(0, 1, 0, 1));
 
-    auto str = "Lorem||||| ipsum dolor sit amet, <b><fx_w>consectetu adipiscing elit</fx_w></b>, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. <b><fx_w><fx_r>Ut enim ad minim veniam, quis</fx_r></fx_w></b> nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur...";
+    auto content = "In animal crossing, scrolling <b>pauses</b> on punctuation. This makes the scroll dialogue feel as if it was being read out loud. Other than this, I stole the format tags from <b>Paper Mario: TTYD</b>, which uses|| <fx_r><fx_w>RAINBOW TEXT</fx_w></fx_r> like dis.|||||||||||\n\n<col=(0.25, 0.25, 0.25)>(also Undertale but <b><fx_s>fuck</fx_s></b> that game)</col>";
+    auto position = {50, 50};
+    auto width = window.get_size().x - 2 * 50;
     auto text = Text(48, "Roboto");
-    text.create_as_scrolling(window, {50, 50}, str, window.get_size().x - 2 * 50);
+    text.create_as_scrolling(window, {50, 50}, content, width);
 
     auto transform = Transform()._transform;
-
     float scale = 1;
+
+    auto texture = Texture(window);
+    texture.load("/home/clem/Workspace/mousetrap/mole.png");
+
+    for (auto& shape : shapes)
+        shape.set_texture(&texture);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+
+    InputHandler::update();
+    auto time = window.update();
+    SDL_GL_SwapWindow(window.get_native());
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 30));
+
     while (not InputHandler::exit_requested())
     {
         InputHandler::update();
@@ -113,8 +129,8 @@ int main()
         }
 
         const float offset = 10;
-        //for (auto& shape : shapes)
-          //  shape.render(window);
+        for (auto& shape : shapes)
+            shape.render(window);
 
         SDL_GL_SwapWindow(window.get_native());
         std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 60));
