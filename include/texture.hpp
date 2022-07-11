@@ -41,7 +41,7 @@ namespace rat
 
             virtual void create(size_t width, size_t height, RGBA color = RGBA(1, 1, 1, 1));
             virtual void create_from(SDL_Surface*); // rat::Image implicitly converted to SDL_Surface
-
+            virtual void create_from(Image&);
             virtual void load(const std::string& path);
 
             Vector2ui get_size() const;
@@ -50,7 +50,7 @@ namespace rat
             void set_wrap_mode(WrapMode);
             WrapMode get_wrap_mode() const;
 
-            void set_filer_mode(FilterMode);
+            void set_filter_mode(FilterMode);
             FilterMode get_filter_mode() const;
 
             void bind();
@@ -59,7 +59,7 @@ namespace rat
 
             GLNativeHandle get_native_handle() const;
 
-        //protected:
+        protected:
             SDL_Renderer* _renderer;
             SDL_Texture* _native;
             mutable GLNativeHandle _native_handle = 0;

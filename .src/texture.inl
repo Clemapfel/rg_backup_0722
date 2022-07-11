@@ -39,10 +39,38 @@ namespace rat
         return _native;
     }
 
+    WrapMode Texture::get_wrap_mode() const
+    {
+        return _wrap_mode;
+    }
+
+    void Texture::set_wrap_mode(WrapMode mode)
+    {
+        _wrap_mode = mode;
+    }
+
+    void Texture::set_filter_mode(FilterMode mode)
+    {
+        _filter_mode = mode;
+    }
+
+    FilterMode Texture::get_filter_mode() const
+    {
+        return _filter_mode;
+    }
+
     void Texture::create_from(SDL_Surface* surface)
     {
         _native = SDL_CreateTextureFromSurface(_renderer, surface);
         _initialized = true;
+    }
+
+    void Texture::create_from(Image& image)
+    {
+        auto surface = image.operator SDL_Surface*();
+        _native = SDL_CreateTextureFromSurface(_renderer, surface);
+        _initialized = true;
+        SDL_FreeSurface(surface);
     }
 
     void Texture::load(const std::string &path)
@@ -68,6 +96,12 @@ namespace rat
             return;
 
         glBindTexture(GL_TEXTURE_2D, get_native_handle());
+        //SDL_GL_BindTexture(_native, nullptr, nullptr);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, get_wrap_mode());
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,  get_wrap_mode());
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, get_filter_mode());
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, get_filter_mode());
     }
 
     void Texture::unbind()

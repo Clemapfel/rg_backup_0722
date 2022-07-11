@@ -17,6 +17,9 @@ namespace rat
             ~RenderTexture();
 
             virtual void create(size_t width, size_t height, RGBA color = RGBA(1, 1, 1, 1));
+            //virtual void create_from(SDL_Surface*);
+            //virtual void create_from(Image&);
+            //virtual void load(const std::string& path);
 
             void render(const Renderable*, Transform = rat::Transform(), Shader* = nullptr) const override;
             SDL_Renderer* get_renderer() override;
@@ -52,8 +55,6 @@ namespace rat
     {
         if (not Texture::valid())
             return;
-
-        SDL_UnlockTexture(_native);
 
         glBindFramebuffer(GL_FRAMEBUFFER, _framebuffer_id);
         glBindTexture(GL_TEXTURE_2D, get_native_handle());
@@ -91,8 +92,6 @@ namespace rat
 
         glBindFramebuffer(GL_FRAMEBUFFER, _framebuffer_id);
         glBindTexture(GL_TEXTURE_2D, get_native_handle());
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, get_native_handle(), 0);
 
         GLenum draw_buffers[1] = {GL_COLOR_ATTACHMENT0};
@@ -134,6 +133,28 @@ namespace rat
     void RenderTexture::create(size_t width, size_t height, RGBA color)
     {
         _native = SDL_CreateTexture(_renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_TARGET, width, height);
+        auto id = get_native_handle();
+
+        std::vector<float> data;
+        data.reserve(width * height * 4);
+        for (size_t i = 0; i < width * height; ++i)
+        {
+            data.push_back(color.r);
+            data.push_back(color.g);
+            data.push_back(color.b);
+            data.push_back(color.a);
+        }
+
+        glBindTexture(GL_TEXTURE_2D, id);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, data.data());
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, get_wrap_mode());
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,  get_wrap_mode());
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, get_filter_mode());
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, get_filter_mode());
+
+        glBindTexture(GL_TEXTURE_2D, 0);
     }
 }
 

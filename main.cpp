@@ -39,9 +39,6 @@ int main()
     shapes.push_back(RectangleShape({100, 100}, {400, 300})); //, 50));
     shapes.back().set_centroid(Vector2f(window.get_size().x * 0.5, window.get_size().y * 0.5));
 
-    shapes.push_back(CircleShape(Vector2f(window.get_size().x * 0.5, window.get_size().y * 0.5), 10, 16));
-    shapes.back().set_color(RGBA(0, 1, 0, 1));
-
     auto content = "In animal crossing, scrolling <b>pauses</b> on punctuation. This makes the scroll dialogue feel as if it was being read out loud. Other than this, I stole the format tags from <b>Paper Mario: TTYD</b>, which uses|| <fx_r><fx_w>RAINBOW TEXT</fx_w></fx_r> like dis.|||||||||||\n\n<col=(0.25, 0.25, 0.25)>(also Undertale but <b><fx_s>fuck</fx_s></b> that game)</col>";
     auto position = {50, 50};
     auto width = window.get_size().x - 2 * 50;
@@ -52,19 +49,86 @@ int main()
     auto texture = RenderTexture(window);
     texture.load("/home/clem/Workspace/mousetrap/mole.png");
 
-    glBindTexture(GL_TEXTURE_2D, texture.get_native_handle());
+    auto render_texture = RenderTexture(window);
+    render_texture.load("/home/clem/Workspace/mousetrap/mole.png");
+
+    size_t _width = render_texture.get_size().x;
+    size_t _height = render_texture.get_size().y;
+
+    /*
+    std::vector<float> data;
+    data.reserve(_width * _height * 4);
+    for (size_t i = 0; i < _width * _height; ++i)
+    {
+        data.push_back(1);
+        data.push_back(0);
+        data.push_back(0);
+        data.push_back(1);
+    }
+
+    glBindTexture(GL_TEXTURE_2D, render_texture.get_native_handle());
     glTexImage2D(GL_TEXTURE_2D,
                  0,
                  GL_RGBA32F,
-                 texture.get_size().x,
-                 texture.get_size().y,
+                 _width,
+                 _height,
                  0,
                  GL_RGBA,
                  GL_FLOAT,
-                 0);
+                 data.data());
+                 */
+
+    GLuint FramebufferName = 0;
+    glGenFramebuffers(1, &FramebufferName);
+    glBindFramebuffer(GL_FRAMEBUFFER, FramebufferName);
+
+    glBindTexture(GL_TEXTURE_2D, render_texture.get_native_handle());
+
+    GLuint depthrenderbuffer;
+    glGenRenderbuffers(1, &depthrenderbuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, _width, _height);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
+
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, render_texture.get_native_handle(), 0);
+    GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+    glDrawBuffers(1, DrawBuffers);
+
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cerr << "framebuffer incomplete" << std::endl;
+
+    /*
+    glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(0, 1, 1, 1);
+    text.render(&window);
+     */
+
+    SDL_GL_MakeCurrent(window.get_native(), window.get_context());
+    SDL_RenderClear(window.get_renderer());
+
+    auto rect = SDL_Rect();
+    rect.x = 0;
+    rect.y = 0;
+    rect.w = 10000;
+    rect.h = 10000;
+
+    SDL_SetRenderDrawColor(window.get_renderer(), 0, 255, 255, 255);
+    SDL_RenderDrawRect(window.get_renderer(), &rect);
+    SDL_RenderFlush(window.get_renderer());
+    SDL_RenderPresent(window.get_renderer());
+
+    text.render(&window);
+    SDL_GL_SwapWindow(window.get_native());
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    SDL_RenderClear(window.get_renderer());
 
     for (auto& shape : shapes)
-        shape.set_texture(&texture);
+      shape.set_texture(&render_texture);
 
     while (not InputHandler::exit_requested())
     {
