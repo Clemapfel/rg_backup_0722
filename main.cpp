@@ -50,10 +50,9 @@ int main()
 
     // TODO
     auto texture = RenderTexture(window);
-    texture.create(500, 500, RGBA(0, 0, 0, 1));
+    texture.load("/home/clem/Workspace/mousetrap/mole.png"); //create(500, 500, RGBA(0, 0, 0, 1));
 
     /*
-
     SDL_SetRenderTarget(window.get_renderer(), texture._native);
 
     SDL_SetRenderDrawColor(window.get_renderer(), 255, 0, 0, 255);

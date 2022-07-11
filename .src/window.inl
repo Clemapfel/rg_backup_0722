@@ -101,7 +101,7 @@ namespace rat
         SDL_RenderSetVSync(_renderer, true);
         SDL_GL_SetSwapInterval(-1);
 
-        SDL_GL_MakeCurrent(_window, _gl_context);
+        // SDL_GL_MakeCurrent(_window, _gl_context);
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
