@@ -50,23 +50,18 @@ int main()
 
     // TODO
     auto texture = RenderTexture(window);
-    texture.load("/home/clem/Workspace/mousetrap/mole.png"); //create(500, 500, RGBA(0, 0, 0, 1));
+    texture.load("/home/clem/Workspace/mousetrap/mole.png");
 
-    /*
-    SDL_SetRenderTarget(window.get_renderer(), texture._native);
-
-    SDL_SetRenderDrawColor(window.get_renderer(), 255, 0, 0, 255);
-    SDL_RenderClear(window.get_renderer());
-
-    text.render(&texture);
-
-    SDL_GL_SwapWindow(window.get_native());
-    SDL_RenderFlush(window.get_renderer());
-    SDL_RenderPresent(window.get_renderer());
-
-    SDL_SetRenderTarget(window.get_renderer(), nullptr);
-     */
-    // TODO
+    glBindTexture(GL_TEXTURE_2D, texture.get_native_handle());
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGBA32F,
+                 texture.get_size().x,
+                 texture.get_size().y,
+                 0,
+                 GL_RGBA,
+                 GL_FLOAT,
+                 0);
 
     for (auto& shape : shapes)
         shape.set_texture(&texture);

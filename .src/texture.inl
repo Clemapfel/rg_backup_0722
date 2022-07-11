@@ -48,6 +48,9 @@ namespace rat
     void Texture::load(const std::string &path)
     {
         _native = IMG_LoadTexture(_renderer, path.c_str());
+        if (_native == nullptr)
+            std::cerr << "[WARNING] In Texture::load: Unable to load image at " << path << std::endl;
+
         _initialized = true;
     }
 
@@ -64,7 +67,7 @@ namespace rat
         if (not valid())
             return;
 
-        SDL_GL_BindTexture(_native, nullptr, nullptr);
+        glBindTexture(GL_TEXTURE_2D, get_native_handle());
     }
 
     void Texture::unbind()
@@ -72,7 +75,7 @@ namespace rat
         if (not valid())
             return;
 
-        SDL_GL_UnbindTexture(_native);
+        glBindTexture(GL_TEXTURE_2D, 0);
     }
 
     bool Texture::valid() const

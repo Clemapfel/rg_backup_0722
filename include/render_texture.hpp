@@ -112,7 +112,6 @@ namespace rat
 
         renderable->render(this, transform, shader);
 
-
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glBindTexture(GL_TEXTURE_2D, 0);
     }
