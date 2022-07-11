@@ -77,7 +77,8 @@ namespace rat
 
             void render(const Renderable*, Transform = rat::Transform(), Shader* = nullptr) const override;
             SDL_Renderer* get_renderer() override;
-            Transform& get_global_transform() override;
+            Transform get_global_transform() const override;
+            void set_global_transform(Transform) override;
 
         private:
             static inline bool _sdl_initialized = false;

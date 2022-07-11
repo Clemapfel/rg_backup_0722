@@ -46,24 +46,31 @@ int main()
     auto position = {50, 50};
     auto width = window.get_size().x - 2 * 50;
     auto text = Text(48, "Roboto");
-    text.create_as_scrolling(window, {50, 50}, content, width);
+    text.create(window, {50, 50}, content, width);
 
-    auto transform = Transform()._transform;
-    float scale = 1;
+    // TODO
+    auto texture = RenderTexture(window);
+    texture.create(500, 500, RGBA(0, 0, 0, 1));
 
-    auto texture = Texture(window);
-    texture.load("/home/clem/Workspace/mousetrap/mole.png");
+    /*
+
+    SDL_SetRenderTarget(window.get_renderer(), texture._native);
+
+    SDL_SetRenderDrawColor(window.get_renderer(), 255, 0, 0, 255);
+    SDL_RenderClear(window.get_renderer());
+
+    text.render(&texture);
+
+    SDL_GL_SwapWindow(window.get_native());
+    SDL_RenderFlush(window.get_renderer());
+    SDL_RenderPresent(window.get_renderer());
+
+    SDL_SetRenderTarget(window.get_renderer(), nullptr);
+     */
+    // TODO
 
     for (auto& shape : shapes)
         shape.set_texture(&texture);
-
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-
-    InputHandler::update();
-    auto time = window.update();
-    SDL_GL_SwapWindow(window.get_native());
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 30));
 
     while (not InputHandler::exit_requested())
     {
@@ -184,7 +191,7 @@ int main()
         SDL_Delay(1000 / 15);
     }
 
-    /*
+     /*
     auto shader = Shader();
 
     SDL_Window* gWindow = window.get_native();

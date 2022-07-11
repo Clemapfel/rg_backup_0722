@@ -39,10 +39,10 @@ namespace rat
             Texture(Texture&&);
             Texture& operator=(Texture&&);
 
-            void create(size_t width, size_t height, RGBA color = RGBA(1, 1, 1, 1));
-            void create_from(SDL_Surface*); // rat::Image implicitly converted to SDL_Surface
+            virtual void create(size_t width, size_t height, RGBA color = RGBA(1, 1, 1, 1));
+            virtual void create_from(SDL_Surface*); // rat::Image implicitly converted to SDL_Surface
 
-            void load(const std::string& path);
+            virtual void load(const std::string& path);
 
             Vector2ui get_size() const;
             SDL_Texture* get_native();
@@ -59,26 +59,16 @@ namespace rat
 
             GLNativeHandle get_native_handle() const;
 
-        protected:
+        //protected:
             SDL_Renderer* _renderer;
             SDL_Texture* _native;
-            mutable GLNativeHandle _native_handle;
+            mutable GLNativeHandle _native_handle = 0;
 
         private:
             bool _initialized = false;
             bool _mipmap_enabled;
             WrapMode _wrap_mode = WrapMode::REPEAT;
             FilterMode _filter_mode = FilterMode::NEAREST_NEIGHBOUR;
-    };
-
-    class RenderTexture : public Texture, public RenderTarget
-    {
-        public:
-            RenderTexture(RenderTarget& window_context);
-
-            void render(const Renderable*, Transform = rat::Transform(), Shader* = nullptr) const override;
-            SDL_Renderer* get_renderer() override;
-            Transform& get_global_transform() override;
     };
 }
 

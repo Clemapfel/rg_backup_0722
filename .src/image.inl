@@ -68,8 +68,9 @@ namespace rat
         _data = SDL_CreateRGBSurface(0, _width, _height, 32, r_mask, g_mask, b_mask, a_mask);
         
         auto value = color_to_bit(color);
-        for (size_t i = 0, j = 0; i < _width and j < _height; ++i, ++j)
-            ((uint32_t*) _data->pixels)[to_linear_index(i, j)] = value;
+        for (size_t i = 0; i < _width; ++i)
+            for (size_t j = 0; j < _height; ++j)
+                ((uint32_t*) _data->pixels)[to_linear_index(i, j)] = value;
     }
 
     void Image::load(const std::string &path)

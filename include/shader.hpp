@@ -59,7 +59,7 @@ namespace rat
                 in vec4 _vertex_color;
                 in vec2 _vertex_texture_coordinate;
 
-                layout (location = 0) out vec4 _fragment_color;
+                out vec4 _fragment_color;
 
                 uniform int _texture_set;
                 uniform sampler2D _texture;

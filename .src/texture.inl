@@ -96,6 +96,7 @@ namespace rat
         SDL_GL_BindTexture(_native, nullptr, nullptr);
 
         glGetIntegerv(GL_TEXTURE_BINDING_2D, &id);
+
         _native_handle = id;
 
         SDL_GL_UnbindTexture(_native);

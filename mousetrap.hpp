@@ -7,6 +7,8 @@
 #include <include/input_handler.hpp>
 #include <include/keycodes.hpp>
 #include <include/window.hpp>
+#include <include/texture.hpp>
+#include <include/render_texture.hpp>
 #include <include/shader.hpp>
 #include <include/geometric_shapes.hpp>
 #include <include/colors.hpp>

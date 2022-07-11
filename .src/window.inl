@@ -99,7 +99,9 @@ namespace rat
         _renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC |
                                                     SDL_RENDERER_TARGETTEXTURE);
         SDL_RenderSetVSync(_renderer, true);
-        SDL_GL_SetSwapInterval(1);
+        SDL_GL_SetSwapInterval(-1);
+
+        SDL_GL_MakeCurrent(_window, _gl_context);
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -186,9 +188,14 @@ namespace rat
         return &_gl_context;
     }
 
-    Transform& Window::get_global_transform()
+    Transform Window::get_global_transform() const
     {
         return _global_transform;
+    }
+
+    void Window::set_global_transform(Transform transform)
+    {
+        _global_transform = transform;
     }
 
     void Window::close()

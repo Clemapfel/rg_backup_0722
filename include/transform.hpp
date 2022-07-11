@@ -27,7 +27,7 @@ namespace rat
             void translate(Vector2f gl_offset);
             void scale(float x, float y);
 
-            glm::mat4x4 _transform;
+            glm::mat4x4 transform;
     };
 }
 
@@ -36,7 +36,7 @@ namespace rat
 namespace rat
 {
     Transform::Transform()
-            : _transform(1)
+            : transform(1)
     {}
 
     Vector2f Transform::apply_to(Vector2f point)
@@ -47,31 +47,31 @@ namespace rat
     Vector3f Transform::apply_to(Vector3f point)
     {
         Vector4f temp = Vector4f(point.x, point.y, point.z, 1);
-        temp = _transform * temp;
+        temp = transform * temp;
         return temp;
     }
 
     Transform Transform::combine_with(Transform other)
     {
         auto out = Transform();
-        out._transform = this->_transform * other._transform;
+        out.transform = this->transform * other.transform;
         return out;
     }
 
     void Transform::translate(Vector2f vec)
     {
-        _transform = glm::translate(_transform, Vector3f(vec.x, vec.y, 0));
+        transform = glm::translate(transform, Vector3f(vec.x, vec.y, 0));
     }
 
     void Transform::rotate(Angle angle, Vector2f origin)
     {
-        _transform = glm::translate(_transform, Vector3f(-origin.x, -origin.y, 0));
-        _transform = glm::rotate(_transform, angle.as_radians(), glm::vec3(0, 0, 1));
-        _transform = glm::translate(_transform, Vector3f(origin.x, origin.y, 0));
+        transform = glm::translate(transform, Vector3f(-origin.x, -origin.y, 0));
+        transform = glm::rotate(transform, angle.as_radians(), glm::vec3(0, 0, 1));
+        transform = glm::translate(transform, Vector3f(origin.x, origin.y, 0));
     }
 
     void Transform::scale(float x, float y)
     {
-        _transform = glm::scale(_transform, Vector3f(x, y, 1));
+        transform = glm::scale(transform, Vector3f(x, y, 1));
     }
 }

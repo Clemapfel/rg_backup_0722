@@ -13,14 +13,16 @@ namespace rat
     {
         auto size = get_viewport_size();
 
-        auto &transform = _target->get_global_transform()._transform;
-        transform = glm::mat4x4(1);
+        auto to_set = Transform();
+        auto& transform = to_set.transform;
 
         transform = glm::translate(transform, Vector3f(0.5 * size.x, 0.5 * size.y, 0));
+        transform = glm::translate(transform, Vector3f(-_position.x, -_position.y, -_position.z));
         transform = glm::rotate(transform, _rotation.as_radians(), glm::vec3(0, 0, 1));
         transform = glm::scale(transform, Vector3f(_zoom, _zoom, 1));
         transform = glm::translate(transform, Vector3f(-0.5 * size.x, -0.5 * size.y, 0));
-        transform = glm::translate(transform, Vector3f(-_position.x, -_position.y, -_position.z));
+
+        _target->set_global_transform(to_set);
     }
 
     void Camera::move(float x, float y)
