@@ -51,54 +51,13 @@ int main()
 
     auto render_texture = RenderTexture(window);
     render_texture.load("/home/clem/Workspace/mousetrap/mole.png");
+    render_texture._native = SDL_CreateTexture(window.get_renderer(), SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_TARGET, 400, 300);
+
+    if (SDL_SetRenderTarget(window.get_renderer(), render_texture.get_native()) != 0)
+        std::cerr << SDL_GetError() << std::endl;
 
     size_t _width = render_texture.get_size().x;
     size_t _height = render_texture.get_size().y;
-
-    /*
-    std::vector<float> data;
-    data.reserve(_width * _height * 4);
-    for (size_t i = 0; i < _width * _height; ++i)
-    {
-        data.push_back(1);
-        data.push_back(0);
-        data.push_back(0);
-        data.push_back(1);
-    }
-
-    glBindTexture(GL_TEXTURE_2D, render_texture.get_native_handle());
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,
-                 GL_RGBA32F,
-                 _width,
-                 _height,
-                 0,
-                 GL_RGBA,
-                 GL_FLOAT,
-                 data.data());
-                 */
-
-    GLuint FramebufferName = 0;
-    glGenFramebuffers(1, &FramebufferName);
-    glBindFramebuffer(GL_FRAMEBUFFER, FramebufferName);
-
-    glBindTexture(GL_TEXTURE_2D, render_texture.get_native_handle());
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, _width, _height, 0, GL_RGBA, GL_FLOAT, 0);
-
-    GLuint depthrenderbuffer;
-    glGenRenderbuffers(1, &depthrenderbuffer);
-    glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, _width, _height);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
-
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, render_texture.get_native_handle(), 0);
-    GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
-    glDrawBuffers(1, DrawBuffers);
-
-    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        std::cerr << "framebuffer incomplete" << std::endl;
-
-    text.set_top_left({0, 0});
 
     SDL_GL_MakeCurrent(window.get_native(), window.get_context());
     SDL_RenderClear(window.get_renderer());
@@ -117,8 +76,8 @@ int main()
     //glEnable(GL_BLEND);
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    //text.render(&window);
-    //SDL_GL_SwapWindow(window.get_native());
+    text.render(&window);
+    SDL_GL_SwapWindow(window.get_native());
 
     SDL_RenderFlush(window.get_renderer());
     SDL_RenderPresent(window.get_renderer());
@@ -129,6 +88,8 @@ int main()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     SDL_RenderClear(window.get_renderer());
+
+    SDL_SetRenderTarget(window.get_renderer(), nullptr);
 
     glViewport(0, 0, window.get_size().x, window.get_size().y);
 

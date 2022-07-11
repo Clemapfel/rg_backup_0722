@@ -59,7 +59,7 @@ namespace rat
 
             GLNativeHandle get_native_handle() const;
 
-        protected:
+        //protected:
             SDL_Renderer* _renderer;
             SDL_Texture* _native;
             mutable GLNativeHandle _native_handle = 0;
