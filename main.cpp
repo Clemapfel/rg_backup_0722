@@ -83,6 +83,7 @@ int main()
     glBindFramebuffer(GL_FRAMEBUFFER, FramebufferName);
 
     glBindTexture(GL_TEXTURE_2D, render_texture.get_native_handle());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, _width, _height, 0, GL_RGBA, GL_FLOAT, 0);
 
     GLuint depthrenderbuffer;
     glGenRenderbuffers(1, &depthrenderbuffer);
@@ -97,28 +98,30 @@ int main()
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         std::cerr << "framebuffer incomplete" << std::endl;
 
-    /*
-    glClear(GL_COLOR_BUFFER_BIT);
-    glClearColor(0, 1, 1, 1);
-    text.render(&window);
-     */
+    text.set_top_left({0, 0});
 
     SDL_GL_MakeCurrent(window.get_native(), window.get_context());
     SDL_RenderClear(window.get_renderer());
 
-    auto rect = SDL_Rect();
-    rect.x = 0;
-    rect.y = 0;
-    rect.w = 10000;
-    rect.h = 10000;
+    glViewport(0, 0, 1000, 1000);
 
-    SDL_SetRenderDrawColor(window.get_renderer(), 0, 255, 255, 255);
-    SDL_RenderDrawRect(window.get_renderer(), &rect);
+    auto rect = SDL_Rect();
+    rect.x = 20;
+    rect.y = 100;
+    rect.w = 500;
+    rect.h = 500;
+
+    SDL_SetRenderDrawColor(window.get_renderer(), 255, 0, 255, 255);
+    SDL_RenderFillRect(window.get_renderer(), &rect);
+
+    //glEnable(GL_BLEND);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    //text.render(&window);
+    //SDL_GL_SwapWindow(window.get_native());
+
     SDL_RenderFlush(window.get_renderer());
     SDL_RenderPresent(window.get_renderer());
-
-    text.render(&window);
-    SDL_GL_SwapWindow(window.get_native());
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -127,8 +130,12 @@ int main()
 
     SDL_RenderClear(window.get_renderer());
 
+    glViewport(0, 0, window.get_size().x, window.get_size().y);
+
     for (auto& shape : shapes)
       shape.set_texture(&render_texture);
+
+    //SDL_Delay(10000);
 
     while (not InputHandler::exit_requested())
     {
@@ -191,7 +198,7 @@ int main()
 
         auto clock = Clock();
         text.update(time);
-        text.render(&window);
+        //text.render(&window);
 
         const float offset = 10;
         for (auto& shape : shapes)
