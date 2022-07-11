@@ -122,10 +122,10 @@ namespace rat
         glDeleteBuffers(1, &_element_buffer_id);
     }
 
-    void Shape::render(RenderTarget& target, Transform transform, Shader* shader) const
+    void Shape::render(const RenderTarget* target, Transform transform, Shader* shader) const
     {
         GLNativeHandle program_id;
-        transform = transform.combine_with(target.get_global_transform());
+        transform = transform.combine_with(target->get_global_transform());
 
         if (shader == nullptr)
             program_id = _noop_shader->get_program_id();
@@ -133,7 +133,6 @@ namespace rat
             program_id = shader->get_program_id();
 
         auto positions = _positions;
-
         for (size_t i = 2; i < positions.size(); i += 3)
         {
             auto gl_point = Vector3f(positions.at(i-2), positions.at(i-1), positions.at(0));

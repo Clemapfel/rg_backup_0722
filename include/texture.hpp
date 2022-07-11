@@ -59,15 +59,26 @@ namespace rat
 
             GLNativeHandle get_native_handle() const;
 
-        private:
-            bool _initialized = false;
+        protected:
             SDL_Renderer* _renderer;
             SDL_Texture* _native;
             mutable GLNativeHandle _native_handle;
 
+        private:
+            bool _initialized = false;
             bool _mipmap_enabled;
             WrapMode _wrap_mode = WrapMode::REPEAT;
             FilterMode _filter_mode = FilterMode::NEAREST_NEIGHBOUR;
+    };
+
+    class RenderTexture : public Texture, public RenderTarget
+    {
+        public:
+            RenderTexture(RenderTarget& window_context);
+
+            void render(const Renderable*, Transform = rat::Transform(), Shader* = nullptr) const override;
+            SDL_Renderer* get_renderer() override;
+            Transform& get_global_transform() override;
     };
 }
 

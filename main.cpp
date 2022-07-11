@@ -73,11 +73,7 @@ int main()
         if (InputHandler::was_pressed(ESCAPE))
             break;
 
-        glClear(GL_COLOR_BUFFER_BIT);
-        glClearColor(0, 0, 0, 1);
-
-        text.update(time);
-        text.render(window);
+        window.clear();
 
         if (InputHandler::is_down(KeyboardKey::UP))
         {
@@ -128,12 +124,16 @@ int main()
             camera.center_on(shapes.front().get_centroid());
         }
 
+        auto clock = Clock();
+        text.update(time);
+        text.render(&window);
+
         const float offset = 10;
         for (auto& shape : shapes)
-            shape.render(window);
+            shape.render(&window);
 
-        SDL_GL_SwapWindow(window.get_native());
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 60));
+        window.flush();
+        window.display();
     }
 
     return 0;

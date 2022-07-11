@@ -12,7 +12,7 @@ namespace rat
     class Camera
     {
         public:
-            Camera(Window*);
+            Camera(RenderTarget*);
 
             // set
             void center_on(Vector2f);
@@ -32,7 +32,7 @@ namespace rat
             float _zoom = 1;
             Angle _rotation = degrees(0);
 
-            Window* _window;
+            RenderTarget* _target;
 
             glm::vec3 _position = glm::vec3(0.0f, 0.0f, 0.0f);
             static inline const glm::vec3 _direction = glm::vec3(0.0f, 0.0f, -1.0f);

@@ -38,7 +38,7 @@ namespace rat
         }
     }
 
-    void Text::render(RenderTarget& target, Transform transform, Shader* shader) const
+    void Text::render(const RenderTarget* target, Transform transform, Shader* shader) const
     {
         for (size_t i = 0; i < _glyphs.size(); ++i)
         {

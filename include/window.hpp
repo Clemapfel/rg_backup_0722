@@ -43,9 +43,9 @@ namespace rat
 
             Time update();
 
-            void render(const Renderable*, Transform = rat::Transform());
             void clear();
             void flush();
+            void display();
 
             void create(std::string title, size_t width, size_t height, uint32_t options = DEFAULT, size_t anti_aliasing_samples = 8);
             void set_icon(const std::string& path);
@@ -73,12 +73,13 @@ namespace rat
 
             WindowID get_id() const;
             SDL_Window* get_native();
-            SDL_Renderer* get_renderer() override;
             SDL_GLContext* get_context();
 
-            Transform get_global_transform() const override;
+            void render(const Renderable*, Transform = rat::Transform(), Shader* = nullptr) const override;
+            SDL_Renderer* get_renderer() override;
+            Transform& get_global_transform() override;
 
-        //private:
+        private:
             static inline bool _sdl_initialized = false;
 
             SDL_Window* _window = nullptr;

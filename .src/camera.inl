@@ -5,22 +5,21 @@
 
 namespace rat
 {
-    Camera::Camera(Window *window)
-            : _window(window)
+    Camera::Camera(RenderTarget *target)
+            : _target(target)
     {}
 
     void Camera::update()
     {
         auto size = get_viewport_size();
 
-        auto &transform = _window->_global_transform._transform;
+        auto &transform = _target->get_global_transform()._transform;
         transform = glm::mat4x4(1);
 
         transform = glm::translate(transform, Vector3f(0.5 * size.x, 0.5 * size.y, 0));
         transform = glm::rotate(transform, _rotation.as_radians(), glm::vec3(0, 0, 1));
         transform = glm::scale(transform, Vector3f(_zoom, _zoom, 1));
         transform = glm::translate(transform, Vector3f(-0.5 * size.x, -0.5 * size.y, 0));
-
         transform = glm::translate(transform, Vector3f(-_position.x, -_position.y, -_position.z));
     }
 
@@ -63,7 +62,7 @@ namespace rat
     {
         auto size = get_viewport_size();
         Vector2f center = Vector2f(size.x * 0.5, size.y * 0.5);
-        center = _window->_global_transform.apply_to(center);
+        center = _target->get_global_transform().apply_to(center);
         return center;
     }
 
@@ -81,6 +80,6 @@ namespace rat
 
     Vector2f Camera::apply_to(Vector2f point)
     {
-        return _window->_global_transform.apply_to(point);
+        return _target->get_global_transform().apply_to(point);
     }
 }

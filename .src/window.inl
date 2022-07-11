@@ -3,6 +3,9 @@
 // Created on 6/26/22 by clem (mail@clemens-cords.com)
 //
 
+#include <thread>
+#include <chrono>
+
 namespace rat
 {
     void Window::create(
@@ -163,10 +166,9 @@ namespace rat
             SDL_FreeSurface(_icon);
     }
 
-    void Window::render(const Renderable *object, Transform transform)
+    void Window::render(const Renderable *object, Transform transform, Shader* shader) const
     {
-        //transform *= _global_transform;
-        object->render((*this), transform);
+        object->render(this, transform, shader);
     }
 
     SDL_Window *Window::get_native()
@@ -184,7 +186,7 @@ namespace rat
         return &_gl_context;
     }
 
-    Transform Window::get_global_transform() const
+    Transform& Window::get_global_transform()
     {
         return _global_transform;
     }
@@ -314,13 +316,25 @@ namespace rat
 
     void Window::clear()
     {
-        SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 255);
-        SDL_RenderClear(_renderer);
+        //SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 255);
+        //SDL_RenderClear(_renderer);
+
+        glClear(GL_COLOR_BUFFER_BIT);
+        glClearColor(0, 0, 0, 1);
     }
 
     void Window::flush()
     {
-        SDL_RenderFlush(_renderer);
-        SDL_RenderPresent(_renderer);
+        //SDL_RenderFlush(_renderer);
+        //SDL_RenderPresent(_renderer);
+
+        SDL_GL_SwapWindow(get_native());
+    }
+
+    void Window::display()
+    {
+        static auto clock = Clock();
+        auto delta = seconds(1.f / 60) - clock.restart();
+        std::this_thread::sleep_for(std::chrono::milliseconds((size_t) delta.as_milliseconds()));
     }
 }
