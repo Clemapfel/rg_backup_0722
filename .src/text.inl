@@ -86,6 +86,58 @@ namespace rat
         }
     }
 
+    size_t Text::glyph_to_hash(Glyph& glyph)
+    {
+        size_t hash = 0;
+
+        auto is = [&glyph](std::array<bool, 4> in) -> bool {
+
+            if (glyph._is_bold != in.at(0) or
+                glyph._is_italic != in.at(1) or
+                glyph._is_underlined != in.at(2) or
+                glyph._is_strikethrough != in.at(3))
+                return false;
+
+            return true;
+        };
+
+        if (is({0, 0, 0, 0}))
+            hash += 0;
+        else if (is({0, 0, 0, 1}))
+            hash += 1000;
+        else if (is({0, 0, 1, 0}))
+            hash += 2000;
+        else if (is({0, 0, 1, 1}))
+            hash += 3000;
+        else if (is({0, 1, 0, 0}))
+            hash += 4000;
+        else if (is({0, 1, 0, 1}))
+            hash += 5000;
+        else if (is({0, 1, 1, 0}))
+            hash += 6000;
+        else if (is({0, 1, 1, 1}))
+            hash += 7000;
+        else if (is({1, 0, 0, 0}))
+            hash += 8000;
+        else if (is({1, 0, 0, 1}))
+            hash += 9000;
+        else if (is({1, 0, 1, 0}))
+            hash += 10000;
+        else if (is({1, 0, 1, 1}))
+            hash += 11000;
+        else if (is({1, 1, 0, 0}))
+            hash += 12000;
+        else if (is({1, 1, 0, 1}))
+            hash += 13000;
+        else if (is({1, 1, 1, 0}))
+            hash += 14000;
+        else if (is({1, 1, 1, 1}))
+            hash += 15000;
+
+        hash += glyph._content.back();
+        return hash;
+    }
+
     void Text::create(RenderTarget& target, Vector2f position, const std::string& formatted_text, size_t width_px, int line_spacer)
     {
         _position = position;
@@ -127,7 +179,7 @@ namespace rat
 
         auto push_glyph = [&](const std::string& raw, Vector2f position)
         {
-            _glyphs.emplace_back(target);
+            _glyphs.emplace_back();
             auto& glyph = _glyphs.back();
             glyph._is_bold = bold_active;
             glyph._is_italic = italic_active;
@@ -190,7 +242,6 @@ namespace rat
                 style |= TTF_STYLE_STRIKETHROUGH;
 
             TTF_SetFontStyle(current_font, style);
-
             SDL_Surface* surface = nullptr;
 
             if (should_render)
@@ -205,7 +256,18 @@ namespace rat
                 }
             }
 
-            glyph._texture.create_from(surface);
+            auto hash = glyph_to_hash(glyph);
+            if (_glyph_texture_index.find(hash) == _glyph_texture_index.end())
+            {
+                auto it = _glyph_texture_index.emplace(
+                    std::piecewise_construct,
+                    std::forward_as_tuple(hash),
+                    std::forward_as_tuple(target)
+                );
+                it.first->second.create_from(surface);
+            }
+
+            glyph._texture = &_glyph_texture_index.at(hash);
             position.y -= (font_height * 0.5);
 
             glyph._shape = RectangleShape(position, surface != nullptr ? Vector2f(surface->w, surface->h) : Vector2f(0, 0));
@@ -589,7 +651,7 @@ namespace rat
             warn_never_closed("background color", color_background_tag);
 
         for (auto& g : _glyphs)
-            g._shape.set_texture(&g._texture);
+            g._shape.set_texture(g._texture);
 
         apply_wrapping();
 
@@ -614,6 +676,9 @@ namespace rat
             glyph._background_shape.set_texture(nullptr);
             glyph._background_shape.set_color(glyph._background_color);
         }
+
+        std::cout << "n letters: " << _glyphs.size() << std::endl;
+        std::cout << "n textures: " << _glyph_texture_index.size() << std::endl;
     }
 
     void Text::create_as_scrolling(RenderTarget & target, Vector2f position, const std::string &formatted_text, size_t width_px, int line_spacer)

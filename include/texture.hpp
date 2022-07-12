@@ -63,7 +63,6 @@ namespace rat
             bool _initialized = false;
 
         private:
-            bool _mipmap_enabled;
             WrapMode _wrap_mode = WrapMode::REPEAT;
             FilterMode _filter_mode = FilterMode::NEAREST_NEIGHBOUR;
     };

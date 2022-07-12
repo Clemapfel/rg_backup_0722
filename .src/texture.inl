@@ -22,7 +22,6 @@ namespace rat
     {
         _native = other._native;
         _initialized = other._initialized;
-        _mipmap_enabled = other._mipmap_enabled;
         _wrap_mode = other._wrap_mode;
         _filter_mode = other._filter_mode;
 

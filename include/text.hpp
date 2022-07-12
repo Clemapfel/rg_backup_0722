@@ -8,6 +8,7 @@
 #include <SDL2/SDL_ttf.h>
 
 #include <map>
+#include <unordered_map>
 #include <string>
 #include <memory>
 #include <deque>
@@ -185,9 +186,7 @@ namespace rat
 
             struct Glyph
             {
-                Glyph(RenderTarget& target)
-                    : _texture(target)
-                {}
+                Glyph() = default;
 
                 void set_top_left(Vector2f pos)
                 {
@@ -210,7 +209,7 @@ namespace rat
                      _background_color = RGBA(0, 0, 0, 0);
 
                 std::string _content;
-                StaticTexture _texture;
+                StaticTexture* _texture;
                 Shape _shape;
                 Shape _background_shape;
             };
@@ -222,6 +221,9 @@ namespace rat
 
             void apply_wrapping();
             std::deque<Glyph> _glyphs = {};
+
+            size_t glyph_to_hash(Glyph&);
+            std::unordered_map<size_t, StaticTexture> _glyph_texture_index;
 
             std::set<size_t> _shake_indices,
                              _wave_indices,
