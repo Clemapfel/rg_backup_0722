@@ -65,16 +65,19 @@ int main()
     glViewport(0, 0, 1000, 1000);
 
     auto rect = SDL_Rect();
-    rect.x = 20;
-    rect.y = 100;
+    rect.x = 0;
+    rect.y = 0;
     rect.w = 500;
     rect.h = 500;
 
-    SDL_SetRenderDrawColor(window.get_renderer(), 255, 0, 255, 255);
-    SDL_RenderFillRect(window.get_renderer(), &rect);
+    //SDL_SetRenderDrawColor(window.get_renderer(), 255, 255, 255, 255);
+    //SDL_RenderFillRect(window.get_renderer(), &rect);
 
     //glEnable(GL_BLEND);
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     text.render(&window);
     SDL_GL_SwapWindow(window.get_native());
@@ -84,17 +87,21 @@ int main()
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
     SDL_RenderClear(window.get_renderer());
 
     SDL_SetRenderTarget(window.get_renderer(), nullptr);
 
     glViewport(0, 0, window.get_size().x, window.get_size().y);
 
-    for (auto& shape : shapes)
-      shape.set_texture(&render_texture);
+
+    auto& rectangle_shape = shapes.back();
+    rectangle_shape.set_texture(&render_texture);
+    rectangle_shape.set_vertex_texture_coordinate(0, {1, 1});
+    rectangle_shape.set_vertex_texture_coordinate(1, {0, 1});
+    rectangle_shape.set_vertex_texture_coordinate(2, {0, 0});
+    rectangle_shape.set_vertex_texture_coordinate(3, {1, 0});
+
+    auto texture_rect = Rectangle{{1, 1}, {-1, -1}};
 
     //SDL_Delay(10000);
 

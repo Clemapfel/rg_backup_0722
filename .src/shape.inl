@@ -333,7 +333,6 @@ namespace rat
             // anchor at correct top left
             v.texture_coordinates.x += normalized.top_left.x;
             v.texture_coordinates.y += normalized.top_left.y;
-
         }
         update_texture_coordinates();
     }
