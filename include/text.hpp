@@ -210,7 +210,7 @@ namespace rat
                      _background_color = RGBA(0, 0, 0, 0);
 
                 std::string _content;
-                Texture _texture;
+                StaticTexture _texture;
                 Shape _shape;
                 Shape _background_shape;
             };

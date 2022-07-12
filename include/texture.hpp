@@ -27,22 +27,17 @@ namespace rat
         CUBIC              // GL_CUBIC_IMG or GL_CUBIC_MIPMAP_LINEAR_IMG
     };
 
+    /// @brief abstract texture
     class Texture
     {
         public:
-            Texture(RenderTarget&, bool enable_mipmap = false);
-            ~Texture();
+            virtual ~Texture();
 
             Texture(const Texture&) = delete;
             Texture& operator=(const Texture&) = delete;
 
             Texture(Texture&&);
             Texture& operator=(Texture&&);
-
-            virtual void create(size_t width, size_t height, RGBA color = RGBA(1, 1, 1, 1));
-            virtual void create_from(SDL_Surface*); // rat::Image implicitly converted to SDL_Surface
-            virtual void create_from(Image&);
-            virtual void load(const std::string& path);
 
             Vector2ui get_size() const;
             SDL_Texture* get_native();
@@ -59,16 +54,67 @@ namespace rat
 
             GLNativeHandle get_native_handle() const;
 
-        //protected:
-            SDL_Renderer* _renderer;
+        protected:
+            Texture(RenderTarget&);
+
             SDL_Texture* _native;
+            SDL_Renderer* _renderer;
             mutable GLNativeHandle _native_handle = 0;
+            bool _initialized = false;
 
         private:
-            bool _initialized = false;
             bool _mipmap_enabled;
             WrapMode _wrap_mode = WrapMode::REPEAT;
             FilterMode _filter_mode = FilterMode::NEAREST_NEIGHBOUR;
+    };
+
+    /// \brief regular texture, cannot be interacted with once it is gpu-side
+    class StaticTexture : public Texture
+    {
+        public:
+            StaticTexture(RenderTarget&);
+
+            virtual void create(size_t width, size_t height, RGBA color = RGBA(1, 1, 1, 1));
+            virtual void create_from(SDL_Surface*);
+            virtual void create_from(Image&);
+            virtual void load(const std::string& path);
+    };
+
+    /// \brief texture, can be modified once gpu-side
+    class DynamicTexture : public Texture
+    {
+        public:
+            DynamicTexture(RenderTarget&);
+
+            virtual void create(size_t width, size_t height);
+    };
+
+    /// \brief render texture, is a render target
+    class RenderTexture : public Texture, public RenderTarget
+    {
+        public:
+            RenderTexture(Window&);
+
+            virtual void create(size_t width, size_t height);
+
+            void bind_as_render_target();
+            void unbind_as_render_target();
+
+            virtual Transform get_global_transform() const;
+            virtual void set_global_transform(Transform);
+            virtual SDL_Renderer* get_renderer();
+
+            void clear(RGBA = RGBA(0, 0, 0, 1));
+            virtual void render(const Renderable*, Transform = Transform(), Shader* = nullptr) const;
+
+        private:
+            Window* _window;
+
+            bool _currently_bound = false;
+            Transform _global_transform = Transform();
+
+            mutable Vector2ui _previous_viewport_size;
+            mutable Transform _previous_transform;
     };
 }
 

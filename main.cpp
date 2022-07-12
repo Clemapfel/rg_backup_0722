@@ -45,65 +45,16 @@ int main()
     auto text = Text(48, "Roboto");
     text.create(window, {50, 50}, content, width);
 
-    // TODO
-    auto texture = RenderTexture(window);
-    texture.load("/home/clem/Workspace/mousetrap/mole.png");
-
     auto render_texture = RenderTexture(window);
-    render_texture.load("/home/clem/Workspace/mousetrap/mole.png");
-    render_texture._native = SDL_CreateTexture(window.get_renderer(), SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_TARGET, 400, 300);
+    render_texture.create(300, 300);
 
-    if (SDL_SetRenderTarget(window.get_renderer(), render_texture.get_native()) != 0)
-        std::cerr << SDL_GetError() << std::endl;
+    render_texture.bind_as_render_target();
+    render_texture.clear();
+    text.render(&render_texture);
+    render_texture.unbind_as_render_target();
 
-    size_t _width = render_texture.get_size().x;
-    size_t _height = render_texture.get_size().y;
-
-    SDL_GL_MakeCurrent(window.get_native(), window.get_context());
-    SDL_RenderClear(window.get_renderer());
-
-    glViewport(0, 0, 1000, 1000);
-
-    auto rect = SDL_Rect();
-    rect.x = 0;
-    rect.y = 0;
-    rect.w = 500;
-    rect.h = 500;
-
-    //SDL_SetRenderDrawColor(window.get_renderer(), 255, 255, 255, 255);
-    //SDL_RenderFillRect(window.get_renderer(), &rect);
-
-    //glEnable(GL_BLEND);
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    text.render(&window);
-    SDL_GL_SwapWindow(window.get_native());
-
-    SDL_RenderFlush(window.get_renderer());
-    SDL_RenderPresent(window.get_renderer());
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    SDL_RenderClear(window.get_renderer());
-
-    SDL_SetRenderTarget(window.get_renderer(), nullptr);
-
-    glViewport(0, 0, window.get_size().x, window.get_size().y);
-
-
-    auto& rectangle_shape = shapes.back();
-    rectangle_shape.set_texture(&render_texture);
-    rectangle_shape.set_vertex_texture_coordinate(0, {1, 1});
-    rectangle_shape.set_vertex_texture_coordinate(1, {0, 1});
-    rectangle_shape.set_vertex_texture_coordinate(2, {0, 0});
-    rectangle_shape.set_vertex_texture_coordinate(3, {1, 0});
-
-    auto texture_rect = Rectangle{{1, 1}, {-1, -1}};
-
-    //SDL_Delay(10000);
+    for (auto& shape : shapes)
+        shape.set_texture(&render_texture);
 
     while (not InputHandler::exit_requested())
     {
@@ -166,7 +117,13 @@ int main()
 
         auto clock = Clock();
         text.update(time);
-        //text.render(&window);
+
+        render_texture.bind_as_render_target();
+        render_texture.clear();
+        text.render(&render_texture);
+        render_texture.unbind_as_render_target();
+
+        text.render(&window);
 
         const float offset = 10;
         for (auto& shape : shapes)
