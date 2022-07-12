@@ -225,6 +225,7 @@ namespace rat
         //SDL_RenderPresent(_window->get_renderer());
 
         glViewport(0, 0, _previous_viewport_size.x, _previous_viewport_size.y);
+
         _window->set_global_transform(_previous_transform);
         SDL_SetRenderTarget(_window->get_renderer(), nullptr);
         _currently_bound = false;

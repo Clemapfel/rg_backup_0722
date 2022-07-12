@@ -244,9 +244,18 @@ namespace rat
             TTF_SetFontStyle(current_font, style);
             SDL_Surface* surface = nullptr;
 
+            static auto white = []() -> SDL_Color {
+                SDL_Color out;
+                out.r = 255;
+                out.g = 255;
+                out.b = 255;
+                out.a = 255;
+                return out;
+            }();
+
             if (should_render)
             {
-                surface = TTF_RenderText_Blended(current_font, raw.data(), as_sdl_color(foreground));
+                surface = TTF_RenderText_Blended(current_font, raw.data(), white);
                 if (surface == nullptr or surface->w == 0 or surface->h == 0)
                 {
                     std::cerr << "[WARNING] In Text::create: Unable to render char `" << raw << "` (" << int(raw.back())

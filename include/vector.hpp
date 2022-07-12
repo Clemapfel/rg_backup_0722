@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <glm/glm.hpp>
+
 namespace rat
 {
     template<typename T>

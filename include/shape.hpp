@@ -80,7 +80,9 @@ namespace rat
             RGBA get_color() const; // average of all vertices
 
             Texture* get_texture() const;
-            void set_texture(Texture*);
+
+            template<typename Texture_t>
+            void set_texture(Texture_t texture);
 
             Rectangle get_bounding_box() const;
             Vector2f get_size() const;
@@ -129,6 +131,16 @@ namespace rat
                     _texture_coordinate_buffer_id;
 
             static inline const float _default_z = 1;
+
+            // sfinae needed to automatically flip when using render textures only (thanks SDL)
+            template<typename Texture_t, std::enable_if_t<std::is_same_v<Texture_t, StaticTexture>, bool> = true>
+            void set_texture_aux(Texture_t* texture);
+
+            template<typename Texture_t, std::enable_if_t<std::is_same_v<Texture_t, nullptr_t>, bool> = true>
+            void set_texture_aux(Texture_t texture);
+
+            template<typename Texture_t, std::enable_if_t<std::is_same_v<Texture_t, RenderTexture>, bool> = true>
+            void set_texture_aux(Texture_t* texture);
     };
 
     Shape TriangleShape(Vector2f a, Vector2f b, Vector2f c);
@@ -139,7 +151,6 @@ namespace rat
     Shape PolygonShape(std::vector<Vector2f> positions);
     Shape WireframeShape(std::vector<Vector2f>);
     Shape FrameShape(Vector2f top_left, Vector2f size, float width);
-
 }
 
 #include <.src/shape.inl>

@@ -431,11 +431,6 @@ namespace rat
         return _texture;
     }
 
-    void Shape::set_texture(Texture* texture)
-    {
-        _texture = texture;
-    }
-
     void Shape::set_origin(Vector2f relative_to_centroid)
     {
         _origin = relative_to_centroid;
@@ -720,6 +715,37 @@ namespace rat
         auto out = Shape();
         out.as_frame(top_left, size, width);
         return out;
+    }
+
+    template<typename Texture_t>
+    void Shape::set_texture(Texture_t texture)
+    {
+        set_texture_aux(texture);
+    }
+
+    template<typename Texture_t, std::enable_if_t<std::is_same_v<Texture_t, StaticTexture>, bool>>
+    void Shape::set_texture_aux(Texture_t* texture)
+    {
+        _texture = texture;
+    }
+
+    template<typename Texture_t, std::enable_if_t<std::is_same_v<Texture_t, nullptr_t>, bool>>
+    void Shape::set_texture_aux(Texture_t texture)
+    {
+        _texture = texture;
+    }
+
+    template<typename Texture_t, std::enable_if_t<std::is_same_v<Texture_t, RenderTexture>, bool>>
+    void Shape::set_texture_aux(Texture_t* texture)
+    {
+        std::cout << "called" << std::endl;
+        _texture = texture;
+        for (auto& v : _vertices)
+        {
+            v.texture_coordinates.x = v.texture_coordinates.x;
+            v.texture_coordinates.y = 1 - v.texture_coordinates.y;
+        }
+        update_texture_coordinates();
     }
 }
 

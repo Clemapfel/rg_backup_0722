@@ -45,16 +45,26 @@ int main()
     auto text = Text(48, "Roboto");
     text.create(window, {50, 50}, content, width);
 
+    /*
     auto render_texture = RenderTexture(window);
-    render_texture.create(300, 300);
+    render_texture.create(400, 300);
 
     render_texture.bind_as_render_target();
     render_texture.clear();
     text.render(&render_texture);
     render_texture.unbind_as_render_target();
 
+    auto blend_overlay = RectangleShape({0, 0}, {400, 300});
+
     for (auto& shape : shapes)
         shape.set_texture(&render_texture);
+
+*/
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_COLOR, GL_SRC_COLOR);
+    glBlendEquationSeparate(GL_FUNC_SUBTRACT, GL_FUNC_SUBTRACT);
+
+
 
     while (not InputHandler::exit_requested())
     {
@@ -118,10 +128,14 @@ int main()
         auto clock = Clock();
         text.update(time);
 
+        /*
         render_texture.bind_as_render_target();
         render_texture.clear();
         text.render(&render_texture);
         render_texture.unbind_as_render_target();
+
+        blend_overlay.render(&window);
+         */
 
         text.render(&window);
 

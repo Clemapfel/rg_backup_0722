@@ -4,6 +4,8 @@
 //
 
 #include <include/common.hpp>
+#include <include/vector.hpp>
+#include <include/opengl_common.hpp>
 #include <include/input_handler.hpp>
 #include <include/keycodes.hpp>
 #include <include/window.hpp>
