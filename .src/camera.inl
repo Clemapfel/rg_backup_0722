@@ -9,10 +9,30 @@ namespace rat
             : _target(target)
     {}
 
+    RenderTarget* Camera::get_render_target() const
+    {
+        return _target;
+    }
+
+    void Camera::set_render_target(RenderTarget* target)
+    {
+         _target = target;
+         update();
+    }
+
     void Camera::update()
     {
-        auto size = get_viewport_size();
+        if (_target == nullptr)
+        {
+            static bool once = true;
+            if (once)
+            {
+                std::cerr << "in Camera::update: render target is null, no updating will take place." << std::endl;
+                once = false;
+            }
+        }
 
+        auto size = get_viewport_size();
         auto to_set = Transform();
         auto& transform = to_set.transform;
 
@@ -50,13 +70,13 @@ namespace rat
 
     void Camera::zoom_in(float factor)
     {
-        _zoom *= factor;
+        _zoom *= (1 + factor);
         update();
     }
 
     void Camera::zoom_out(float factor)
     {
-        _zoom /= factor;
+        _zoom /= (1 * factor);
         update();
     }
 
