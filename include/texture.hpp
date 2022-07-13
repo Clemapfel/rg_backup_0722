@@ -73,10 +73,10 @@ namespace rat
         public:
             StaticTexture(RenderTarget&);
 
-            virtual void create(size_t width, size_t height, RGBA color = RGBA(1, 1, 1, 1));
-            virtual void create_from(SDL_Surface*);
-            virtual void create_from(Image&);
-            virtual void load(const std::string& path);
+            void create(size_t width, size_t height, RGBA color = RGBA(1, 1, 1, 1));
+            void create_from(SDL_Surface*);
+            void create_from(Image&);
+            void load(const std::string& path);
     };
 
     /// \brief texture, can be modified once gpu-side
@@ -85,7 +85,10 @@ namespace rat
         public:
             DynamicTexture(RenderTarget&);
 
-            virtual void create(size_t width, size_t height);
+            void create(size_t width, size_t height);
+            void load(const std::string& path);
+
+            void update(Image& image, Vector2ui top_left = {0, 0});
     };
 
     /// \brief render texture, is a render target

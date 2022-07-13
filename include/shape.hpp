@@ -136,6 +136,9 @@ namespace rat
             template<typename Texture_t, std::enable_if_t<std::is_same_v<Texture_t, StaticTexture>, bool> = true>
             void set_texture_aux(Texture_t* texture);
 
+            template<typename Texture_t, std::enable_if_t<std::is_same_v<Texture_t, DynamicTexture>, bool> = true>
+            void set_texture_aux(Texture_t* texture);
+
             template<typename Texture_t, std::enable_if_t<std::is_same_v<Texture_t, nullptr_t>, bool> = true>
             void set_texture_aux(Texture_t texture);
 

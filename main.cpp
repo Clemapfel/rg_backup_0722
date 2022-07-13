@@ -45,6 +45,19 @@ int main()
     auto text = Text(48, "Roboto");
     text.create(window, {50, 50}, content, width);
 
+    auto image = Image();
+    image.load("/home/clem/Workspace/mousetrap/mole.png");
+
+    for (size_t i = 0; i < std::min(image.get_size().x, image.get_size().y); ++i)
+        image.at(i, i) = RGBA(1, 1, 1, 1);
+
+    auto texture = DynamicTexture(window);
+    texture.create(image.get_size().x, image.get_size().y);
+    texture.update(image);
+
+    for (auto& shape : shapes)
+        shape.set_texture(&texture);
+
     /*
     auto render_texture = RenderTexture(window);
     render_texture.create(400, 300);
@@ -58,13 +71,13 @@ int main()
 
     for (auto& shape : shapes)
         shape.set_texture(&render_texture);
+    */
 
-*/
+    /*
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_COLOR, GL_SRC_COLOR);
     glBlendEquationSeparate(GL_FUNC_SUBTRACT, GL_FUNC_SUBTRACT);
-
-
+    */
 
     while (not InputHandler::exit_requested())
     {

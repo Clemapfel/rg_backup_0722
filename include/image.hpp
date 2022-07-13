@@ -12,21 +12,34 @@
 
 namespace rat
 {
-    // image living in RAM
+    /// \brief image living in ram
     class Image
     {
         friend class Texture;
         template<bool> class Iterator;
 
         public:
+            /// \brief default ctor
             Image();
+
+            /// no docs
             ~Image();
 
+            /// \brief create image of given size and color
+            /// \param width: x-dimension of image, in pixels
+            /// \param width: y-dimension of image, in pixels
+            /// \param color: [optional] color
             void create(size_t width, size_t height, RGBA color = RGBA(0, 0, 0, 1));
+
+            /// \brief load an image from a path
+            /// \param path: absolute path
             void load(const std::string& path);
 
+            /// \brief get dimensions of the image
+            /// \returns size
             Vector2ui get_size() const;
 
+            /// \brief
             auto at(size_t, size_t);
             auto begin();
             auto end();
@@ -37,14 +50,14 @@ namespace rat
 
             operator SDL_Surface*();
 
+            uint32_t* data();
+
         private:
             using Value_t = uint32_t;
-
-            size_t _width, _height;
             SDL_Surface* _data; // RGBA, 8 bytes per element stored in 32-bit int
 
-            static RGBA bit_to_color(Value_t);
-            static Value_t color_to_bit(RGBA);
+            RGBA bit_to_color(Value_t);
+            Value_t color_to_bit(RGBA);
             size_t to_linear_index(size_t, size_t) const;
 
             static const Value_t r_mask = 0xFF000000;
@@ -77,6 +90,8 @@ namespace rat
 
                     operator RGBA() const;
                     Iterator<is_const> operator*() const;
+
+                    uint32_t raw();
 
                 private:
                     mutable Image* _image;

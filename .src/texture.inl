@@ -154,6 +154,63 @@ namespace rat
         _native = SDL_CreateTexture(_renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, width, height);
         if (_native != nullptr)
             _initialized = true;
+        else
+            std::cerr << "[WARNING] In DynamicTexture::create: Unable to create texture: " << SDL_GetError() << std::endl;
+    }
+
+    void DynamicTexture::load(const std::string &path)
+    {
+        auto image = Image();
+        image.load(path);
+
+        create(image.get_size().x, image.get_size().y);
+        update(image);
+    }
+
+    void DynamicTexture::update(Image &image, Vector2ui top_left)
+    {
+        auto size = Texture::get_size();
+        auto image_bounds = image.get_size();
+        if ((image_bounds.x + top_left.x) > size.x or (image_bounds.y + top_left.y) > size.y)
+        {
+            std::cerr << "[WARNING] In DynamicTexture::update: Selected image region is larger than the texture. Only part of the image will be used for updating." << std::endl;
+            image_bounds.x = size.x - ((image_bounds.x + top_left.x));
+            image_bounds.y = size.y - ((image_bounds.y + top_left.y));
+        }
+
+        void* pixels;
+        int pitch;
+        auto rectangle = SDL_Rect();
+
+        uint32_t format;
+        int texture_width, texture_height;
+        SDL_QueryTexture(_native, &format, nullptr, &texture_width, &texture_height);
+
+        rectangle.x = top_left.x;
+        rectangle.y = top_left.y;
+        rectangle.w = image_bounds.x;
+        rectangle.h = image_bounds.y;
+
+        if (SDL_LockTexture(_native, &rectangle, &pixels, &pitch) != 0)
+        {
+            std::cerr << "[WARNING] In DynamicTexture::update: Unable to lock texture: " << SDL_GetError() << std::endl;
+            return;
+        }
+
+        size_t i = 0;
+        for (auto it : image)
+        {
+            auto color = it.operator RGBA();
+
+            ((uint8_t*) pixels)[i+0] = color.r * 255;
+            ((uint8_t*) pixels)[i+1] = color.g * 255;
+            ((uint8_t*) pixels)[i+2] = color.b * 255;
+            ((uint8_t*) pixels)[i+3] = color.a * 255;
+
+            i += 4;
+        }
+
+        SDL_UnlockTexture(_native);
     }
 
     // RENDER TEXTURE

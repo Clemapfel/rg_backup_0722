@@ -6,7 +6,6 @@
 namespace rat
 {
     Image::Image()
-        : _width(0), _height(0)
     {}
     
     Image::~Image()
@@ -22,60 +21,53 @@ namespace rat
     RGBA Image::bit_to_color(uint32_t in)
     {
         RGBA out;
-        out.r = (r_mask & in) / 255.f;
-        out.g = (g_mask & in) / 255.f;
-        out.b = (b_mask & in) / 255.f;
-        out.a = (a_mask & in) / 255.f;
+        uint8_t r, g, b, a;
+
+        SDL_GetRGBA(in, _data->format, &r, &g, &b, &a);
+
+        out.r = r / 255.f;
+        out.g = g / 255.f;
+        out.b = b / 255.f;
+        out.a = a / 255.f;
 
         return out;
     }
 
     uint32_t Image::color_to_bit(RGBA in)
     {
-        static const uint32_t r_shift = 3 * 8;
-        static const uint32_t g_shift = 2 * 8;
-        static const uint32_t b_shift = 1 * 8;
-        static const uint32_t a_shift = 0 * 8;
-
-        auto r = static_cast<uint32_t>(round(in.r * 255));
-        auto g = static_cast<uint32_t>(round(in.g * 255));
-        auto b = static_cast<uint32_t>(round(in.b * 255));
-        auto a = static_cast<uint32_t>(round(in.a * 255));
-
-        auto out = uint32_t(0);
-        out |= (r << r_shift);
-        out |= (g << g_shift);
-        out |= (b << b_shift);
-        out |= (a << a_shift);
-
-        return out;
+        return SDL_MapRGBA(_data->format, in.r * 255, in.g * 255, in.b * 255, in.a * 255);
     }
 
     size_t Image::to_linear_index(size_t x, size_t y) const
     {
-        return y * _width + x;
+        return y * get_size().x + x;
     }
 
     Vector2ui Image::get_size() const
     {
-        return {_width, _height};
+        return {_data->w, _data->h};
     }
 
     void Image::create(size_t width, size_t height, RGBA color)
     {
-        _width = width;
-        _height = height;
-        _data = SDL_CreateRGBSurface(0, _width, _height, 32, r_mask, g_mask, b_mask, a_mask);
+        _data = SDL_CreateRGBSurface(0, width, height, 32, r_mask, g_mask, b_mask, a_mask);
         
         auto value = color_to_bit(color);
-        for (size_t i = 0; i < _width; ++i)
-            for (size_t j = 0; j < _height; ++j)
+        for (size_t i = 0; i < get_size().x; ++i)
+            for (size_t j = 0; j < get_size().y; ++j)
                 ((uint32_t*) _data->pixels)[to_linear_index(i, j)] = value;
     }
 
     void Image::load(const std::string &path)
     {
         _data = IMG_Load(path.c_str());
+
+        if (_data->format->format != SDL_PIXELFORMAT_RGBA32)
+        {
+            auto* _temp = _data;
+            auto format = SDL_AllocFormat(SDL_PIXELFORMAT_RGBA32);
+            _data = SDL_ConvertSurfaceFormat(_temp, format->format, 0);
+        }
     }
 
     template<bool is_const>
@@ -84,15 +76,21 @@ namespace rat
     {}
 
     template<bool is_const>
+    uint32_t Image::Iterator<is_const>::raw()
+    {
+        return ((uint32_t*) _image->_data->pixels)[_image->to_linear_index(_x, _y)];
+    }
+
+    template<bool is_const>
     Image::Iterator<is_const> &Image::Iterator<is_const>::operator=(RGBA in) requires (not is_const)
     {
-        ((uint32_t*) _image->_data->pixels)[_image->to_linear_index(_x, _y)] = color_to_bit(in);
+        ((uint32_t*) _image->_data->pixels)[_image->to_linear_index(_x, _y)] = _image->color_to_bit(in);
     }
 
     template<bool is_const>
     Image::Iterator<is_const>::operator RGBA() const
     {
-        return bit_to_color(((uint32_t*) _image->_data->pixels)[_image->to_linear_index(_x, _y)]);
+        return _image->bit_to_color(((uint32_t*) _image->_data->pixels)[_image->to_linear_index(_x, _y)]);
     }
 
     template<bool is_const>
@@ -116,7 +114,7 @@ namespace rat
     template<bool is_const>
     auto Image::Iterator<is_const>::operator++()
     {
-        if (_x == _image->_width - 1 and _y == _image->_height - 1)
+        if (_x == _image->get_size().x - 1 and _y == _image->get_size().y - 1)
         {
             // move to past-the-end state
             _x++;
@@ -124,10 +122,10 @@ namespace rat
             return;
         }
 
-        if (_x == _image->_width - 1)
+        if (_x == _image->get_size().x - 1)
         {
             _x = 0;
-            if (_y != _image->_height - 1)
+            if (_y != _image->get_size().y - 1)
                 _y++;
         }
         else
@@ -142,7 +140,7 @@ namespace rat
 
         if (_x == 0)
         {
-            _x = _image->_width - 1;
+            _x = _image->get_size().x - 1;
             _y--;
         }
         else
@@ -162,20 +160,20 @@ namespace rat
 
     auto Image::end()
     {
-        return Iterator<NOT_CONST>(this, _width, _height);
+        return Iterator<NOT_CONST>(this, get_size().x, get_size().y);
     }
 
     auto Image::end() const
     {
-        return Iterator<NOT_CONST>(const_cast<Image*>(this), _width, _height);
+        return Iterator<CONST>(const_cast<Image*>(this), get_size().x, get_size().y);
     }
 
     auto Image::at(size_t x, size_t y) const
     {
-        if (x >= _width or y >= _height)
+        if (x >= get_size().x or y >= get_size().y)
         {
             std::stringstream str;
-            str << "In Image::at: index (" << x << ", " << y << ") out of range for an image of size " << _width << "x" << _height << std::endl;
+            str << "In Image::at: index (" << x << ", " << y << ") out of range for an image of size " << get_size().x << "x" << get_size().y << std::endl;
             throw std::out_of_range(str.str());
         }
 
@@ -184,13 +182,18 @@ namespace rat
 
     auto Image::at(size_t x, size_t y)
     {
-        if (x >= _width or y >= _height)
+        if (x >= get_size().x or y >= get_size().y)
         {
             std::stringstream str;
-            str << "In Image::at: index (" << x << ", " << y << ") out of range for an image of size " << _width << "x" << _height << std::endl;
+            str << "In Image::at: index (" << x << ", " << y << ") out of range for an image of size " << get_size().x << "x" << get_size().y << std::endl;
             throw std::out_of_range(str.str());
         }
 
         return Image::Iterator<NOT_CONST>(this, x, y);
+    }
+
+    uint32_t* Image::data()
+    {
+        return (uint32_t*) _data->pixels;
     }
 }
