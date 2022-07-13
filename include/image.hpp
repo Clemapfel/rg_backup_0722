@@ -33,7 +33,8 @@ namespace rat
 
             /// \brief load an image from a path
             /// \param path: absolute path
-            void load(const std::string& path);
+            /// \returns true if successfully loaded
+            bool load(const std::string& path);
 
             /// \brief get dimensions of the image
             /// \returns size

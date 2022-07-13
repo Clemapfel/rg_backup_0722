@@ -58,7 +58,7 @@ namespace rat
                 ((uint32_t*) _data->pixels)[to_linear_index(i, j)] = value;
     }
 
-    void Image::load(const std::string &path)
+    bool Image::load(const std::string &path)
     {
         _data = IMG_Load(path.c_str());
 
@@ -68,6 +68,8 @@ namespace rat
             auto format = SDL_AllocFormat(SDL_PIXELFORMAT_RGBA32);
             _data = SDL_ConvertSurfaceFormat(_temp, format->format, 0);
         }
+
+        return (_data->w != 0 and _data->h != 0);
     }
 
     template<bool is_const>

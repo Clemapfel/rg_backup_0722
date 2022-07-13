@@ -685,9 +685,6 @@ namespace rat
             glyph._background_shape.set_texture(nullptr);
             glyph._background_shape.set_color(glyph._background_color);
         }
-
-        std::cout << "n letters: " << _glyphs.size() << std::endl;
-        std::cout << "n textures: " << _glyph_texture_index.size() << std::endl;
     }
 
     void Text::create_as_scrolling(RenderTarget & target, Vector2f position, const std::string &formatted_text, size_t width_px, int line_spacer)
@@ -893,6 +890,9 @@ namespace rat
                     i += 1;
                 }
                 i -= 1;
+
+                if (line.size() == 1)
+                    continue;
 
                 std::deque<std::vector<Glyph*>> words;
                 std::deque<float> word_lengths;
