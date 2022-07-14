@@ -4,18 +4,65 @@
 
 //#include <gtk-3.0/gtk/gtk.h>
 
-#include <gtkmm-3.0/gtkmm.h>
+#include <functional>
 
-int main(int argc, char *argv[])
+#include <iostream>
+#include <string>
+
+#include <gtk/gtk.h>
+
+void clicked()
 {
-    auto app = Gtk::Application::create(argc, argv,
-                                     "org.gtkmm.examples.base");
-    Gtk::Window window;
-    window.set_default_size(200, 200);
-
-    return app->run(window);
+    std::cout << "clicked" << std::endl;
 }
 
+template<typename Return_t, typename... Args_t>
+struct LambdaProxy
+{
+    static inline std::function<Return_t(Args_t...)> _lambda = [](Args_t...) -> Return_t {};
+
+    static Return_t invoke(Args_t... args) {
+        return _lambda(args...);
+    }
+};
+
+template<typename Return_t, typename... Args_t, typename Lambda_t>
+auto forward_as_static(Lambda_t lambda)
+{
+    LambdaProxy<Return_t, Args_t...>::_lambda = lambda;
+    return &LambdaProxy<Return_t, Args_t...>::invoke;
+}
+
+int main(int argc, char *argv[]) {
+
+    gtk_init(&argc, &argv);
+
+    auto* window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_default_size(GTK_WINDOW(window), 400, 300);
+
+    g_signal_connect(window, "destroy",
+                     G_CALLBACK(gtk_main_quit), nullptr);
+
+    auto* button = gtk_button_new_with_label("Button");
+    gtk_widget_set_tooltip_text(button, "Button widget");
+    gtk_widget_set_halign(button, GtkAlign::GTK_ALIGN_CENTER);
+    gtk_widget_set_valign(button, GtkAlign::GTK_ALIGN_CENTER);
+    gtk_container_add(GTK_CONTAINER(window), button);
+
+    auto lambda = [](GtkMenuItem* menuitem, gpointer data) -> void {
+        std::cout << *((std::string*) data) << std::endl;
+    };
+
+    auto* as_static = forward_as_static<void, GtkMenuItem*, gpointer>(lambda);
+    std::string data = "string called";
+
+    g_signal_connect(button, "clicked", G_CALLBACK(as_static), &data);
+
+    gtk_widget_show_all(window);
+    gtk_main();
+
+    return 0;
+}
 /*
 
 #include <mousetrap.hpp>
