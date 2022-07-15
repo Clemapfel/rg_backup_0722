@@ -113,14 +113,4 @@ namespace rat
     {
         return _program_id;
     }
-
-    void Shader::bind() const
-    {
-        glUseProgram(program_id);
-    }
-
-    void Shader::unbind() const
-    {
-        glUseProgram(0);
-    }
 }

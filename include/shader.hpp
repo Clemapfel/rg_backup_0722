@@ -28,8 +28,8 @@ namespace rat
             void link_program();
 
             GLNativeHandle _vertex_shader_id,
-                       _fragment_shader_id,
-                       _program_id;
+                           _fragment_shader_id,
+                           _program_id;
 
             static inline std::string _noop_vertex_shader_source = R"(
                 #version 420

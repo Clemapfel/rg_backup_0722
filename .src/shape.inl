@@ -7,13 +7,13 @@
 #include <algorithm>
 
 #include <glm/glm.hpp>
-#include <SDL2/SDL_render.h>
-#include <SDL2/SDL_image.h>
+//#include <SDL2/SDL_render.h>
+//#include <SDL2/SDL_image.h>
 
 #include <.src/include_gl.hpp>
 #include <include/render_target.hpp>
 #include <include/shape.hpp>
-#include <include/texture.hpp>
+//#include <include/texture.hpp>
 #include <include/transform.hpp>
 
 namespace rat
@@ -27,7 +27,7 @@ namespace rat
         glGenBuffers(1, &_element_buffer_id);
 
         _vertices = other._vertices;
-        _texture = other._texture;
+        //_texture = other._texture;
         _texture_rect = other._texture_rect;
         _render_type = other._render_type;
         _origin = other._origin;
@@ -48,7 +48,7 @@ namespace rat
         glGenBuffers(1, &_element_buffer_id);
 
         _vertices = other._vertices;
-        _texture = other._texture;
+        //_texture = other._texture;
         _texture_rect = other._texture_rect;
         _render_type = other._render_type;
         _origin = other._origin;
@@ -67,7 +67,7 @@ namespace rat
         glGenBuffers(1, &_element_buffer_id);
 
         _vertices = std::move(other._vertices);
-        _texture = std::move(other._texture);
+        //_texture = std::move(other._texture);
         _texture_rect = std::move(other._texture_rect);
         _render_type = std::move(other._render_type);
         _origin = std::move(other._origin);
@@ -88,7 +88,7 @@ namespace rat
         glGenBuffers(1, &_element_buffer_id);
 
         _vertices = std::move(other._vertices);
-        _texture = std::move(other._texture);
+        //_texture = std::move(other._texture);
         _texture_rect = std::move(other._texture_rect);
         _render_type = std::move(other._render_type);
         _origin = std::move(other._origin);
@@ -137,9 +137,9 @@ namespace rat
         for (size_t i = 2; i < positions.size(); i += 3)
         {
             auto gl_point = Vector3f(positions.at(i-2), positions.at(i-1), positions.at(0));
-            auto sdl_point = gl_to_sdl_screen_position(gl_point);
+            auto sdl_point = from_gl_screen_position(gl_point);
             sdl_point = transform.apply_to(sdl_point);
-            gl_point = sdl_to_gl_screen_position(sdl_point);
+            gl_point = to_gl_screen_position(sdl_point);
 
             positions.at(i-2) = gl_point.x;
             positions.at(i-1) = gl_point.y;
@@ -166,11 +166,12 @@ namespace rat
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _element_buffer_id);
 
+        /*
         if (_texture != nullptr)
-            _texture->bind();
+            _texture->bind();*/
 
         glUniform1i(glGetUniformLocation(program_id, "_texture"), 0);
-        glUniform1i(glGetUniformLocation(program_id, "_texture_set"), _texture != nullptr);
+        glUniform1i(glGetUniformLocation(program_id, "_texture_set"), false);//_texture != nullptr);
 
         glDrawElements(_render_type, _indices.size(), GL_UNSIGNED_INT, 0);
 
@@ -178,8 +179,9 @@ namespace rat
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
+        /*
         if (_texture != nullptr)
-            _texture->unbind();
+            _texture->unbind();*/
     }
 
     void Shape::update_positions()
@@ -190,7 +192,7 @@ namespace rat
         for (size_t i = 0; i < _vertices.size(); ++i)
         {
             const auto& v = _vertices.at(i);
-            auto position = sdl_to_gl_screen_position(v.position);
+            auto position = to_gl_screen_position(v.position);
 
             _positions.push_back(position.x);
             _positions.push_back(position.y);
@@ -240,7 +242,7 @@ namespace rat
 
         for (size_t i = 0; i < _vertices.size(); ++i)
         {
-            const auto& pos = sdl_to_gl_texture_coordinates(_vertices.at(i).texture_coordinates);
+            const auto& pos = to_gl_texture_coordinates(_vertices.at(i).texture_coordinates);
             _texture_coordinates.push_back(pos.x);
             _texture_coordinates.push_back(pos.y);
         }
@@ -427,10 +429,12 @@ namespace rat
         return sum / RGBA(n, n, n, n);
     }
 
+    /*
     Texture* Shape::get_texture() const
     {
         return _texture;
     }
+     */
 
     void Shape::set_origin(Vector2f relative_to_centroid)
     {
@@ -718,6 +722,7 @@ namespace rat
         return out;
     }
 
+    /*
     template<typename Texture_t>
     void Shape::set_texture(Texture_t texture)
     {
@@ -754,5 +759,6 @@ namespace rat
         }
         update_texture_coordinates();
     }
+     */
 }
 
