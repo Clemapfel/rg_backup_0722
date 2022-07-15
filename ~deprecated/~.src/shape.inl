@@ -143,7 +143,7 @@ namespace rat
 
             positions.at(i-2) = gl_point.x;
             positions.at(i-1) = gl_point.y;
-            positions.at(i) = gl_point.z;
+            positions.at(i) = -1;// gl_point.z;
         }
 
         glUseProgram(program_id);
@@ -170,14 +170,15 @@ namespace rat
         if (_texture != nullptr)
             _texture->bind();*/
 
-        glUniform1i(glGetUniformLocation(program_id, "_texture"), 0);
-        glUniform1i(glGetUniformLocation(program_id, "_texture_set"), false);//_texture != nullptr);
+        //glUniform1i(glGetUniformLocation(program_id, "_texture"), 0);
+        //glUniform1i(glGetUniformLocation(program_id, "_texture_set"), false);//_texture != nullptr);
 
         glDrawElements(_render_type, _indices.size(), GL_UNSIGNED_INT, 0);
 
         glBindVertexArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        glUseProgram (0);
 
         /*
         if (_texture != nullptr)

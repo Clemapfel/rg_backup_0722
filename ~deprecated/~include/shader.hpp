@@ -31,6 +31,35 @@ namespace rat
                            _fragment_shader_id,
                            _program_id;
 
+
+            static inline std::string _noop_vertex_shader_source = R"(
+                #version 130
+
+                in vec3 position;
+                in vec3 color;
+
+                smooth out vec4 vertexColor;
+
+                void main()
+                {
+                  gl_Position = vec4(position, 1.0);
+                  vertexColor = vec4(color, 1.0);
+                }
+            )";
+
+            static inline std::string _noop_fragment_shader_source = R"(
+                #version 130
+
+                smooth in vec4 vertexColor;
+
+                out vec4 outputColor;
+
+                void main()
+                {
+                  outputColor = vertexColor;
+                }
+            )";
+            /*
             static inline std::string _noop_vertex_shader_source = R"(
                 #version 420
 
@@ -72,6 +101,7 @@ namespace rat
                         _fragment_color = texture2D(_texture, _vertex_texture_coordinate) * _vertex_color;
                 }
             )";
+             */
     };
 }
 

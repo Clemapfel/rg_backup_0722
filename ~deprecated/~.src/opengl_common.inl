@@ -18,6 +18,7 @@ namespace rat
 
     Vector2f to_gl_screen_position(Vector2f in)
     {
+        return in;
         auto size = get_viewport_size();
         auto centroid = Vector2f(size.x / 2, size.y / 2);
 
@@ -30,6 +31,7 @@ namespace rat
 
     Vector2f from_gl_screen_position(Vector2f in)
     {
+        return in;
         auto size = get_viewport_size();
         auto centroid = Vector2f(size.x / 2, size.y / 2);
 
@@ -43,6 +45,7 @@ namespace rat
 
     Vector3f to_gl_screen_position(Vector3f in)
     {
+        return in;
         auto size = get_viewport_size();
         auto centroid = Vector3f(size.x / 2, size.y / 2, 0);
 
@@ -55,6 +58,7 @@ namespace rat
 
     Vector3f from_gl_screen_position(Vector3f in)
     {
+        return in;
         auto size = get_viewport_size();
         auto centroid = Vector3f(size.x / 2, size.y / 2, 0);
 

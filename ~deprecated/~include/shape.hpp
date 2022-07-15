@@ -94,7 +94,7 @@ namespace rat
 
             void rotate(Angle);
             void scale(float x_factor, float y_factor);
-            
+
         protected:
             std::vector<Vertex> _vertices; // in sdl coordinates
             void update_positions();

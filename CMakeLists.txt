@@ -19,7 +19,12 @@ endif()
 
 ### Library
 
-add_library(mousetrap SHARED mousetrap.hpp include/gtk/gl_area.hpp .src/shader.inl)
+add_library(mousetrap SHARED mousetrap.hpp
+    include/vector.hpp
+    include/colors.hpp
+    include/gl_canvas.hpp
+    include/gl_common.hpp
+)
 
 set_target_properties(mousetrap PROPERTIES
     LINKER_LANGUAGE CXX
@@ -44,4 +49,3 @@ target_link_directories(mousetrap PUBLIC
 
 add_executable(debug main.cpp)
 target_link_libraries(debug mousetrap)
-
