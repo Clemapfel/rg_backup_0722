@@ -10,6 +10,7 @@
 #include <string>
 
 #include <gtk/gtk.h>
+#include <GL/gl.h>
 
 void clicked()
 {
@@ -33,6 +34,41 @@ auto forward_as_static(Lambda_t lambda)
     return &LambdaProxy<Return_t, Args_t...>::invoke;
 }
 
+static gboolean render (GtkGLArea *area, GdkGLContext *context)
+{
+    glClearColor (1, 0, 1, 1);
+    glClear (GL_COLOR_BUFFER_BIT);
+    std::cout << "render" << std::endl;
+
+    // draw your object
+    // draw_an_object ();
+
+    // we completed our drawing; the draw commands will be
+    // flushed at the end of the signal emission chain, and
+    // the buffers will be drawn on the window
+    return TRUE;
+}
+
+static void on_realize (GtkGLArea* area)
+{
+    // We need to make the context current if we want to
+    // call GL API
+    gtk_gl_area_make_current (area);
+
+    std::cout << "realized" << std::endl;
+
+    // If there were errors during the initialization or
+    // when trying to make the context current, this
+    // function will return a GError for you to catch
+    if (gtk_gl_area_get_error (area) != NULL)
+        return;
+}
+
+static void on_shutdown (GtkGLArea* area)
+{
+    std::cout << "shutdown" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
 
     gtk_init(&argc, &argv);
@@ -40,14 +76,14 @@ int main(int argc, char *argv[]) {
     auto* window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_default_size(GTK_WINDOW(window), 400, 300);
 
-    g_signal_connect(window, "destroy",
-                     G_CALLBACK(gtk_main_quit), nullptr);
+    g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), nullptr);
 
+    // button
     auto* button = gtk_button_new_with_label("Button");
     gtk_widget_set_tooltip_text(button, "Button widget");
     gtk_widget_set_halign(button, GtkAlign::GTK_ALIGN_CENTER);
     gtk_widget_set_valign(button, GtkAlign::GTK_ALIGN_CENTER);
-    gtk_container_add(GTK_CONTAINER(window), button);
+    // gtk_container_add(GTK_CONTAINER(window), button);
 
     auto lambda = [](GtkMenuItem* menuitem, gpointer data) -> void {
         std::cout << *((std::string*) data) << std::endl;
@@ -55,8 +91,20 @@ int main(int argc, char *argv[]) {
 
     auto* as_static = forward_as_static<void, GtkMenuItem*, gpointer>(lambda);
     std::string data = "string called";
-
     g_signal_connect(button, "clicked", G_CALLBACK(as_static), &data);
+
+    // gl area
+    auto* gl_area = gtk_gl_area_new();
+
+    gtk_widget_set_size_request(gl_area, 400 * 0.75, 300 * 0.75);
+    gtk_widget_set_halign(gl_area, GtkAlign::GTK_ALIGN_CENTER);
+    gtk_widget_set_valign(gl_area, GtkAlign::GTK_ALIGN_CENTER);
+    gtk_container_add(GTK_CONTAINER(window), gl_area);
+    gtk_gl_area_set_auto_render((GtkGLArea*) gl_area, FALSE);
+
+    g_signal_connect(gl_area, "render", G_CALLBACK (render), NULL);
+    g_signal_connect(gl_area, "realize", G_CALLBACK (on_realize), NULL);
+    g_signal_connect(gl_area, "unrealize", G_CALLBACK (on_shutdown), NULL);
 
     gtk_widget_show_all(window);
     gtk_main();

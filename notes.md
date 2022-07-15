@@ -84,20 +84,17 @@ File >
     Export as Spritesheet
 
 Selection > 
-    Select All              TODO keybind
+    Select All
     Select None
-    Set Mode: Add           TODO keybind
-    Set Mode: Subtract      TODO keybind
-    Set Mode: Replace       TODO keybind
-    Invert Selection        TODO keybind
-    
-Image >
-    Scale
-    Resize Canvas
     Crop to Selection
+    Invert Selection
+    Set Mode: Replace
+    Set Mode: Add
+    Set Mode: Subtract
     
 Layers >
-    New Layer   // always asks for a name
+    Resize Image
+    New Layer
     Delete Layer
     Hide Layer
     Merge Down
@@ -110,6 +107,14 @@ Layers >
         Subtract
         Reverse Subtract
         Multiply
+            
+Animation >
+    New Frame
+    Duplicate Frame
+    Delete Frame
+    Toggle Frame Enabled
+    Toggle Preview Animated
+    Set FPS
         
 Color > 
     Invert Colors
@@ -121,8 +126,30 @@ Color >
         sort by hue
         create palette from image
     Replace 
+    Color Picker
+    
+Tools >
+    Brush
+    Brush Designer
+    Eraser
+    Selection > 
+        Rectangular
+        Ellipsoid
+        Lasso
+        Wand
+        Fuzzy   
+    Shape >
+        Line
+        Line Sequence
+        Rectangle
+        Rectangle Frame
+        Ellipse
+        Ellipse Frame
+    Tile Placer
+    Tile Designer
 
 Preferences >
+    Tiling 
     Keymap 
     Font Size
     Icon Size

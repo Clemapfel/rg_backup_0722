@@ -5,13 +5,8 @@ set(CMAKE_CXX_STANDARD 20)
 
 ### Dependencies
 
-find_library(SDL2 REQUIRED NAMES SDL2)
-find_library(SDL2_image REQUIRED NAMES SDL2_image)
-find_library(SDL2_mixer REQUIRED NAMES SDL2_mixer)
-find_library(SDL2_ttf REQUIRED NAMES SDL2_ttf)
 find_library(OpenGL REQUIRED NAMES GL)
 find_library(GLEW REQUIRED NAMES GLEW)
-find_library(GLU REQUIRED NAMES GLU)
 
 find_package(PkgConfig)
 pkg_check_modules(GTKMM gtkmm-3.0)
@@ -24,28 +19,17 @@ endif()
 
 ### Library
 
-add_library(mousetrap SHARED
-    include/keycodes.hpp
-    include/input_handler.hpp
-    .src/input_handler.inl
-    include/time.hpp
-    .src/time.inl
-        include/window.hpp include/renderable.hpp include/transform.hpp include/render_target.hpp include/vector.hpp .src/window.inl include/image.hpp include/colors.hpp .src/colors.inl include/geometric_shapes.hpp include/angle.hpp .src/angle.inl include/shader.hpp include/common.hpp include/texture.hpp .src/texture.inl .src/transform.inl .src/image.inl include/text.hpp .src/text.inl include/rng.hpp include/camera.hpp .src/camera.inl include/opengl_common.hpp .src/opengl_common.inl include/sprite.hpp)
+add_library(mousetrap SHARED mousetrap.hpp)
 
 set_target_properties(mousetrap PROPERTIES
     LINKER_LANGUAGE CXX
     CXX_STANDARD 20
-    #LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 target_include_directories(mousetrap PUBLIC
     ${CMAKE_SOURCE_DIR}
     ${GTKMM_INCLUDE_DIRS}
 )
 target_link_libraries(mousetrap PUBLIC
-    ${SDL2}
-    ${SDL2_image}
-    ${SDL2_mixer}
-    ${SDL2_ttf}
     ${OpenGL}
     ${GLEW}
     ${GLU}
