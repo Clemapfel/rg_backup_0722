@@ -9,6 +9,8 @@
 #include <iostream>
 #include <string>
 
+#include <include/opengl_common.hpp>
+
 #include <gtk/gtk.h>
 #include <GL/gl.h>
 
@@ -36,9 +38,16 @@ auto forward_as_static(Lambda_t lambda)
 
 static gboolean render (GtkGLArea *area, GdkGLContext *context)
 {
-    glClearColor (1, 0, 1, 1);
+    gtk_gl_area_make_current (area);
+
+    static float counter = 0;
+    counter += 0.1;
+    glClearColor (counter, 0, 1, 1);
     glClear (GL_COLOR_BUFFER_BIT);
     std::cout << "render" << std::endl;
+
+    auto port = rat::get_viewport_size();
+    std::cout << port.x << " " << port.y << std::endl;
 
     // draw your object
     // draw_an_object ();
@@ -96,7 +105,14 @@ int main(int argc, char *argv[]) {
     // gl area
     auto* gl_area = gtk_gl_area_new();
 
-    gtk_widget_set_size_request(gl_area, 400 * 0.75, 300 * 0.75);
+    gtk_gl_area_set_has_alpha(GTK_GL_AREA(gl_area), TRUE);
+    gtk_widget_set_size_request(gl_area, 400, 300);
+
+    gtk_widget_set_margin_top(gl_area, 10);
+    gtk_widget_set_margin_bottom(gl_area, 10);
+    gtk_widget_set_margin_left(gl_area, 10);
+    gtk_widget_set_margin_right(gl_area, 10);
+
     gtk_widget_set_halign(gl_area, GtkAlign::GTK_ALIGN_CENTER);
     gtk_widget_set_valign(gl_area, GtkAlign::GTK_ALIGN_CENTER);
     gtk_container_add(GTK_CONTAINER(window), gl_area);
@@ -107,8 +123,8 @@ int main(int argc, char *argv[]) {
     g_signal_connect(gl_area, "unrealize", G_CALLBACK (on_shutdown), NULL);
 
     gtk_widget_show_all(window);
-    gtk_main();
 
+    gtk_main();
     return 0;
 }
 /*

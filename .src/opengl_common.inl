@@ -16,7 +16,7 @@ namespace rat
         return Vector2f(width, height);
     }
 
-    Vector2f sdl_to_gl_screen_position(Vector2f in)
+    Vector2f to_gl_screen_position(Vector2f in)
     {
         auto size = get_viewport_size();
         auto centroid = Vector2f(size.x / 2, size.y / 2);
@@ -28,7 +28,7 @@ namespace rat
         return out;
     }
 
-    Vector2f gl_to_sdl_screen_position(Vector2f in)
+    Vector2f from_gl_screen_position(Vector2f in)
     {
         auto size = get_viewport_size();
         auto centroid = Vector2f(size.x / 2, size.y / 2);
@@ -41,7 +41,7 @@ namespace rat
         return out;
     }
 
-    Vector3f sdl_to_gl_screen_position(Vector3f in)
+    Vector3f to_gl_screen_position(Vector3f in)
     {
         auto size = get_viewport_size();
         auto centroid = Vector3f(size.x / 2, size.y / 2, 0);
@@ -53,7 +53,7 @@ namespace rat
         return out;
     }
 
-    Vector3f gl_to_sdl_screen_position(Vector3f in)
+    Vector3f from_gl_screen_position(Vector3f in)
     {
         auto size = get_viewport_size();
         auto centroid = Vector3f(size.x / 2, size.y / 2, 0);
@@ -66,25 +66,25 @@ namespace rat
         return out;
     }
 
-    Vector2f sdl_to_gl_texture_coordinates(Vector2f in)
+    Vector2f to_gl_texture_coordinates(Vector2f in)
     {
         in.x = 1 - in.x; // sdl texture are x-flipped
         return in;
     }
 
-    Vector2f gl_to_sdl_texture_coordinates(Vector2f in)
+    Vector2f from_gl_texture_coordinates(Vector2f in)
     {
         in.x = 1 - in.x;
         return in;
     }
 
-    Vector2f sdl_to_gl_distance(Vector2f distance)
+    Vector2f to_gl_distance(Vector2f distance)
     {
         auto size = get_viewport_size();
         return Vector2f(distance.x / (size.x * 0.5) , -1 * distance.y / (size.y * 0.5));
     }
 
-    Vector2f gl_to_sdl_distance(Vector2f distance)
+    Vector2f from_gl_distance(Vector2f distance)
     {
         auto size = get_viewport_size();
         return Vector2f(distance.x * (size.x * 0.5), -1 * distance.y * (size.y * 0.5));

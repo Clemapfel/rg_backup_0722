@@ -133,6 +133,7 @@ namespace rat
             program_id = shader->get_program_id();
 
         auto positions = _positions;
+
         for (size_t i = 2; i < positions.size(); i += 3)
         {
             auto gl_point = Vector3f(positions.at(i-2), positions.at(i-1), positions.at(0));

@@ -19,7 +19,7 @@ endif()
 
 ### Library
 
-add_library(mousetrap SHARED mousetrap.hpp)
+add_library(mousetrap SHARED mousetrap.hpp include/gtk/gl_area.hpp .src/shader.inl)
 
 set_target_properties(mousetrap PROPERTIES
     LINKER_LANGUAGE CXX
