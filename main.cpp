@@ -10,7 +10,14 @@
 #include <string>
 
 #include <include/gl_canvas.hpp>
+#include <include/shader.hpp>
 #include <gtk/gtk.h>
+
+gboolean animate(GtkWidget* widget, GdkFrameClock* frame_clock, gpointer _)
+{
+    gint64 frame_time = gdk_frame_clock_get_frame_time(frame_clock);
+    return G_SOURCE_CONTINUE;
+}
 
 int main(int argc, char *argv[])
 {
@@ -20,7 +27,7 @@ int main(int argc, char *argv[])
     auto *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_default_size(GTK_WINDOW(window), 400, 300);
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), nullptr);
-    gtk_widget_show(window);
+    gtk_widget_realize(window);
 
     // setup gl
     auto *gdk_window = gtk_widget_get_window(GTK_WIDGET(window));
@@ -44,6 +51,8 @@ int main(int argc, char *argv[])
     if (glewError != GLEW_OK)
         std::cerr << "[ERROR] In glewInit: " << glewGetErrorString(glewError) << std::endl;
 
+    GL_INITIALIZED = true;
+
     // setup render area
     using namespace rat;
     auto canvas = GLCanvas({400, 300});
@@ -58,8 +67,11 @@ int main(int argc, char *argv[])
     gtk_widget_set_valign(native, GtkAlign::GTK_ALIGN_CENTER);
     gtk_container_add(GTK_CONTAINER(window), native);
     gtk_gl_area_set_auto_render((GtkGLArea *) native, FALSE);
+    gtk_widget_add_tick_callback(native, &animate, nullptr, nullptr);
+    gtk_widget_set_visible(native, TRUE);
 
     gtk_widget_show_all(window);
+    gtk_window_present((GtkWindow*) window);
     gtk_main();
     return 0;
 }

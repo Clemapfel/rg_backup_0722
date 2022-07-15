@@ -10,6 +10,7 @@
 #include <include/colors.hpp>
 #include <include/vector.hpp>
 #include <include/gl_common.hpp>
+#include <include/shader.hpp>
 
 namespace rat
 {
@@ -37,6 +38,37 @@ namespace rat
 
             GtkWidget* _native;
             Vector2f _size;
+
+            // TODO
+            Shader* _shader;
+            int _vertex_position_location = -1,
+                _vertex_color_location = -1,
+                _vertex_texture_coordinates_location = -1;
+
+            int _vertex_transform_location = -1;
+
+            GLNativeHandle _vertex_array_id = 0,
+                           _vertex_buffer_id = 0;
+
+            struct vertex_info
+            {
+                float position[3];
+                float color[3];
+            };
+
+            static constexpr struct vertex_info _vertex_data[] = {
+                { {  0.0f,  0.500f, 0.0f }, { 1.f, 0.f, 0.f } },
+                { {  0.5f, -0.366f, 0.0f }, { 0.f, 1.f, 0.f } },
+                { { -0.5f, -0.366f, 0.0f }, { 0.f, 0.f, 1.f } },
+            };
+
+            glm::mat4 _transform = {
+                1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1.f
+            };
+            // TODO
     };
 }
 
@@ -84,18 +116,79 @@ namespace rat
     void GLCanvas::on_realize(GtkGLArea* area)
     {
         std::cout << "realized" << std::endl;
+
+        _shader = new Shader();
+        auto program = _shader->get_program_id();
+
+        _vertex_position_location = glGetAttribLocation(program, "_vertex_position_in");
+        _vertex_color_location = glGetAttribLocation(program, "_vertex_color_in");
+        _vertex_texture_coordinates_location = glGetAttribLocation(program, "_vertex_texture_coordinates_in");
+
+        _vertex_transform_location = glGetUniformLocation(program, "_transform");
+
+        gtk_gl_area_make_current(area);
+
+        GError* error_maybe = gtk_gl_area_get_error(area);
+        if (error_maybe != NULL)
+            std::cerr << "In GLCanvas::on_realize: " << error_maybe->message << std::endl;
+
+        glGenVertexArrays(1, &_vertex_array_id);
+        glBindVertexArray(_vertex_array_id);
+
+        glGenBuffers(1, &_vertex_buffer_id);
+        glBindBuffer(GL_ARRAY_BUFFER, _vertex_buffer_id);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(_vertex_data), _vertex_data, GL_STATIC_DRAW);
+
+        glEnableVertexAttribArray(_vertex_position_location);
+        glVertexAttribPointer(_vertex_position_location,
+            3,
+            GL_FLOAT,
+            GL_FALSE,
+            sizeof (struct vertex_info),
+            (GLvoid *) (G_STRUCT_OFFSET (struct vertex_info, position))
+        );
+
+        glEnableVertexAttribArray(_vertex_color_location);
+        glVertexAttribPointer(_vertex_color_location,
+            3,
+            GL_FLOAT,
+            GL_FALSE,
+            sizeof (struct vertex_info),
+            (GLvoid *) (G_STRUCT_OFFSET (struct vertex_info, color))
+        );
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray (0);
+    }
+
+    void GLCanvas::on_shutdown(GtkGLArea* area)
+    {
+        gtk_gl_area_make_current(area);
+
+        GError* error_maybe = gtk_gl_area_get_error(area);
+        if (error_maybe != NULL)
+            std::cerr << "In GLCanvas::on_realize: " << error_maybe->message << std::endl;
+
+        glDeleteVertexArrays(1, &_vertex_array_id);
+        glDeleteBuffers(1, &_vertex_buffer_id);
+        delete _shader;
     }
 
     gboolean GLCanvas::on_render(GtkGLArea* area, GdkGLContext* context)
     {
         std::cout << "rendered" << std::endl;
 
-        glClearColor(0, 0, 0, 1);
+        glClearColor(0.5, 0.5, 0.5, 1.0);
         glClear(GL_COLOR_BUFFER_BIT);
-    }
 
-    void GLCanvas::on_shutdown(GtkGLArea* area)
-    {
-        std::cout << "shutdown" << std::endl;
+        glUseProgram(_shader->get_program_id());
+        glUniformMatrix4fv(_vertex_transform_location, 1, GL_FALSE, &_transform[0][0]);
+        glBindVertexArray(_vertex_array_id);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glBindVertexArray (0);
+        glUseProgram (0);
+
+        glFlush();
+        return FALSE;
     }
 }

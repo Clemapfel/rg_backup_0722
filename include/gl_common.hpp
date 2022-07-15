@@ -9,6 +9,9 @@
 #include <GL/gl.h>
 #include <include/vector.hpp>
 
+static inline bool GL_INITIALIZED = false;
+using GLNativeHandle = GLuint;
+
 namespace rat
 {
     Vector2f get_viewport_size();
