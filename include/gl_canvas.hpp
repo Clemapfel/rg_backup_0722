@@ -12,6 +12,7 @@
 #include <include/gl_common.hpp>
 #include <include/shader.hpp>
 #include <include/transform.hpp>
+#include <include/shape.hpp>
 
 namespace rat
 {
@@ -40,40 +41,9 @@ namespace rat
             GtkWidget* _native;
             Vector2f _size;
 
-            // TODO
             Shader* _shader;
-
-            int _vertex_position_location = -1,
-                _vertex_color_location = -1,
-                _vertex_texture_coordinates_location = -1;
-
-            int _vertex_transform_location = -1,
-                _fragment_texture_location = -1,
-                _fragment_texture_set_location = -1;
-
-            GLNativeHandle _vertex_array_id = 0,
-                           _vertex_buffer_id = 0;
-
-            struct vertex_info
-            {
-                float position[3];
-                float color[4];
-                float texture_coordinates[2];
-            };
-
-            std::vector<vertex_info> _vertex_data =
-            {   // pos: xyz               // color: rgba        // tex coord: uv
-                vertex_info{ {+0.0f, +0.500f, 0.0f}, {1.f, 0.f, 0.f, 1}, {0, 0}},
-                vertex_info{ {+0.5f, -0.366f, 0.0f}, {0.f, 1.f, 0.f, 1}, {0, 1}},
-                vertex_info{ {-0.5f, -0.366f, 0.0f}, {0.f, 0.f, 1.f, 1}, {1, 1}},
-            };
-
-            std::vector<int> _indices = {
-                0, 1, 1, 2
-            };
-
-            Transform _transform;
-            // TODO
+            Transform* _transform;
+            Shape* _shape;
     };
 }
 
@@ -122,73 +92,21 @@ namespace rat
     {
         std::cout << "realized" << std::endl;
 
-        _shader = new Shader();
-        auto program = _shader->get_program_id();
-
-        _vertex_position_location = 0; //glGetAttribLocation(program, "_vertex_position_in");
-        _vertex_color_location = 1; //glGetAttribLocation(program, "_vertex_color_in");
-        _vertex_texture_coordinates_location = 2;//glGetAttribLocation(program, "_vertex_texture_coordinates_in");
-
-        _vertex_transform_location = glGetUniformLocation(program, "_transform");
-        _fragment_texture_location = glGetUniformLocation(program, "_texture");
-        _fragment_texture_set_location = glGetUniformLocation(program, "_texture_set");
-
         gtk_gl_area_make_current(area);
 
-        GError* error_maybe = gtk_gl_area_get_error(area);
-        if (error_maybe != NULL)
-            std::cerr << "In GLCanvas::on_realize: " << error_maybe->message << std::endl;
-
-        glGenVertexArrays(1, &_vertex_array_id);
-        glBindVertexArray(_vertex_array_id);
-
-        glGenBuffers(1, &_vertex_buffer_id);
-        glBindBuffer(GL_ARRAY_BUFFER, _vertex_buffer_id);
-        glBufferData(GL_ARRAY_BUFFER, _vertex_data.size() * sizeof(vertex_info), _vertex_data.data(), GL_STATIC_DRAW);
-
-        glEnableVertexAttribArray(_vertex_position_location);
-        glVertexAttribPointer(_vertex_position_location,
-            3,
-            GL_FLOAT,
-            GL_FALSE,
-            sizeof (struct vertex_info),
-            (GLvoid *) (G_STRUCT_OFFSET (struct vertex_info, position))
-        );
-
-        glEnableVertexAttribArray(_vertex_color_location);
-        glVertexAttribPointer(_vertex_color_location,
-            4,
-            GL_FLOAT,
-            GL_FALSE,
-            sizeof (struct vertex_info),
-            (GLvoid *) (G_STRUCT_OFFSET (struct vertex_info, color))
-        );
-
-        glEnableVertexAttribArray(_vertex_texture_coordinates_location);
-        glVertexAttribPointer(_vertex_texture_coordinates_location,
-            2,
-            GL_FLOAT,
-            GL_FALSE,
-            sizeof (struct vertex_info),
-            (GLvoid *) (G_STRUCT_OFFSET (struct vertex_info, texture_coordinates))
-        );
-
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray (0);
+        _shader = new Shader();
+        _transform = new Transform();
+        _shape = new Shape();
+        _shape->as_circle({0, 0}, 0.5, 3);
     }
 
     void GLCanvas::on_shutdown(GtkGLArea* area)
     {
         gtk_gl_area_make_current(area);
 
-        GError* error_maybe = gtk_gl_area_get_error(area);
-        if (error_maybe != NULL)
-            std::cerr << "In GLCanvas::on_realize: " << error_maybe->message << std::endl;
-
-        glDeleteVertexArrays(1, &_vertex_array_id);
-        glDeleteBuffers(1, &_vertex_buffer_id);
         delete _shader;
+        delete _transform;
+        delete _shape;
     }
 
     gboolean GLCanvas::on_render(GtkGLArea* area, GdkGLContext* context)
@@ -201,16 +119,7 @@ namespace rat
         glClearColor(0, 0, 0, 0);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUseProgram(_shader->get_program_id());
-        glUniformMatrix4fv(_vertex_transform_location, 1, GL_FALSE, &_transform.transform[0][0]);
-        glUniform1i(_fragment_texture_set_location, GL_FALSE);
-        glBindTexture(GL_TEXTURE_2D, 0);
-
-        glBindVertexArray(_vertex_array_id);
-        glDrawElements(GL_LINE_STRIP, _indices.size(), GL_UNSIGNED_INT, _indices.data());
-
-        glBindVertexArray (0);
-        glUseProgram (0);
+        _shape->render(*_shader, *_transform);
 
         glFlush();
         return FALSE;
