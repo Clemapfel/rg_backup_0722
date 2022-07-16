@@ -9,41 +9,74 @@
 
 namespace rat
 {
-    /// \brief colors in RGBA representation, values in [0, 1]
-    using RGBA = glm::vec<4, float>;
+    struct RGBA;
+    struct HSVA;
+    struct CYMK;
 
-    /// \brief color in HSVA representation, values in [0, 1]
+    struct RGBA
+    {
+        float r = 0;
+        float g = 0;
+        float b = 0;
+        float a = 0;
+
+        RGBA() = default;
+        RGBA(float r, float g, float b, float a);
+        RGBA(glm::vec4);
+
+        operator glm::vec4();
+
+        // rgb <-> rgb
+        RGBA(HSVA);
+        operator HSVA();
+
+        // rgb <-> cym
+        RGBA(CYMK);
+        operator CYMK();
+    };
+
     struct HSVA
     {
-        /// \brief hue component;
         float h = 0;
-
-        /// \brief saturation component;
         float s = 0;
-
-        /// \brief value component;
         float v = 0;
-
-        /// \brief alpha component;
         float a = 1;
 
-        /// \brief default ctor, initializes to HSVA(0, 0, 0, 1)
         HSVA() = default;
-
-        /// \brief construct
-        /// \param h: hue
-        /// \param s: saturation
-        /// \param v: value
-        /// \param a: transparency
         HSVA(float h, float s, float v, float a);
+        HSVA(glm::vec4);
 
-        /// \brief convert RGBA to HSVA
-        /// \param HSVA
+        operator glm::vec4();
+
+        // hsv <-> rgb
         HSVA(RGBA);
-
-        /// \brief convert HSVA to RGBA
-        /// \returns RGBA
         operator RGBA();
+
+        // hsv <-> cym
+        HSVA(CYMK);
+        operator CYMK();
+    };
+
+    struct CYMK
+    {
+        float c = 0;
+        float y = 0;
+        float m = 0;
+        float k = 1;
+
+        CYMK() = default;
+        CYMK(float h, float s, float v, float a);
+        CYMK(glm::vec4);
+
+        operator glm::vec4();
+
+        // cymk <-> rgb
+        CYMK(RGBA);
+        operator RGBA();
+
+        // cym <-> hsv
+        CYMK(HSVA);
+        operator HSVA();
     };
 }
 
@@ -56,6 +89,7 @@ namespace rat
     HSVA::HSVA(float h_in, float s_in, float v_in, float a_in)
             : h(h_in), s(s_in), v(v_in), a(a_in)
     {}
+
 
     HSVA::HSVA(RGBA in)
     {
