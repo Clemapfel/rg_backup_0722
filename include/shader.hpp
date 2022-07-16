@@ -20,6 +20,16 @@ namespace rat
             GLNativeHandle get_fragment_shader_id() const;
             GLNativeHandle get_vertex_shader_id() const;
 
+            // attribute locations all shaders have:
+            static int get_vertex_position_location();
+            static int get_vertex_color_location();
+            static int get_vertex_texture_coordinate_location();
+
+            // uniform locations all shaders have:
+            int get_vertex_transform_location() const;
+            int get_fragment_texture_location() const;
+            int get_fragment_texture_set_location() const;
+
         private:
             GLNativeHandle compile_shader(const std::string&, GLuint shader_type);
             GLNativeHandle link_program(GLNativeHandle fragment_id, GLNativeHandle vertex_id);
@@ -196,5 +206,35 @@ namespace rat
         }
 
         return id;
+    }
+
+    int Shader::get_vertex_position_location()
+    {
+        return 0;
+    }
+
+    int Shader::get_vertex_color_location()
+    {
+        return 1;
+    }
+
+    int Shader::get_vertex_texture_coordinate_location()
+    {
+        return 2;
+    }
+
+    int Shader::get_vertex_transform_location() const
+    {
+        return glGetUniformLocation(_program_id, "_transform");
+    }
+
+    int Shader::get_fragment_texture_location() const
+    {
+        return glGetUniformLocation(_program_id, "_texture");
+    }
+
+    int Shader::get_fragment_texture_set_location() const
+    {
+        return glGetUniformLocation(_program_id, "_texture_set");
     }
 }

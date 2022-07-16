@@ -11,6 +11,7 @@
 
 #include <include/gl_canvas.hpp>
 #include <include/shader.hpp>
+#include <include/shape.hpp>
 #include <gtk/gtk.h>
 
 gboolean animate(GtkWidget* widget, GdkFrameClock* frame_clock, gpointer _)

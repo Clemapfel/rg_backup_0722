@@ -125,9 +125,9 @@ namespace rat
         _shader = new Shader();
         auto program = _shader->get_program_id();
 
-        _vertex_position_location = glGetAttribLocation(program, "_vertex_position_in");
-        _vertex_color_location = glGetAttribLocation(program, "_vertex_color_in");
-        _vertex_texture_coordinates_location = glGetAttribLocation(program, "_vertex_texture_coordinates_in");
+        _vertex_position_location = 0; //glGetAttribLocation(program, "_vertex_position_in");
+        _vertex_color_location = 1; //glGetAttribLocation(program, "_vertex_color_in");
+        _vertex_texture_coordinates_location = 2;//glGetAttribLocation(program, "_vertex_texture_coordinates_in");
 
         _vertex_transform_location = glGetUniformLocation(program, "_transform");
         _fragment_texture_location = glGetUniformLocation(program, "_texture");
