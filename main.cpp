@@ -28,6 +28,7 @@ int main(int argc, char *argv[])
     auto *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_default_size(GTK_WINDOW(window), 400, 300);
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), nullptr);
+    //gtk_window_set_decorated(GTK_WINDOW(window), FALSE);
     gtk_widget_realize(window);
 
     // setup gl
@@ -56,20 +57,17 @@ int main(int argc, char *argv[])
 
     // setup render area
     using namespace rat;
-    auto canvas = GLCanvas({400, 300});
+    auto canvas = GLCanvas({300, 300}, GTK_WINDOW(window));
 
     auto native = canvas.get_native();
-    gtk_widget_set_margin_top(native, 10);
-    gtk_widget_set_margin_bottom(native, 10);
-    gtk_widget_set_margin_start(native, 10);
-    gtk_widget_set_margin_end(native, 10);
+
+    gint width, height;
+    gtk_window_get_size(GTK_WINDOW(window), &width, &height);
+    gtk_widget_set_size_request(native, width, height);
 
     gtk_widget_set_halign(native, GtkAlign::GTK_ALIGN_CENTER);
     gtk_widget_set_valign(native, GtkAlign::GTK_ALIGN_CENTER);
     gtk_container_add(GTK_CONTAINER(window), native);
-    gtk_gl_area_set_auto_render((GtkGLArea *) native, FALSE);
-    gtk_widget_add_tick_callback(native, &animate, nullptr, nullptr);
-    gtk_widget_set_visible(native, TRUE);
 
     gtk_widget_show_all(window);
     gtk_window_present((GtkWindow*) window);

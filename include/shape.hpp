@@ -103,9 +103,11 @@ namespace rat
             _vertex_data.emplace_back();
             auto &data = _vertex_data.back();
 
-            data._position[0] = v.position[0];
-            data._position[1] = v.position[1];
-            data._position[2] = v.position[2];
+            auto as_gl_coords = to_gl_position(v.position);
+
+            data._position[0] = as_gl_coords[0];
+            data._position[1] = as_gl_coords[1];
+            data._position[2] = as_gl_coords[2];
 
             data._color[0] = v.color.r;
             data._color[1] = v.color.g;

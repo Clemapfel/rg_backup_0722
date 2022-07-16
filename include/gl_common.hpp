@@ -41,27 +41,32 @@ namespace rat
 
     Vector2f to_gl_position(Vector2f in)
     {
-        auto size = get_viewport_size();
-        auto centroid = Vector2f(size.x / 2, size.y / 2);
-
-        auto out = centroid - in;
-        out.x = 1 - out.x;
-        out.x /= size.x / 2;
-        out.y /= size.y / 2;
+        auto out = in;
+        out.y = 1 - out.y;
+        out -= 0.5;
+        out *= 2;
         return out;
+    }
+
+    Vector3f to_gl_position(Vector3f in)
+    {
+        auto xy = to_gl_position({in.x, in.y});
+        return {xy.x, xy.y, in.z};
     }
 
     Vector2f from_gl_position(Vector2f in)
     {
-        auto size = get_viewport_size();
-        auto centroid = Vector2f(size.x / 2, size.y / 2);
-
         auto out = in;
-        out.x *= size.x / 2;
-        out.y *= size.y / 2;
-        out.x = 1 - out.x;
-        out = centroid - out;
+        out /= 2;
+        out += 0.5;
+        out.y = 1 - out.y;
         return out;
+    }
+
+    Vector3f from_gl_position(Vector3f in)
+    {
+        auto xy = from_gl_position({in.x, in.y});
+        return {xy.x, xy.y, in.z};
     }
 
     Vector2f to_gl_distance(Vector2f distance)
