@@ -42,11 +42,14 @@ namespace rat
 
             // TODO
             Shader* _shader;
+
             int _vertex_position_location = -1,
                 _vertex_color_location = -1,
                 _vertex_texture_coordinates_location = -1;
 
-            int _vertex_transform_location = -1;
+            int _vertex_transform_location = -1,
+                _fragment_texture_location = -1,
+                _fragment_texture_set_location = -1;
 
             GLNativeHandle _vertex_array_id = 0,
                            _vertex_buffer_id = 0;
@@ -58,19 +61,15 @@ namespace rat
                 float texture_coordinates[2];
             };
 
-            std::vector<float> _vertex_position = {
-                +0.0f, +0.500f, 0.0f,
-                +0.5f, -0.366f, 0.0f,
-                -0.5f, -0.366f, 0.0f,
+            std::vector<vertex_info> _vertex_data =
+            {   // pos: xyz               // color: rgba        // tex coord: uv
+                vertex_info{ {+0.0f, +0.500f, 0.0f}, {1.f, 0.f, 0.f, 1}, {0, 0}},
+                vertex_info{ {+0.5f, -0.366f, 0.0f}, {0.f, 1.f, 0.f, 1}, {0, 1}},
+                vertex_info{ {-0.5f, -0.366f, 0.0f}, {0.f, 0.f, 1.f, 1}, {1, 1}},
             };
 
-
-
-            static constexpr struct vertex_info _vertex_data[] =
-            {   // pos: xyz               // color: rgba        // tex coord: uv
-                { {+0.0f, +0.500f, 0.0f}, {1.f, 0.f, 0.f, 1}, {0, 0}},
-                { {+0.5f, -0.366f, 0.0f}, {0.f, 1.f, 0.f, 1}, {0, 1}},
-                { {-0.5f, -0.366f, 0.0f}, {0.f, 0.f, 1.f, 1}, {1, 1}},
+            std::vector<int> _indices = {
+                0, 1, 1, 2
             };
 
             Transform _transform;
@@ -131,6 +130,8 @@ namespace rat
         _vertex_texture_coordinates_location = glGetAttribLocation(program, "_vertex_texture_coordinates_in");
 
         _vertex_transform_location = glGetUniformLocation(program, "_transform");
+        _fragment_texture_location = glGetUniformLocation(program, "_texture");
+        _fragment_texture_set_location = glGetUniformLocation(program, "_texture_set");
 
         gtk_gl_area_make_current(area);
 
@@ -143,7 +144,7 @@ namespace rat
 
         glGenBuffers(1, &_vertex_buffer_id);
         glBindBuffer(GL_ARRAY_BUFFER, _vertex_buffer_id);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(_vertex_data), _vertex_data, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, _vertex_data.size() * sizeof(vertex_info), _vertex_data.data(), GL_STATIC_DRAW);
 
         glEnableVertexAttribArray(_vertex_position_location);
         glVertexAttribPointer(_vertex_position_location,
@@ -172,6 +173,7 @@ namespace rat
             (GLvoid *) (G_STRUCT_OFFSET (struct vertex_info, texture_coordinates))
         );
 
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray (0);
     }
@@ -201,8 +203,12 @@ namespace rat
 
         glUseProgram(_shader->get_program_id());
         glUniformMatrix4fv(_vertex_transform_location, 1, GL_FALSE, &_transform.transform[0][0]);
+        glUniform1i(_fragment_texture_set_location, GL_FALSE);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
         glBindVertexArray(_vertex_array_id);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(GL_LINE_STRIP, _indices.size(), GL_UNSIGNED_INT, _indices.data());
+
         glBindVertexArray (0);
         glUseProgram (0);
 

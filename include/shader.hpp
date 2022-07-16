@@ -56,11 +56,11 @@ namespace rat
             )";
 
             static inline const std::string _noop_vertex_shader_source = R"(
-                #version 130
+                #version 330
 
-                in vec3 _vertex_position_in;
-                in vec4 _vertex_color_in;
-                in vec2 _vertex_texture_coordinates_in;
+                layout (location = 0) in vec3 _vertex_position_in;
+                layout (location = 1) in vec4 _vertex_color_in;
+                layout (location = 2) in vec2 _vertex_texture_coordinates_in;
 
                 uniform mat4 _transform;
 
