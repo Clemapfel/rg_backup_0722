@@ -70,7 +70,7 @@ namespace rat
                 void main()
                 {
                     gl_Position = _transform * vec4(_vertex_position_in, 1.0);
-                    _vertex_color = vec4(_vertex_color_in);
+                    _vertex_color = _vertex_color_in;
                 }
             )";
     };

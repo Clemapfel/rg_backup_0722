@@ -11,6 +11,7 @@
 #include <include/vector.hpp>
 #include <include/gl_common.hpp>
 #include <include/shader.hpp>
+#include <include/transform.hpp>
 
 namespace rat
 {
@@ -53,21 +54,26 @@ namespace rat
             struct vertex_info
             {
                 float position[3];
-                float color[3];
+                float color[4];
+                float texture_coordinates[2];
             };
 
-            static constexpr struct vertex_info _vertex_data[] = {
-                { {  0.0f,  0.500f, 0.0f }, { 1.f, 0.f, 0.f } },
-                { {  0.5f, -0.366f, 0.0f }, { 0.f, 1.f, 0.f } },
-                { { -0.5f, -0.366f, 0.0f }, { 0.f, 0.f, 1.f } },
+            std::vector<float> _vertex_position = {
+                +0.0f, +0.500f, 0.0f,
+                +0.5f, -0.366f, 0.0f,
+                -0.5f, -0.366f, 0.0f,
             };
 
-            glm::mat4 _transform = {
-                1, 0, 0, 0,
-                0, 1, 0, 0,
-                0, 0, 1, 0,
-                0, 0, 0, 1.f
+
+
+            static constexpr struct vertex_info _vertex_data[] =
+            {   // pos: xyz               // color: rgba        // tex coord: uv
+                { {+0.0f, +0.500f, 0.0f}, {1.f, 0.f, 0.f, 1}, {0, 0}},
+                { {+0.5f, -0.366f, 0.0f}, {0.f, 1.f, 0.f, 1}, {0, 1}},
+                { {-0.5f, -0.366f, 0.0f}, {0.f, 0.f, 1.f, 1}, {1, 1}},
             };
+
+            Transform _transform;
             // TODO
     };
 }
@@ -150,11 +156,20 @@ namespace rat
 
         glEnableVertexAttribArray(_vertex_color_location);
         glVertexAttribPointer(_vertex_color_location,
-            3,
+            4,
             GL_FLOAT,
             GL_FALSE,
             sizeof (struct vertex_info),
             (GLvoid *) (G_STRUCT_OFFSET (struct vertex_info, color))
+        );
+
+        glEnableVertexAttribArray(_vertex_texture_coordinates_location);
+        glVertexAttribPointer(_vertex_texture_coordinates_location,
+            2,
+            GL_FLOAT,
+            GL_FALSE,
+            sizeof (struct vertex_info),
+            (GLvoid *) (G_STRUCT_OFFSET (struct vertex_info, texture_coordinates))
         );
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -178,11 +193,14 @@ namespace rat
     {
         std::cout << "rendered" << std::endl;
 
-        glClearColor(0.5, 0.5, 0.5, 1.0);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        glClearColor(0, 0, 0, 0);
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(_shader->get_program_id());
-        glUniformMatrix4fv(_vertex_transform_location, 1, GL_FALSE, &_transform[0][0]);
+        glUniformMatrix4fv(_vertex_transform_location, 1, GL_FALSE, &_transform.transform[0][0]);
         glBindVertexArray(_vertex_array_id);
         glDrawArrays(GL_TRIANGLES, 0, 3);
         glBindVertexArray (0);
