@@ -10,6 +10,12 @@
 
 namespace rat
 {
+    enum class ShaderType
+    {
+        FRAGMENT = GL_FRAGMENT_SHADER,
+        VERTEX = GL_VERTEX_SHADER
+    };
+
     struct Shader
     {
         public:
@@ -30,15 +36,18 @@ namespace rat
             int get_fragment_texture_location() const;
             int get_fragment_texture_set_location() const;
 
+            //
+            void create_from_string(const std::string& code, ShaderType);
+            void create_from_file(const std::string& path, ShaderType);
+
         private:
-            GLNativeHandle compile_shader(const std::string&, GLuint shader_type);
-            GLNativeHandle link_program(GLNativeHandle fragment_id, GLNativeHandle vertex_id);
+            [[nodiscard]] GLNativeHandle compile_shader(const std::string&, ShaderType shader_type);
+            [[nodiscard]] GLNativeHandle link_program(GLNativeHandle fragment_id, GLNativeHandle vertex_id);
 
             // local
             GLNativeHandle _program_id,
                            _fragment_shader_id,
                            _vertex_shader_id;
-
 
             // default noop
             static inline size_t _noop_program_id,
@@ -50,6 +59,7 @@ namespace rat
 
                 in vec4 _vertex_color;
                 in vec2 _texture_coordinates;
+                in vec3 _vertex_position;
 
                 out vec4 _fragment_color;
 
@@ -76,11 +86,14 @@ namespace rat
 
                 out vec4 _vertex_color;
                 out vec2 _texture_coordinates;
+                out vec3 _vertex_position;
 
                 void main()
                 {
                     gl_Position = _transform * vec4(_vertex_position_in, 1.0);
                     _vertex_color = _vertex_color_in;
+                    _vertex_position = _vertex_position_in;
+                    _texture_coordinates = _vertex_texture_coordinates_in;
                 }
             )";
     };
@@ -90,6 +103,8 @@ namespace rat
 
 #include <iostream>
 #include <vector>
+#include <fstream>
+#include <sstream>
 
 namespace rat
 {
@@ -97,11 +112,11 @@ namespace rat
     {
         if (GL_INITIALIZED and _noop_program_id == 0)
         {
-            _noop_fragment_shader_id = compile_shader(_noop_fragment_shader_source, GL_FRAGMENT_SHADER);
-            _noop_vertex_shader_id = compile_shader(_noop_vertex_shader_source, GL_VERTEX_SHADER);
+            _noop_fragment_shader_id = compile_shader(_noop_fragment_shader_source, ShaderType::FRAGMENT);
+            _noop_vertex_shader_id = compile_shader(_noop_vertex_shader_source, ShaderType::VERTEX);
             _noop_program_id = link_program(_noop_fragment_shader_id, _noop_vertex_shader_id);
         }
-        else
+        else if (not GL_INITIALIZED)
             std::cerr << "[WARNING] In Shader::Shader: Trying to initialize the noop shaders, but GL_INITIALIZE is still false." << std::endl;
 
         _program_id = _noop_program_id;
@@ -121,6 +136,33 @@ namespace rat
             glDeleteProgram(_program_id);
     }
 
+    void Shader::create_from_string(const std::string &code, ShaderType type)
+    {
+        if (type == ShaderType::FRAGMENT)
+            _fragment_shader_id = compile_shader(code, type);
+        else
+            _vertex_shader_id = compile_shader(code, type);
+
+        _program_id = link_program(_fragment_shader_id, _vertex_shader_id);
+    }
+
+    void Shader::create_from_file(const std::string& path, ShaderType type)
+    {
+        auto file = std::ifstream();
+
+        file.open(path);
+        if (not file.is_open())
+        {
+            std::cerr << "[WARNING] In Shader::create_from_file: Unable to open file at `" << path << "`" << std::endl;
+            return;
+        }
+        auto str = std::stringstream();
+        str << file.rdbuf();
+
+        create_from_string(str.str(), type);
+        file.close();
+    }
+
     GLNativeHandle Shader::get_program_id() const
     {
         return _program_id;
@@ -136,12 +178,9 @@ namespace rat
         return _fragment_shader_id;
     }
 
-    GLNativeHandle Shader::compile_shader(const std::string& source, GLuint shader_type)
+    GLNativeHandle Shader::compile_shader(const std::string& source, ShaderType shader_type)
     {
-        if (not (shader_type == GL_FRAGMENT_SHADER or shader_type == GL_VERTEX_SHADER))
-            std::cerr << "[ERROR] In Shader::compiler_shader: Shader type is neither GL_FRAGMENT_SHADER nor GL_VERTEX_SHADER" << std::endl;
-
-        GLNativeHandle id = glCreateShader(shader_type);
+        GLNativeHandle id = glCreateShader(static_cast<GLenum>(shader_type));
 
         const char* source_ptr = source.c_str();
         glShaderSource(id, 1, &source_ptr, nullptr);
@@ -151,7 +190,8 @@ namespace rat
         glGetShaderiv(id, GL_COMPILE_STATUS, &compilation_success);
         if (compilation_success != GL_TRUE)
         {
-            std::cerr << "In Shader::compile_shader: compilation failed: ";
+            std::cerr << "In Shader::compile_shader: compilation failed:\n"
+                      << source << "\n\n";
 
             int info_length = 0;
             int max_length = info_length;

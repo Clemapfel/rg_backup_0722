@@ -27,12 +27,12 @@ namespace rat
         explicit operator glm::vec4() const;
 
         // rgb <-> rgb
-        RGBA(HSVA);
-        operator HSVA() const;
+        explicit RGBA(HSVA);
+        explicit operator HSVA() const;
 
         // rgb <-> cym
-        RGBA(CYMK);
-        operator CYMK() const;
+        explicit RGBA(CYMK);
+        explicit operator CYMK() const;
 
         float to_grayscale() const;
     };
@@ -51,12 +51,12 @@ namespace rat
         explicit operator glm::vec4() const;
 
         // hsv <-> rgb
-        HSVA(RGBA);
+        explicit HSVA(RGBA);
         operator RGBA() const;
 
         // hsv <-> cym
-        HSVA(CYMK);
-        operator CYMK() const;
+        explicit HSVA(CYMK);
+        explicit operator CYMK() const;
 
         float to_grayscale() const;
     };
@@ -75,12 +75,12 @@ namespace rat
         explicit operator glm::vec4() const;
 
         // cymk <-> rgb
-        CYMK(RGBA);
+        explicit CYMK(RGBA);
         operator RGBA() const;
 
         // cym <-> hsv
-        CYMK(HSVA);
-        operator HSVA() const;
+        explicit CYMK(HSVA);
+        explicit operator HSVA() const;
 
         float to_grayscale() const;
     };
@@ -224,7 +224,7 @@ namespace rat
 
     CYMK::operator RGBA() const
     {
-        return RGBA(rgba_to_hsva(this->operator glm::vec4()));
+        return RGBA(cymk_to_rgba(this->operator glm::vec4()));
     }
 
     CYMK::CYMK(HSVA hsva)
@@ -338,17 +338,16 @@ namespace rat
 
     glm::vec4 rgba_to_cymk(glm::vec4 in)
     {
-        const float r = in.r;
-        const float g = in.g;
-        const float b = in.b;
-        const float a = in.a;
+        float r = in[0];
+        float g = in[1];
+        float b = in[2];
 
-        float k = 1 - std::max<float>(std::max<float>(r, g), b);
+        float k = 1 - std::max(std::max(r, g), b);
         float c = (1 - r - k) / (1 - k);
         float m = (1 - g - k) / (1 - k);
         float y = (1 - b - k) / (1 - k);
 
-        return glm::vec4(c, y, m, k);
+        return glm::vec4(c, m, y, k);
     }
 
     glm::vec4 cymk_to_rgba(glm::vec4 in)

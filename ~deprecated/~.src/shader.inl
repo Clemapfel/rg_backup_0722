@@ -27,7 +27,8 @@ namespace rat
         glGetShaderiv(id, GL_COMPILE_STATUS, &compilation_success);
         if (compilation_success != GL_TRUE)
         {
-            std::cerr << "In Shader::compile_shader: compilation failed: ";
+            std::cerr << "In Shader::compile_shader: compilation failed for \n"
+                      << source << "\n\n";
 
             int info_length = 0;
             int max_length = info_length;

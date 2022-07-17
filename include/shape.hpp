@@ -29,8 +29,17 @@ namespace rat
             void as_frame(Vector2f top_left, Vector2f size, float width);
 
             void render(Shader& shader, Transform transform);
-            
+
+            RGBA get_vertex_color(size_t) const;
+            void set_vertex_color(size_t, RGBA);
+
+            void set_vertex_texture_coordinate(size_t, Vector2f);
+            Vector2f get_vertex_texture_coordinate(size_t) const;
+
+            void set_vertex_position(size_t, Vector3f);
+            Vector3f get_vertex_position(size_t) const;
         protected:
+
             struct Vertex
             {
                 Vertex(float x, float y)
@@ -272,6 +281,26 @@ namespace rat
         initialize();
     }
 
+    void Shape::as_rectangle(Vector2f top_left, Vector2f size)
+    {
+        _vertices =
+        {
+            Vertex(top_left.x, top_left.y),
+            Vertex(top_left.x + size.x, top_left.y),
+            Vertex(top_left.x + size.x, top_left.y + size.y),
+            Vertex(top_left.x, top_left.y + size.y)
+        };
+
+        _vertices.at(0).texture_coordinates = {0, 0};
+        _vertices.at(1).texture_coordinates = {1, 0};
+        _vertices.at(2).texture_coordinates = {1, 1};
+        _vertices.at(3).texture_coordinates = {0, 1};
+
+        _indices = {0, 1, 2, 3};
+        _render_type = GL_TRIANGLE_FAN;
+        initialize();
+    }
+
     void Shape::as_line(Vector2f a, Vector2f b)
     {
         _vertices =
@@ -407,5 +436,39 @@ namespace rat
 
         _render_type = GL_TRIANGLES;
         initialize();
+    }
+
+    void Shape::set_vertex_color(size_t i, RGBA color)
+    {
+        _vertices.at(i).color = color;
+        update_color();
+        update_data();
+    }
+
+    RGBA Shape::get_vertex_color(size_t index) const
+    {
+        return RGBA(_vertices.at(index).color);
+    }
+
+    void Shape::set_vertex_position(size_t i, Vector3f position)
+    {
+        _vertices.at(i).position = position;
+        update_position();
+    }
+
+    Vector3f Shape::get_vertex_position(size_t i) const
+    {
+        return _vertices.at(i).position;
+    }
+
+    void Shape::set_vertex_texture_coordinate(size_t i, Vector2f coordinates)
+    {
+        _vertices.at(i).texture_coordinates = coordinates;
+        update_texture_coordinate();
+    }
+
+    Vector2f Shape::get_vertex_texture_coordinate(size_t i) const
+    {
+        return _vertices.at(i).texture_coordinates;
     }
 }
