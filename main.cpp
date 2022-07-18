@@ -57,7 +57,13 @@ int main(int argc, char *argv[])
     // setup render area
     using namespace rat;
 
-    Vector2f gradient_size = {300, 50};
+    std::string value;
+    value.resize(4);
+
+    auto* entry_buffer = gtk_entry_buffer_new(value.data(), 100);
+    auto* entry = gtk_entry_new_with_buffer(entry_buffer);
+
+    Vector2f gradient_size = {300, 30};
     std::map<std::string, ColorGradientRectangle> gradients =
     {
         {"ORIGINAL", ColorGradientRectangle(gradient_size)},
@@ -177,16 +183,31 @@ int main(int argc, char *argv[])
     };
     update_gradients();
 
-    auto hue_select = ShaderArea("/home/clem/Workspace/mousetrap/resources/shaders/color_picker_hue_gradient.frag", {100, 50});
+    auto hue_select = ShaderArea("/home/clem/Workspace/mousetrap/resources/shaders/color_picker_hue_gradient.frag", {100, 30});
 
     auto vbox_hsv = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
     auto vbox_rgb = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
     auto vbox_cymk = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
 
     auto vbox_outer = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+    gtk_widget_set_margin_top(GTK_WIDGET(vbox_outer), 50);
+    gtk_widget_set_margin_bottom(GTK_WIDGET(vbox_outer), 50);
+    gtk_widget_set_margin_start(GTK_WIDGET(vbox_outer), 20);
+    gtk_widget_set_margin_end(GTK_WIDGET(vbox_outer), 20);
 
     gtk_container_add(GTK_CONTAINER(window), vbox_outer);
 
+    gtk_box_pack_start(GTK_BOX(vbox_outer), GTK_WIDGET(entry), TRUE, TRUE, 0);
+
+    auto hsv_separator = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+    gtk_widget_set_margin_top(GTK_WIDGET(hsv_separator), 10);
+
+    auto hsv_label = gtk_label_new("HSV");
+    gtk_widget_set_margin_end(GTK_WIDGET(hsv_label), 50);
+    gtk_box_pack_start(GTK_BOX(hsv_separator), hsv_label, FALSE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(hsv_separator), GTK_WIDGET(gtk_separator_menu_item_new()), TRUE, TRUE, 0);
+
+    gtk_box_pack_start(GTK_BOX(vbox_hsv), hsv_separator, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox_hsv), hue_select.get_native(), TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox_hsv), gradients.at("S").get_native(), TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox_hsv), gradients.at("V").get_native(), TRUE, TRUE, 0);
@@ -200,16 +221,26 @@ int main(int argc, char *argv[])
     gtk_box_pack_start(GTK_BOX(vbox_cymk), gradients.at("M").get_native(), TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox_cymk), gradients.at("K").get_native(), TRUE, TRUE, 0);
 
-    auto hline0 = gtk_separator_menu_item_new();
-    auto hline1 = gtk_separator_menu_item_new();
+    auto rgb_separator = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+    gtk_widget_set_margin_top(GTK_WIDGET(rgb_separator), 25);
 
-    gtk_widget_set_size_request(hline0, 0, 10);
-    gtk_widget_set_size_request(hline1, 0, 10);
+    auto rgb_label = gtk_label_new("RGB");
+    gtk_widget_set_margin_end(GTK_WIDGET(rgb_label), 50);
+    gtk_box_pack_start(GTK_BOX(rgb_separator), rgb_label, FALSE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(rgb_separator), GTK_WIDGET(gtk_separator_menu_item_new()), TRUE, TRUE, 0);
+
+    auto cymk_separator = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+    gtk_widget_set_margin_top(GTK_WIDGET(cymk_separator), 25);
+
+    auto cymk_label = gtk_label_new("CYMK");
+    gtk_widget_set_margin_end(GTK_WIDGET(cymk_label), 50);
+    gtk_box_pack_start(GTK_BOX(cymk_separator), cymk_label, FALSE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(cymk_separator), GTK_WIDGET(gtk_separator_menu_item_new()), TRUE, TRUE, 0);
 
     gtk_box_pack_start(GTK_BOX(vbox_outer), GTK_WIDGET(vbox_hsv), TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox_outer), GTK_WIDGET(hline0), TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox_outer), GTK_WIDGET(rgb_separator), TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox_outer), GTK_WIDGET(vbox_rgb), TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox_outer), GTK_WIDGET(hline1), TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox_outer), GTK_WIDGET(cymk_separator), TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox_outer), GTK_WIDGET(vbox_cymk), TRUE, TRUE, 0);
 
     gtk_widget_show_all(window);
