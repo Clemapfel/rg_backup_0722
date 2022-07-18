@@ -11,12 +11,14 @@
 
 namespace rat
 {
+    static RGBA primary_color = RGBA(1, 1, 1, 1);
+
     class ColorGradientRectangle : public GLCanvas
     {
-        static inline std::map<size_t, std::pair<RGBA, RGBA>> _colors = {};
+        static inline std::map<size_t, std::pair<RGBA, RGBA>> _left_right_colors = {};
 
         public:
-            ColorGradientRectangle(Vector2f size);
+            ColorGradientRectangle(Vector2f size, const std::string& fragment_shader_path = "");
 
             void set_left_color(RGBA);
             void set_right_color(RGBA);
@@ -28,10 +30,18 @@ namespace rat
             void on_resize(GtkGLArea* area, gint width, gint height) override;
 
         private:
-            Shader* _shader;
-            Shape* _shape = nullptr;
-            void update_shape_color();
-            
+            std::string _shader_path; // optional shader
+            size_t _current_color_location = -1;
+
+            Shader* _shader = nullptr;
+            Shape* _gradient_shape = nullptr;
+            Shape* _gradient_shape_frame = nullptr;
+            void update_gradient_shape_color();
+
+            static inline Shader* _noop_shader = nullptr;
+            Shape* _cursor_shape_inner = nullptr;
+            Shape* _cursor_shape_frame = nullptr;
+
             static inline const Transform _identity_transform = Transform();
     };
 }
@@ -40,41 +50,52 @@ namespace rat
 
 namespace rat
 {
-    ColorGradientRectangle::ColorGradientRectangle(Vector2f size)
-        : GLCanvas(size)
+    ColorGradientRectangle::ColorGradientRectangle(Vector2f size, const std::string& fragment_shader_path)
+        : GLCanvas(size), _shader_path(fragment_shader_path)
     {
-        _colors.emplace(std::piecewise_construct,
-            std::forward_as_tuple(get_id()),
-            std::forward_as_tuple(RGBA(), RGBA())
+        if (_noop_shader == nullptr)
+            _noop_shader = new Shader();
+
+        if (not fragment_shader_path.empty())
+        {
+            _shader = new Shader();
+            _shader->create_from_file("/home/clem/Workspace/mousetrap/resources/shaders/color_picker_hue_gradient.frag", ShaderType::FRAGMENT);
+
+            _current_color_location = glGetUniformLocation(_shader->get_program_id(), "_current_color");
+        }
+
+        _left_right_colors.emplace(std::piecewise_construct,
+                                   std::forward_as_tuple(get_id()),
+                                   std::forward_as_tuple(RGBA(), RGBA())
         );
     }
 
     void ColorGradientRectangle::set_left_color(RGBA color)
     {
-        _colors.at(get_id()).first = color;
+        _left_right_colors.at(get_id()).first = color;
     }
 
     void ColorGradientRectangle::set_right_color(RGBA color)
     {
-        _colors.at(get_id()).second = color;
+        _left_right_colors.at(get_id()).second = color;
     }
 
-    void ColorGradientRectangle::update_shape_color()
+    void ColorGradientRectangle::update_gradient_shape_color()
     {
-        auto it = _colors.find(get_id());
+        auto it = _left_right_colors.find(get_id());
         auto left_color = it->second.first;
         auto right_color = it->second.second;
 
-        if ((glm::vec4) _shape->get_vertex_color(0) != (glm::vec4) left_color)
+        if ((glm::vec4) _gradient_shape->get_vertex_color(0) != (glm::vec4) left_color)
         {
-            _shape->set_vertex_color(0, left_color);
-            _shape->set_vertex_color(3, left_color);
+            _gradient_shape->set_vertex_color(0, left_color);
+            _gradient_shape->set_vertex_color(3, left_color);
         }
 
-        if ((glm::vec4) _shape->get_vertex_color(1) != (glm::vec4) right_color)
+        if ((glm::vec4) _gradient_shape->get_vertex_color(1) != (glm::vec4) right_color)
         {
-            _shape->set_vertex_color(1, right_color);
-            _shape->set_vertex_color(2, right_color);
+            _gradient_shape->set_vertex_color(1, right_color);
+            _gradient_shape->set_vertex_color(2, right_color);
         }
     }
 
@@ -82,11 +103,29 @@ namespace rat
     {
         gtk_gl_area_make_current(area);
 
-        _shader = new Shader();
-        _shape = new Shape();
-        _shape->as_rectangle({0.0, 0.0}, {1, 1});
+        if (_shader == nullptr)
+            _shader = new Shader();
 
-        update_shape_color();
+        _gradient_shape = new Shape();
+        _gradient_shape->as_rectangle({0.0, 0.0}, {1, 1});
+
+        update_gradient_shape_color();
+
+        static const float gradient_frame = 0.05;
+        static const float cursor_width = 0.01;
+        static const float cursor_frame = 0.25 * cursor_width;
+
+        float initial_x = 0.5;
+        _cursor_shape_inner = new Shape();
+        _cursor_shape_inner->as_rectangle({initial_x, 0}, {cursor_width, 1});
+
+        _cursor_shape_frame = new Shape();
+        _cursor_shape_frame->as_frame({initial_x, 0}, {cursor_width, 1}, cursor_frame);
+        _cursor_shape_frame->set_color(RGBA(0, 0, 0, 1));
+
+        _gradient_shape_frame = new Shape();
+        _gradient_shape_frame->as_frame({0, 0}, {1, 1}, gradient_frame);
+        _gradient_shape_frame->set_color(RGBA(0, 0, 0, 1));
 
         gtk_gl_area_queue_render(area);
     }
@@ -96,22 +135,28 @@ namespace rat
         gtk_gl_area_make_current(area);
 
         delete _shader;
-        delete _shape;
+        delete _gradient_shape;
     }
 
     gboolean ColorGradientRectangle::on_render(GtkGLArea* area, GdkGLContext* context)
     {
         gtk_gl_area_make_current(area);
 
-        update_shape_color();
+        update_gradient_shape_color();
+
+        glUseProgram(_shader->get_program_id());
+        glUniform4f(_current_color_location, primary_color.r, primary_color.g, primary_color.b, primary_color.a);
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        glClearColor(1, 0, 1, 1);
+        glClearColor(0, 0, 0, 0);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        _shape->render(*_shader, _identity_transform);
+        _gradient_shape->render(*_shader, _identity_transform);
+        _gradient_shape_frame->render(*_noop_shader, _identity_transform);
+        _cursor_shape_inner->render(*_noop_shader, _identity_transform);
+        _cursor_shape_frame->render(*_noop_shader, _identity_transform);
 
         glFlush();
         return FALSE;

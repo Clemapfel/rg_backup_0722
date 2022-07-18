@@ -16,20 +16,20 @@
 
 namespace rat
 {
-    namespace detail
+    namespace gl_canvas_wrapper
     {
-        static void on_realize_wrapper(void* area, void* instance);
-        static gboolean on_render_wrapper(void* area, void* context, void* instance);
-        static void on_shutdown_wrapper(void* area, void* instance);
-        static void on_resize_wrapper(GtkGLArea* area, gint width, gint height, void* instance);
+        static void on_realize(void* area, void* instance);
+        static gboolean on_render(void* area, void* context, void* instance);
+        static void on_shutdown(void* area, void* instance);
+        static void on_resize(GtkGLArea* area, gint width, gint height, void* instance);
     }
 
     class GLCanvas
     {
-        friend void detail::on_realize_wrapper(void* area, void* instance);
-        friend gboolean detail::on_render_wrapper(void* area, void* context, void* instance);
-        friend void detail::on_shutdown_wrapper(void* area, void* instance);
-        friend void detail::on_resize_wrapper(GtkGLArea* area, gint width, gint height, void* instance);
+        friend void gl_canvas_wrapper::on_realize(void* area, void* instance);
+        friend gboolean gl_canvas_wrapper::on_render(void* area, void* context, void* instance);
+        friend void gl_canvas_wrapper::on_shutdown(void* area, void* instance);
+        friend void gl_canvas_wrapper::on_resize(GtkGLArea* area, gint width, gint height, void* instance);
 
         public:
             GLCanvas(Vector2f size);
@@ -56,24 +56,24 @@ namespace rat
 
 namespace rat
 {
-    namespace detail
+    namespace gl_canvas_wrapper
     {
-        static void on_realize_wrapper(void* area, void* instance)
+        static void on_realize(void* area, void* instance)
         {
             ((GLCanvas*) instance)->on_realize(GTK_GL_AREA(area));
         }
 
-        static gboolean on_render_wrapper(void* area, void* context, void* instance)
+        static gboolean on_render(void* area, void* context, void* instance)
         {
             return ((GLCanvas*) instance)->on_render(GTK_GL_AREA(area), GDK_GL_CONTEXT(context));
         }
 
-        static void on_shutdown_wrapper(void* area, void* instance)
+        static void on_shutdown(void* area, void* instance)
         {
             ((GLCanvas*) instance)->on_shutdown(GTK_GL_AREA(area));
         }
 
-        static void on_resize_wrapper(GtkGLArea* area, gint width, gint height, void* instance)
+        static void on_resize(GtkGLArea* area, gint width, gint height, void* instance)
         {
             ((GLCanvas*) instance)->on_resize(area, width, height);
         }
@@ -88,10 +88,10 @@ namespace rat
         gtk_gl_area_set_has_alpha(GTK_GL_AREA(_native), TRUE);
         gtk_gl_area_set_auto_render(GTK_GL_AREA(_native), TRUE);
 
-        g_signal_connect(_native, "realize", G_CALLBACK(detail::on_realize_wrapper), this);
-        g_signal_connect(_native, "render", G_CALLBACK(detail::on_render_wrapper), this);
-        g_signal_connect(_native, "unrealize", G_CALLBACK(detail::on_shutdown_wrapper), this);
-        g_signal_connect(_native, "resize", G_CALLBACK(detail::on_resize_wrapper), this);
+        g_signal_connect(_native, "realize", G_CALLBACK(gl_canvas_wrapper::on_realize), this);
+        g_signal_connect(_native, "render", G_CALLBACK(gl_canvas_wrapper::on_render), this);
+        g_signal_connect(_native, "unrealize", G_CALLBACK(gl_canvas_wrapper::on_shutdown), this);
+        g_signal_connect(_native, "resize", G_CALLBACK(gl_canvas_wrapper::on_resize), this);
     }
 
     size_t GLCanvas::get_id() const

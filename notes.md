@@ -37,6 +37,15 @@ pasted color:
 Brush sizes: 3x3, 4x4, 8x8, 16x16, 32x32, 64x64<br>
 send warning if not at least 1 pixel is set
 
+## Brush Mode
+Alpha and RGB Mode Split
+
+possible Alpha modes:
++ replace
++ add (default)
+
+posible
+
 ### defaults
 + squares: rectangles: 1x1 px (default), 2x2
 + circles: 2x2, 4x4 circle

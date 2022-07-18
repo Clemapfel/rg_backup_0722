@@ -14,10 +14,17 @@
 #include <include/shape.hpp>
 #include <include/shader_area.hpp>
 #include <include/color_picker/color_gradient_element.hpp>
+#include <include/color_picker/color_component_entry.hpp>
+#include <include/color_picker/color_html_code_entry.hpp>
 #include <gtk/gtk.h>
+#include <gdk/gdk.h>
 
 #include <map>
 
+void on_activate (GtkEntry* entry, void* _) {
+    std::cout << gtk_entry_get_text(entry) << std::endl;
+    gtk_entry_set_text(entry, "");
+};
 
 int main(int argc, char *argv[])
 {
@@ -57,17 +64,16 @@ int main(int argc, char *argv[])
     // setup render area
     using namespace rat;
 
+    float bar_height = 20;
+
     std::string value;
     value.resize(4);
 
-    auto* entry_buffer = gtk_entry_buffer_new(value.data(), 100);
-    auto* entry = gtk_entry_new_with_buffer(entry_buffer);
-
-    Vector2f gradient_size = {300, 30};
+    Vector2f gradient_size = {300, 20};
     std::map<std::string, ColorGradientRectangle> gradients =
     {
         {"ORIGINAL", ColorGradientRectangle(gradient_size)},
-        // no H, sic
+        {"H", ColorGradientRectangle(gradient_size, "/home/clem/Workspace/mousetrap/resources/shaders/color_picker_hue_gradient.frag")},
         {"S", ColorGradientRectangle(gradient_size)},
         {"V", ColorGradientRectangle(gradient_size)},
 
@@ -81,15 +87,15 @@ int main(int argc, char *argv[])
         {"K", ColorGradientRectangle(gradient_size)}
     };
 
-    auto color = RGBA(1, 0, 0, 1);
+    primary_color = RGBA(0.8, 0.75, 1, 1);
 
     auto update_gradients = [&]()
     {
-        gradients.at("ORIGINAL").set_left_color(color);
-        gradients.at("ORIGINAL").set_right_color(color);
+        gradients.at("ORIGINAL").set_left_color(primary_color);
+        gradients.at("ORIGINAL").set_right_color(primary_color);
 
         // HSVA
-        const HSVA as_hsva = color.operator HSVA();
+        const HSVA as_hsva = primary_color.operator HSVA();
 
         auto hsva_0 = as_hsva;
         auto hsva_1 = as_hsva;
@@ -113,7 +119,7 @@ int main(int argc, char *argv[])
         gradients.at("V").set_right_color(hsva_1);
 
         // RGBA
-        const auto as_rgba = color;
+        const auto as_rgba = primary_color;
 
         auto rgba_0 = as_rgba;
         auto rgba_1 = as_rgba;
@@ -143,7 +149,7 @@ int main(int argc, char *argv[])
         gradients.at("B").set_right_color(rgba_1);
 
         // CYMK
-        const auto as_cymk = color.operator CYMK();
+        const auto as_cymk = primary_color.operator CYMK();
 
         auto cymk_0 = as_cymk;
         auto cymk_1 = as_cymk;
@@ -183,8 +189,6 @@ int main(int argc, char *argv[])
     };
     update_gradients();
 
-    auto hue_select = ShaderArea("/home/clem/Workspace/mousetrap/resources/shaders/color_picker_hue_gradient.frag", {100, 30});
-
     auto vbox_hsv = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
     auto vbox_rgb = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
     auto vbox_cymk = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
@@ -197,8 +201,6 @@ int main(int argc, char *argv[])
 
     gtk_container_add(GTK_CONTAINER(window), vbox_outer);
 
-    gtk_box_pack_start(GTK_BOX(vbox_outer), GTK_WIDGET(entry), TRUE, TRUE, 0);
-
     auto hsv_separator = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_widget_set_margin_top(GTK_WIDGET(hsv_separator), 10);
 
@@ -208,7 +210,7 @@ int main(int argc, char *argv[])
     gtk_box_pack_start(GTK_BOX(hsv_separator), GTK_WIDGET(gtk_separator_menu_item_new()), TRUE, TRUE, 0);
 
     gtk_box_pack_start(GTK_BOX(vbox_hsv), hsv_separator, TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox_hsv), hue_select.get_native(), TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox_hsv), gradients.at("H").get_native(), TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox_hsv), gradients.at("S").get_native(), TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox_hsv), gradients.at("V").get_native(), TRUE, TRUE, 0);
 

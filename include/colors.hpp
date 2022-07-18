@@ -94,12 +94,15 @@ namespace rat
     glm::vec4 cymk_to_hsva(glm::vec4);
     glm::vec4 hsva_to_cymk(glm::vec4);
 
+    RGBA html_code_to_rgba(const std::string& code);
 
 }
 
 // ##############################################################################################
 
 #include <include/vector.hpp>
+#include <sstream>
+#include <cctype>
 
 namespace rat
 {
@@ -371,5 +374,101 @@ namespace rat
     glm::vec4 cymk_to_hsva(glm::vec4 in)
     {
         return rgba_to_hsva(cymk_to_rgba(in));
+    }
+
+    RGBA html_code_to_rgba(const std::string& code)
+    {
+        static auto hex_char_to_int = [](char c) -> uint8_t
+        {
+            if (c == '0')
+                return 0;
+
+            if (c == '1')
+                return 1;
+
+            if (c == '2')
+                return 2;
+
+            if (c == '3')
+                return 3;
+
+            if (c == '4')
+                return 4;
+
+            if (c == '5')
+                return 5;
+
+            if (c == '6')
+                return 6;
+
+            if (c == '7')
+                return 7;
+
+            if (c == '8')
+                return 8;
+
+            if (c == '9')
+                return 9;
+
+            if (c == 'A' or c == 'a')
+                return 10;
+
+            if (c == 'B' or c == 'b')
+                return 11;
+
+            if (c == 'C' or c == 'c')
+                return 12;
+
+            if (c == 'D' or c == 'd')
+                return 13;
+
+            if (c == 'E' or c == 'e')
+                return 14;
+
+            if (c == 'F' or c == 'f')
+                return 15;
+
+            std::stringstream str;
+            str << "In html_code_to_rgba: Unrecognized hex character: " << c << std::endl;
+            throw std::invalid_argument(str.str());
+        };
+
+        static auto hex_component_to_int = [](char left, char right) -> uint8_t
+        {
+           return hex_char_to_int(left) * 16 + hex_char_to_int(right);
+        };
+
+        RGBA out;
+        size_t offset = code.front() == '#' ? 1 : 0;
+
+        out.r = hex_component_to_int(code.at(offset + 0), code.at(offset + 1)) / 255.f;
+        out.g = hex_component_to_int(code.at(offset + 2), code.at(offset + 3)) / 255.f;
+        out.b = hex_component_to_int(code.at(offset + 4), code.at(offset + 5)) / 255.f;
+
+        if (code.size() > offset + 6)
+            out.a = hex_component_to_int(code.at(offset + 6), code.at(offset + 7)) / 255.f;
+        else
+            out.a = 1;
+
+        return out;
+    }
+
+    std::string rgba_to_html_code(RGBA in, bool show_alpha = true)
+    {
+        in.r = glm::clamp<float>(in.r, 0.f, 1.f);
+        in.g = glm::clamp<float>(in.g, 0.f, 1.f);
+        in.b = glm::clamp<float>(in.b, 0.f, 1.f);
+        in.a = glm::clamp<float>(in.a, 0.f, 1.f);
+
+        std::stringstream str;
+        str << "#";
+        str << std::hex << int(std::round(in.r * 255))
+            << std::hex << int(std::round(in.g * 255))
+            << std::hex << int(std::round(in.b * 255));
+
+        if (show_alpha)
+            str << std::hex << int(std::round(in.a * 255));
+
+        return str.str();
     }
 }

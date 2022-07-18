@@ -38,6 +38,9 @@ namespace rat
 
             void set_vertex_position(size_t, Vector3f);
             Vector3f get_vertex_position(size_t) const;
+
+            void set_color(RGBA);
+
         protected:
 
             struct Vertex
@@ -454,6 +457,7 @@ namespace rat
     {
         _vertices.at(i).position = position;
         update_position();
+        update_data();
     }
 
     Vector3f Shape::get_vertex_position(size_t i) const
@@ -465,10 +469,21 @@ namespace rat
     {
         _vertices.at(i).texture_coordinates = coordinates;
         update_texture_coordinate();
+        update_data();
     }
 
     Vector2f Shape::get_vertex_texture_coordinate(size_t i) const
     {
         return _vertices.at(i).texture_coordinates;
+    }
+
+    void Shape::set_color(RGBA color)
+    {
+        for (auto& v : _vertices)
+            v.color = color;
+
+        update_color();
+        update_data();
+        update_data();
     }
 }
