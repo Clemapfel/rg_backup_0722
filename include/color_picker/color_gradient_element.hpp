@@ -15,12 +15,12 @@ namespace rat
 
     namespace color_gradient_rectangle_wrapper
     {
-        static void on_click(GtkWidget* self, GdkEventButton event, void* instance);
+        static void on_click(GtkWidget* self, GdkEventButton* event, void* instance);
     }
 
     class ColorGradientRectangle : public GLCanvas
     {
-        friend void color_gradient_rectangle_wrapper::on_click(GtkWidget*, GdkEventButton, void*);
+        friend void color_gradient_rectangle_wrapper::on_click(GtkWidget*, GdkEventButton*, void*);
         static inline std::map<size_t, std::pair<RGBA, RGBA>> _left_right_colors = {};
 
         public:
@@ -34,7 +34,7 @@ namespace rat
             gboolean on_render(GtkGLArea*, GdkGLContext*) override;
             void on_shutdown(GtkGLArea*) override;
             void on_resize(GtkGLArea* area, gint width, gint height) override;
-            void on_click(GtkWidget* self, GdkEventButton button);
+            void on_click(GtkWidget* self, GdkEventButton* button);
 
         private:
 
@@ -60,7 +60,7 @@ namespace rat
 {
     namespace color_gradient_rectangle_wrapper
     {
-        void on_click(GtkWidget* self, GdkEventButton event, void* instance)
+        void on_click(GtkWidget* self, GdkEventButton* event, void* instance)
         {
             ((ColorGradientRectangle*) instance)->on_click(self, event);
         }
@@ -69,7 +69,10 @@ namespace rat
     ColorGradientRectangle::ColorGradientRectangle(Vector2f size, const std::string& fragment_shader_path)
             : GLCanvas(size), _shader_path(fragment_shader_path)
     {
-        gtk_widget_set_events(GTK_WIDGET(get_native()), GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK);
+        gtk_widget_set_events(GTK_WIDGET(get_native()),
+             GDK_ALL_EVENTS_MASK
+        );
+
         g_signal_connect(get_native(), "button-press-event", G_CALLBACK(color_gradient_rectangle_wrapper::on_click), this);
         g_signal_connect(get_native(), "button-release-event", G_CALLBACK(color_gradient_rectangle_wrapper::on_click), this);
 
@@ -191,8 +194,8 @@ namespace rat
         gtk_gl_area_queue_render(area);
     }
 
-    void ColorGradientRectangle::on_click(GtkWidget *self, GdkEventButton button)
+    void ColorGradientRectangle::on_click(GtkWidget *self, GdkEventButton* event)
     {
-        std::cout << "no d" << std::endl;
+        std::cout << event->x << " " << event->y << std::endl;
     }
 }
