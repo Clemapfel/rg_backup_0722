@@ -24,7 +24,7 @@ add_library(mousetrap SHARED mousetrap.hpp
     include/colors.hpp
     include/gl_canvas.hpp
     include/gl_common.hpp
-        include/shader.hpp include/transform.hpp include/shape.hpp include/shader_area.hpp include/color_picker/color_gradient_element.hpp include/text_entry.hpp include/color_picker/color_component_entry.hpp include/color_picker/color_html_code_entry.hpp)
+        include/shader.hpp include/transform.hpp include/shape.hpp include/shader_area.hpp include/color_picker/color_gradient_element.hpp include/text_entry.hpp include/color_picker/color_component_entry.hpp include/color_picker/color_html_code_entry.hpp include/geometric_shapes.hpp)
 
 set_target_properties(mousetrap PROPERTIES
     LINKER_LANGUAGE CXX

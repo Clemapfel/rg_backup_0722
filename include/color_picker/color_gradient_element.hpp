@@ -196,6 +196,12 @@ namespace rat
 
     void ColorGradientRectangle::on_click(GtkWidget *self, GdkEventButton* event)
     {
-        std::cout << event->x << " " << event->y << std::endl;
+        int width, height;
+        gtk_widget_get_size_request(self, &width, &height);
+
+        auto position = Vector2f(event->x / width, event->y / height);
+        _cursor_shape_inner->set_top_left(position);
+
+        gtk_gl_area_queue_render(GTK_GL_AREA(self));
     }
 }

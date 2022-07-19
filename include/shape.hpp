@@ -10,6 +10,7 @@
 
 #include <include/gl_common.hpp>
 #include <include/colors.hpp>
+#include <include/geometric_shapes.hpp>
 
 namespace rat
 {
@@ -41,8 +42,16 @@ namespace rat
 
             void set_color(RGBA);
 
-        protected:
+            Rectangle get_bounding_box() const;
+            Vector2f get_size() const;
 
+            void set_centroid(Vector2f);
+            Vector2f get_centroid() const;
+
+            void set_top_left(Vector2f);
+            Vector2f get_top_left() const;
+
+        protected:
             struct Vertex
             {
                 Vertex(float x, float y)
@@ -446,7 +455,7 @@ namespace rat
     {
         _vertices.at(i).color = color;
         update_color();
-        update_data();
+        update_data(false, true, false);
     }
 
     RGBA Shape::get_vertex_color(size_t index) const
@@ -458,7 +467,7 @@ namespace rat
     {
         _vertices.at(i).position = position;
         update_position();
-        update_data();
+        update_data(true, false, false);
     }
 
     Vector3f Shape::get_vertex_position(size_t i) const
@@ -470,7 +479,7 @@ namespace rat
     {
         _vertices.at(i).texture_coordinates = coordinates;
         update_texture_coordinate();
-        update_data();
+        update_data(false, false, true);
     }
 
     Vector2f Shape::get_vertex_texture_coordinate(size_t i) const
@@ -484,7 +493,78 @@ namespace rat
             v.color = color;
 
         update_color();
-        update_data();
-        update_data();
+        update_data(false, true, false);
+    }
+
+    Vector2f Shape::get_centroid() const
+    {
+        Vector3f sum = Vector3f(0);
+        for (auto& v : _vertices)
+            sum += v.position;
+
+        return sum / Vector3f(_vertices.size());
+    }
+
+    void Shape::set_centroid(Vector2f position)
+    {
+        auto delta = position - get_centroid();
+        for (auto& v : _vertices)
+        {
+            v.position.x += delta.x;
+            v.position.y += delta.y;
+        }
+
+        update_position();
+        update_data(true, false, false);
+    }
+
+    Rectangle Shape::get_bounding_box() const
+    {
+        float min_x = std::numeric_limits<float>::max();
+        float min_y = std::numeric_limits<float>::max();
+        float min_z = std::numeric_limits<float>::max();
+
+        float max_x = std::numeric_limits<float>::min();
+        float max_y = std::numeric_limits<float>::min();
+        float max_z = std::numeric_limits<float>::min();
+
+        for (auto& v : _vertices)
+        {
+            min_x = std::min(min_x, v.position.x);
+            min_y = std::min(min_y, v.position.y);
+            min_z = std::min(min_z, v.position.z);
+
+            max_x = std::max(max_x, v.position.x);
+            max_y = std::max(max_y, v.position.y);
+            max_z = std::max(max_z, v.position.z);
+        }
+
+        return Rectangle{
+                {min_x, min_y},
+                {max_x - min_x, max_y - min_y}
+        };
+    }
+
+    Vector2f Shape::get_top_left() const
+    {
+        return get_bounding_box().top_left;
+    }
+
+    Vector2f Shape::get_size() const
+    {
+        return get_bounding_box().size;
+    }
+
+    void Shape::set_top_left(Vector2f position)
+    {
+        auto delta = position - get_bounding_box().top_left;
+        for (auto& v : _vertices)
+        {
+            v.position.x += delta.x;
+            v.position.y += delta.y;
+        }
+
+        update_position();
+        update_data(true, false, false);
     }
 }
