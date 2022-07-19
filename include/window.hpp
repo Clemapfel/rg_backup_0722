@@ -15,6 +15,7 @@
 #include <include/renderable.hpp>
 #include <include/vector.hpp>
 #include <include/time.hpp>
+#include <include/shader.hpp>
 
 namespace rat
 {
@@ -75,7 +76,7 @@ namespace rat
             SDL_Window* get_native();
             SDL_GLContext* get_context();
 
-            void render(const Renderable*, Transform = rat::Transform(), Shader* = nullptr) const override;
+            void render(const Renderable*, Shader& = *noop_shader, Transform = rat::Transform()) const override;
             SDL_Renderer* get_renderer() override;
             Transform get_global_transform() const override;
             void set_global_transform(Transform) override;

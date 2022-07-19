@@ -17,6 +17,6 @@ namespace rat
         /// \param render_target: render target
         /// \param transform: transform to be applied to position attribute of vertices
         /// \param shader: shader to be used, or nullptr to use the identity shader
-        virtual void render(const RenderTarget*, Transform = Transform(), Shader* = nullptr) const = 0;
+        virtual void render(const RenderTarget*, Shader&, Transform) const = 0;
     };
 }

@@ -158,7 +158,7 @@ namespace rat
             void align_right_with(Vector2f);
 
             /// \copydoc rat::Renderable::render
-            void render(const RenderTarget* target, Transform transform = Transform(), Shader* shader = nullptr) const override;
+            void render(const RenderTarget* target, Shader& shader = *noop_shader, Transform transform = Transform()) const override;
 
             /// \brief update the texts animations
             /// \param time: time elapsed since last frame, usually return value of `rat::Window::update`

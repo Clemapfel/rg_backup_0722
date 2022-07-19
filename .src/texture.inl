@@ -257,13 +257,13 @@ namespace rat
         _currently_bound = true;
     }
 
-    void RenderTexture::render(const Renderable* renderable, Transform transform, Shader* shader) const
+    void RenderTexture::render(const Renderable* renderable, Shader& shader, Transform transform) const
     {
         if (not _currently_bound)
             std::cerr << "[WARNING] In RenderTexture::render: Trying to render to a texture even though it is not currently bounds as a render target. Use `bind_as_render_target` before calling `render`." << std::endl;
 
         transform = transform.combine_with(_global_transform);
-        renderable->render(_window, transform, shader);
+        renderable->render(_window, shader, transform);
     }
 
     void RenderTexture::clear(RGBA color)

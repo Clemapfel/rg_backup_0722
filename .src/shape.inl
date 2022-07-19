@@ -122,15 +122,10 @@ namespace rat
         glDeleteBuffers(1, &_element_buffer_id);
     }
 
-    void Shape::render(const RenderTarget* target, Transform transform, Shader* shader) const
+    void Shape::render(const RenderTarget* target, Shader& shader, Transform transform) const
     {
-        GLNativeHandle program_id;
+        GLNativeHandle program_id = shader.get_program_id();
         transform = transform.combine_with(target->get_global_transform());
-
-        if (shader == nullptr)
-            program_id = _noop_shader->get_program_id();
-        else
-            program_id = shader->get_program_id();
 
         auto positions = _positions;
         for (size_t i = 2; i < positions.size(); i += 3)
@@ -148,34 +143,20 @@ namespace rat
         glUseProgram(program_id);
         glBindVertexArray(_vertex_array_id);
 
-        glBindBuffer(GL_ARRAY_BUFFER, _position_buffer_id);
-        glBufferData(GL_ARRAY_BUFFER, positions.size() * sizeof(float), positions.data(), GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
-        glEnableVertexAttribArray(0);
-
-        glBindBuffer(GL_ARRAY_BUFFER, _color_buffer_id);
-        glBufferData(GL_ARRAY_BUFFER, _colors.size() * sizeof(float), _colors.data(), GL_STATIC_DRAW);
-        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*) 0);
-        glEnableVertexAttribArray(1);
-
-        glBindBuffer(GL_ARRAY_BUFFER, _texture_coordinate_buffer_id);
-        glBufferData(GL_ARRAY_BUFFER, _texture_coordinates.size() * sizeof(float), _texture_coordinates.data(), GL_STATIC_DRAW);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*) 0);
-        glEnableVertexAttribArray(2);
-
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _element_buffer_id);
-
         if (_texture != nullptr)
             _texture->bind();
 
-        glUniform1i(glGetUniformLocation(program_id, "_texture"), 0);
+        glEnableVertexAttribArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, _position_buffer_id);
+        glBufferData(GL_ARRAY_BUFFER, positions.size() * sizeof(float), positions.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(shader.get_vertex_position_location(), 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+
         glUniform1i(glGetUniformLocation(program_id, "_texture_set"), _texture != nullptr);
 
-        glDrawElements(_render_type, _indices.size(), GL_UNSIGNED_INT, 0);
+        glDrawElements(_render_type, _indices.size(), GL_UNSIGNED_INT, _indices.data());
 
         glBindVertexArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
         if (_texture != nullptr)
             _texture->unbind();
@@ -196,11 +177,12 @@ namespace rat
             _positions.push_back(v.position.z);
         }
 
-        // vertex position: vec3 at layout = 0
         glBindVertexArray(_vertex_array_id);
+
+        // vertex position: vec3 at layout = 0
         glBindBuffer(GL_ARRAY_BUFFER, _position_buffer_id);
         glBufferData(GL_ARRAY_BUFFER, _positions.size() * sizeof(float), _positions.data(), GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+        glVertexAttribPointer(Shader::get_vertex_position_location(), 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
         glEnableVertexAttribArray(0);
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -222,10 +204,12 @@ namespace rat
             _colors.push_back(col.a);
         }
 
+        glBindVertexArray(_vertex_array_id);
+
         // color: rgba at layout = 1
         glBindBuffer(GL_ARRAY_BUFFER, _color_buffer_id);
         glBufferData(GL_ARRAY_BUFFER, _colors.size() * sizeof(float), _colors.data(), GL_STATIC_DRAW);
-        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+        glVertexAttribPointer(Shader::get_vertex_color_location(), 4, GL_FLOAT, GL_FALSE, 0, (void*) 0);
         glEnableVertexAttribArray(1);
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -244,10 +228,12 @@ namespace rat
             _texture_coordinates.push_back(pos.y);
         }
 
+        glBindVertexArray(_vertex_array_id);
+
         // tex coord: vec2 at layout = 2
         glBindBuffer(GL_ARRAY_BUFFER, _texture_coordinate_buffer_id);
         glBufferData(GL_ARRAY_BUFFER, _texture_coordinates.size() * sizeof(float), _texture_coordinates.data(), GL_STATIC_DRAW);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+        glVertexAttribPointer(Shader::get_vertex_texture_coordinate_location(), 2, GL_FLOAT, GL_FALSE, 0, (void*) 0);
         glEnableVertexAttribArray(2);
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);

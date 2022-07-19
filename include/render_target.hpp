@@ -20,6 +20,6 @@ namespace rat
             virtual void set_global_transform(Transform) = 0;
 
             virtual SDL_Renderer* get_renderer() = 0;
-            virtual void render(const Renderable*, Transform, Shader*) const = 0;
+            virtual void render(const Renderable*, Shader&, Transform) const = 0;
     };
 }

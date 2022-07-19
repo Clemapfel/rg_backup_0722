@@ -107,7 +107,7 @@ namespace rat
             virtual SDL_Renderer* get_renderer();
 
             void clear(RGBA = RGBA(0, 0, 0, 1));
-            virtual void render(const Renderable*, Transform = Transform(), Shader* = nullptr) const;
+            virtual void render(const Renderable*, Shader& = *noop_shader, Transform = Transform()) const;
 
         private:
             Window* _window;

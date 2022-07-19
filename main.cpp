@@ -43,10 +43,6 @@ int main()
     text.set_alignment(Text::JUSTIFIED);
     text.create(window, {50, 50}, content, width, 1);
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ZERO);
-    //glBlendEquationSeparate(GL_FUNC_SUBTRACT, GL_FUNC_SUBTRACT);
-
     while (not InputHandler::exit_requested())
     {
         InputHandler::update();

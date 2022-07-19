@@ -52,7 +52,7 @@ namespace rat
             // compound shapes
             void as_frame(Vector2f top_left, Vector2f size, float width);
 
-            virtual void render(const RenderTarget*, Transform = Transform(), Shader* = nullptr) const override;
+            virtual void render(const RenderTarget*, Shader& shader = *noop_shader, Transform = Transform()) const override;
 
             Rectangle get_texture_rectangle() const;
             void set_texture_rectangle(Rectangle normalized);

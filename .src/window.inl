@@ -106,6 +106,8 @@ namespace rat
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         _is_open = true;
+
+        noop_shader = new Shader();
     }
 
     Time Window::update()
@@ -167,9 +169,9 @@ namespace rat
             SDL_FreeSurface(_icon);
     }
 
-    void Window::render(const Renderable *object, Transform transform, Shader* shader) const
+    void Window::render(const Renderable *object, Shader& shader, Transform transform) const
     {
-        object->render(this, transform, shader);
+        object->render(this, shader, transform);
     }
 
     SDL_Window *Window::get_native()

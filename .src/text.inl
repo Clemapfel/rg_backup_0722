@@ -38,12 +38,12 @@ namespace rat
         }
     }
 
-    void Text::render(const RenderTarget* target, Transform transform, Shader* shader) const
+    void Text::render(const RenderTarget* target, Shader& shader, Transform transform) const
     {
         for (size_t i = 0; i < _glyphs.size(); ++i)
         {
             if (_visibility_queue.empty() or i < _visibility_queue.front())
-                _glyphs.at(i)._background_shape.render(target, transform, shader);
+                _glyphs.at(i)._background_shape.render(target, shader, transform);
         }
 
         static auto wave_f = [&](float x){
@@ -82,7 +82,7 @@ namespace rat
                 ));
             }
 
-            _glyphs.at(i)._shape.render(target, current, shader);
+            _glyphs.at(i)._shape.render(target, shader, current);
         }
     }
 
