@@ -13,8 +13,14 @@ namespace rat
 {
     static RGBA primary_color = RGBA(1, 1, 1, 1);
 
+    namespace detail::color_gradient_rectangle
+    {
+        static void on_click(GtkWidget* self, GdkEventButton event, void* instance);
+    }
+
     class ColorGradientRectangle : public GLCanvas
     {
+        friend void detail::color_gradient_rectangle::on_click(GtkWidget*, GdkEventButton, void*);
         static inline std::map<size_t, std::pair<RGBA, RGBA>> _left_right_colors = {};
 
         public:
@@ -29,7 +35,10 @@ namespace rat
             void on_shutdown(GtkGLArea*) override;
             void on_resize(GtkGLArea* area, gint width, gint height) override;
 
+            void on_click(GtkWidget* self, GdkEventButton button);
+
         private:
+
             std::string _shader_path; // optional shader
             size_t _current_color_location = -1;
 
@@ -50,9 +59,20 @@ namespace rat
 
 namespace rat
 {
+    namespace detail::color_gradient_rectangle
+    {
+        void on_click(GtkWidget* self, GdkEventButton event, void* instance)
+        {
+            ((ColorGradientRectangle*) instance)->on_click(self, event);
+        }
+    }
+
     ColorGradientRectangle::ColorGradientRectangle(Vector2f size, const std::string& fragment_shader_path)
         : GLCanvas(size), _shader_path(fragment_shader_path)
     {
+        gtk_widget_set_events(GTK_WIDGET(get_native()), GDK_BUTTON_PRESS_MASK);
+        g_signal_connect(get_native(), "button-press-event", G_CALLBACK(&detail::color_gradient_rectangle::on_click), this);
+
         if (_noop_shader == nullptr)
             _noop_shader = new Shader();
 
@@ -106,8 +126,9 @@ namespace rat
         if (_shader == nullptr)
             _shader = new Shader();
 
+        static const float gradient_margin = 0.1;
         _gradient_shape = new Shape();
-        _gradient_shape->as_rectangle({0.0, 0.0}, {1, 1});
+        _gradient_shape->as_rectangle({0.0, gradient_margin}, {1, 1 - 2*gradient_margin});
 
         update_gradient_shape_color();
 
@@ -115,16 +136,19 @@ namespace rat
         static const float cursor_width = 0.01;
         static const float cursor_frame = 0.25 * cursor_width;
 
+        int x = 0, y = 0;
+        gtk_widget_get_size_request(GTK_WIDGET(get_native()), &x, &y);
+
         float initial_x = 0.5;
         _cursor_shape_inner = new Shape();
         _cursor_shape_inner->as_rectangle({initial_x, 0}, {cursor_width, 1});
 
         _cursor_shape_frame = new Shape();
-        _cursor_shape_frame->as_frame({initial_x, 0}, {cursor_width, 1}, cursor_frame);
+        _cursor_shape_frame->as_frame({initial_x, 0}, {cursor_width, 1}, cursor_frame, cursor_frame);
         _cursor_shape_frame->set_color(RGBA(0, 0, 0, 1));
 
         _gradient_shape_frame = new Shape();
-        _gradient_shape_frame->as_frame({0, 0}, {1, 1}, gradient_frame);
+        _gradient_shape_frame->as_frame({0.0, gradient_margin}, {1, 1 - 2*gradient_margin}, gradient_frame * (y / x), gradient_frame);
         _gradient_shape_frame->set_color(RGBA(0, 0, 0, 1));
 
         gtk_gl_area_queue_render(area);
@@ -165,5 +189,10 @@ namespace rat
     void ColorGradientRectangle::on_resize(GtkGLArea* area, gint _0, gint _1)
     {
         gtk_gl_area_queue_render(area);
+    }
+
+    void ColorGradientRectangle::on_click(GtkWidget *self, GdkEventButton button)
+    {
+        std::cout << "event" << std::endl;
     }
 }

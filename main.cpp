@@ -33,6 +33,8 @@ int main(int argc, char *argv[])
     // setup window
     auto *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_default_size(GTK_WINDOW(window), 400, 300);
+    gtk_widget_set_events(window, GDK_BUTTON_PRESS_MASK);
+
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), nullptr);
     //gtk_window_set_decorated(GTK_WINDOW(window), FALSE);
     gtk_widget_realize(window);
@@ -204,8 +206,10 @@ int main(int argc, char *argv[])
     auto hsv_separator = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_widget_set_margin_top(GTK_WIDGET(hsv_separator), 10);
 
+    float label_right_margin = 10;
+
     auto hsv_label = gtk_label_new("HSV");
-    gtk_widget_set_margin_end(GTK_WIDGET(hsv_label), 50);
+    gtk_widget_set_margin_end(GTK_WIDGET(hsv_label), label_right_margin);
     gtk_box_pack_start(GTK_BOX(hsv_separator), hsv_label, FALSE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(hsv_separator), GTK_WIDGET(gtk_separator_menu_item_new()), TRUE, TRUE, 0);
 
@@ -227,7 +231,7 @@ int main(int argc, char *argv[])
     gtk_widget_set_margin_top(GTK_WIDGET(rgb_separator), 25);
 
     auto rgb_label = gtk_label_new("RGB");
-    gtk_widget_set_margin_end(GTK_WIDGET(rgb_label), 50);
+    gtk_widget_set_margin_end(GTK_WIDGET(rgb_label), label_right_margin);
     gtk_box_pack_start(GTK_BOX(rgb_separator), rgb_label, FALSE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(rgb_separator), GTK_WIDGET(gtk_separator_menu_item_new()), TRUE, TRUE, 0);
 
@@ -235,7 +239,7 @@ int main(int argc, char *argv[])
     gtk_widget_set_margin_top(GTK_WIDGET(cymk_separator), 25);
 
     auto cymk_label = gtk_label_new("CYMK");
-    gtk_widget_set_margin_end(GTK_WIDGET(cymk_label), 50);
+    gtk_widget_set_margin_end(GTK_WIDGET(cymk_label), label_right_margin);
     gtk_box_pack_start(GTK_BOX(cymk_separator), cymk_label, FALSE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(cymk_separator), GTK_WIDGET(gtk_separator_menu_item_new()), TRUE, TRUE, 0);
 

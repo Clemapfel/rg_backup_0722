@@ -26,7 +26,7 @@ namespace rat
             void as_line_strip(std::vector<Vector2f>);
             void as_polygon(std::vector<Vector2f> positions); // bounding polygon
             void as_wireframe(std::vector<Vector2f>);         // bounding polygon
-            void as_frame(Vector2f top_left, Vector2f size, float width);
+            void as_frame(Vector2f top_left, Vector2f size, float x_width, float y_width);
 
             void render(Shader& shader, Transform transform);
 
@@ -395,7 +395,7 @@ namespace rat
         initialize();
     }
 
-    void Shape::as_frame(Vector2f top_left, Vector2f size, float width)
+    void Shape::as_frame(Vector2f top_left, Vector2f size, float x_width, float y_width)
     {
         _vertices.clear();
         _indices.clear();
@@ -410,24 +410,25 @@ namespace rat
         float y = top_left.y;
         float w = size.x;
         float h = size.y;
-        float l = width;
+        float lx = x_width;
+        float ly = y_width;
 
         // in order: left to right, top to bottom
 
         push_vertex(x, y);         // 0
-        push_vertex(x+w-l, y);     // 1
+        push_vertex(x+w-lx, y);     // 1
         push_vertex(x+w, y);       // 2
 
-        push_vertex(x, y+l);       // 3
-        push_vertex(x+l, y+l);     // 4
-        push_vertex(x+w-l, y+l);   // 5
+        push_vertex(x, y+ly);       // 3
+        push_vertex(x+lx, y+ly);     // 4
+        push_vertex(x+w-lx, y+ly);   // 5
 
-        push_vertex(x+l, y+h-l);   // 6
-        push_vertex(x+w-l, y+h-l); // 7
-        push_vertex(x+w, y+h-l);   // 8
+        push_vertex(x+lx, y+h-ly);   // 6
+        push_vertex(x+w-lx, y+h-ly); // 7
+        push_vertex(x+w, y+h-ly);   // 8
 
         push_vertex(x, y+h);       // 9
-        push_vertex(x+l, y+h);     // 10
+        push_vertex(x+lx, y+h);     // 10
         push_vertex(x+w, y+h);     // 11
 
         _indices = {
