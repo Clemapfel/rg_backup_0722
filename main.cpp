@@ -1,23 +1,3 @@
-//
-// Created by clem on 6/26/22.
-//
-
-//#include <gtk-3.0/gtk/gtk.h>
-
-#include <gtkmm-3.0/gtkmm.h>
-
-int main(int argc, char *argv[])
-{
-    auto app = Gtk::Application::create(argc, argv,
-                                     "org.gtkmm.examples.base");
-
-    Gtk::Window window;
-    window.set_default_size(200, 200);
-
-    return app->run(window);
-}
-
-/*
 
 #include <mousetrap.hpp>
 #include <thread>
@@ -64,8 +44,8 @@ int main()
     text.create(window, {50, 50}, content, width, 1);
 
     glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_COLOR, GL_SRC_COLOR);
-    glBlendEquationSeparate(GL_FUNC_SUBTRACT, GL_FUNC_SUBTRACT);
+    glBlendFunc(GL_SRC_ALPHA, GL_ZERO);
+    //glBlendEquationSeparate(GL_FUNC_SUBTRACT, GL_FUNC_SUBTRACT);
 
     while (not InputHandler::exit_requested())
     {
@@ -140,5 +120,3 @@ int main()
 
     return 0;
 }
-
-*/
