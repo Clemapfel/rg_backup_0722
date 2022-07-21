@@ -44,6 +44,7 @@ namespace rat
 
             Rectangle get_bounding_box() const;
             Vector2f get_size() const;
+            void set_size(Vector2f);
 
             void set_centroid(Vector2f);
             Vector2f get_centroid() const;

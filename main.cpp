@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
         {"K", ColorGradientRectangle(gradient_size)}
     };
 
-    primary_color = RGBA(0.8, 0.75, 1, 1);
+    primary_color = HSVA(0.5, 0.75, 1, 1);
 
     auto update_gradients = [&]()
     {
@@ -110,6 +110,7 @@ int main(int argc, char *argv[])
 
         gradients.at("S").set_left_color(hsva_0);
         gradients.at("S").set_right_color(hsva_1);
+        gradients.at("S").set_value(as_hsva.s);
 
         hsva_0 = as_hsva;
         hsva_1 = as_hsva;
@@ -119,6 +120,7 @@ int main(int argc, char *argv[])
 
         gradients.at("V").set_left_color(hsva_0);
         gradients.at("V").set_right_color(hsva_1);
+        gradients.at("V").set_value(as_hsva.v);
 
         // RGBA
         const auto as_rgba = primary_color;
@@ -131,6 +133,7 @@ int main(int argc, char *argv[])
 
         gradients.at("R").set_left_color(rgba_0);
         gradients.at("R").set_right_color(rgba_1);
+        gradients.at("R").set_value(as_rgba.r);
 
         rgba_0 = as_rgba;
         rgba_1 = as_rgba;
@@ -140,6 +143,7 @@ int main(int argc, char *argv[])
 
         gradients.at("G").set_left_color(rgba_0);
         gradients.at("G").set_right_color(rgba_1);
+        gradients.at("G").set_value(as_rgba.g);
 
         rgba_0 = as_rgba;
         rgba_1 = as_rgba;
@@ -149,6 +153,7 @@ int main(int argc, char *argv[])
 
         gradients.at("B").set_left_color(rgba_0);
         gradients.at("B").set_right_color(rgba_1);
+        gradients.at("B").set_value(as_rgba.b);
 
         // CYMK
         const auto as_cymk = primary_color.operator CYMK();
@@ -161,6 +166,7 @@ int main(int argc, char *argv[])
 
         gradients.at("C").set_left_color(cymk_0);
         gradients.at("C").set_right_color(cymk_1);
+        gradients.at("C").set_value(as_cymk.c);
 
         cymk_0 = as_cymk;
         cymk_1 = as_cymk;
@@ -170,6 +176,8 @@ int main(int argc, char *argv[])
 
         gradients.at("Y").set_left_color(cymk_0);
         gradients.at("Y").set_right_color(cymk_1);
+        gradients.at("Y").set_value(as_cymk.y);
+
 
         cymk_0 = as_cymk;
         cymk_1 = as_cymk;
@@ -179,6 +187,7 @@ int main(int argc, char *argv[])
 
         gradients.at("M").set_left_color(cymk_0);
         gradients.at("M").set_right_color(cymk_1);
+        gradients.at("M").set_value(as_cymk.m);
 
         cymk_0 = as_cymk;
         cymk_1 = as_cymk;
@@ -188,6 +197,7 @@ int main(int argc, char *argv[])
 
         gradients.at("K").set_left_color(cymk_0);
         gradients.at("K").set_right_color(cymk_1);
+        gradients.at("K").set_value(as_cymk.k);
     };
     update_gradients();
 

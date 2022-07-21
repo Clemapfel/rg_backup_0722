@@ -35,6 +35,8 @@ namespace rat
         explicit operator CYMK() const;
 
         float to_grayscale() const;
+
+        explicit operator std::string();
     };
 
     struct HSVA
@@ -106,6 +108,14 @@ namespace rat
 
 namespace rat
 {
+    RGBA::operator std::string()
+    {
+        std::stringstream out;
+        out << "RGBA(" << r << ", " << g << ", " << b << ")";
+
+        return out.str();
+    }
+
     RGBA::RGBA(float r, float g, float b, float a)
         : r(r), g(g), b(b), a(a)
     {}

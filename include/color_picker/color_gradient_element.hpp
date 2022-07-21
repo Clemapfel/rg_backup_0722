@@ -1,56 +1,53 @@
 // 
 // Copyright 2022 Clemens Cords
-// Created on 7/17/22 by clem (mail@clemens-cords.com)
+// Created on 7/21/22 by clem (mail@clemens-cords.com)
 //
 
 #pragma once
 
-#include <include/gl_canvas.hpp>
-
 #include <map>
+
+#include <include/gl_canvas.hpp>
+#include <gtk/gtk.h>
 
 namespace rat
 {
     static RGBA primary_color = RGBA(1, 1, 1, 1);
 
-    namespace color_gradient_rectangle_wrapper
-    {
-        static void on_click(GtkWidget* self, GdkEventButton* event, void* instance);
-    }
-
     class ColorGradientRectangle : public GLCanvas
     {
-        friend void color_gradient_rectangle_wrapper::on_click(GtkWidget*, GdkEventButton*, void*);
-        static inline std::map<size_t, std::pair<RGBA, RGBA>> _left_right_colors = {};
+        struct ColorGradientData {
+            RGBA _left;
+            RGBA _right;
+            float _value = 0;
+            std::string _shader_path = "";
+        };
+
+        static inline std::map<size_t, ColorGradientData> _data = {};
 
         public:
             ColorGradientRectangle(Vector2f size, const std::string& fragment_shader_path = "");
+            ~ColorGradientRectangle();
 
             void set_left_color(RGBA);
             void set_right_color(RGBA);
+            void set_value(float zero_to_one);
 
         protected:
             void on_realize(GtkGLArea*) override;
             gboolean on_render(GtkGLArea*, GdkGLContext*) override;
             void on_shutdown(GtkGLArea*) override;
             void on_resize(GtkGLArea* area, gint width, gint height) override;
-            void on_click(GtkWidget* self, GdkEventButton* button);
 
         private:
-
-            std::string _shader_path; // optional shader
             size_t _current_color_location = -1;
 
             Shader* _shader = nullptr;
             Shape* _gradient_shape = nullptr;
-            Shape* _gradient_shape_frame = nullptr;
-            void update_gradient_shape_color();
+            Shape* _cursor_shape = nullptr;
+            Shape* _cursor_frame_shape = nullptr;
 
-            static inline Shader* _noop_shader = nullptr;
-            Shape* _cursor_shape_inner = nullptr;
-            Shape* _cursor_shape_frame = nullptr;
-
-            static inline const Transform _identity_transform = Transform();
+            void update_shape();
     };
 }
 
@@ -58,102 +55,86 @@ namespace rat
 
 namespace rat
 {
-    namespace color_gradient_rectangle_wrapper
+    ColorGradientRectangle::ColorGradientRectangle(Vector2f size, const std::string &fragment_shader_path)
+        : GLCanvas(size)
     {
-        void on_click(GtkWidget* self, GdkEventButton* event, void* instance)
-        {
-            ((ColorGradientRectangle*) instance)->on_click(self, event);
-        }
+        _data.emplace(get_id(), ColorGradientData());
+        _data.at(get_id())._shader_path = fragment_shader_path;
     }
 
-    ColorGradientRectangle::ColorGradientRectangle(Vector2f size, const std::string& fragment_shader_path)
-            : GLCanvas(size), _shader_path(fragment_shader_path)
-    {
-        gtk_widget_set_events(GTK_WIDGET(get_native()),
-             GDK_ALL_EVENTS_MASK
-        );
-
-        g_signal_connect(get_native(), "button-press-event", G_CALLBACK(color_gradient_rectangle_wrapper::on_click), this);
-        g_signal_connect(get_native(), "button-release-event", G_CALLBACK(color_gradient_rectangle_wrapper::on_click), this);
-
-        if (_noop_shader == nullptr)
-            _noop_shader = new Shader();
-
-        if (not fragment_shader_path.empty())
-        {
-            _shader = new Shader();
-            _shader->create_from_file("/home/clem/Workspace/mousetrap/resources/shaders/color_picker_hue_gradient.frag", ShaderType::FRAGMENT);
-
-            _current_color_location = glGetUniformLocation(_shader->get_program_id(), "_current_color");
-        }
-
-        _left_right_colors.emplace(std::piecewise_construct,
-                                   std::forward_as_tuple(get_id()),
-                                   std::forward_as_tuple(RGBA(), RGBA())
-        );
-    }
+    ColorGradientRectangle::~ColorGradientRectangle()
+    {}
 
     void ColorGradientRectangle::set_left_color(RGBA color)
     {
-        _left_right_colors.at(get_id()).first = color;
+        _data.at(get_id())._left = color;
     }
 
     void ColorGradientRectangle::set_right_color(RGBA color)
     {
-        _left_right_colors.at(get_id()).second = color;
+        _data.at(get_id())._right = color;
     }
 
-    void ColorGradientRectangle::update_gradient_shape_color()
+    void ColorGradientRectangle::set_value(float zero_to_one)
     {
-        auto it = _left_right_colors.find(get_id());
-        auto left_color = it->second.first;
-        auto right_color = it->second.second;
+        zero_to_one = glm::clamp<float>(zero_to_one, 0, 1);
+        _data.at(get_id())._value = zero_to_one;
+    }
 
-        if ((glm::vec4) _gradient_shape->get_vertex_color(0) != (glm::vec4) left_color)
+    void ColorGradientRectangle::update_shape()
+    {
+        auto& data = _data.at(get_id());
+
+        //if ((glm::vec4) _gradient_shape->get_vertex_color(0) != (glm::vec4) data._left)
         {
-            _gradient_shape->set_vertex_color(0, left_color);
-            _gradient_shape->set_vertex_color(3, left_color);
+            _gradient_shape->set_vertex_color(0, data._left);
+            _gradient_shape->set_vertex_color(3, data._left);
         }
 
-        if ((glm::vec4) _gradient_shape->get_vertex_color(1) != (glm::vec4) right_color)
+        //if ((glm::vec4) _gradient_shape->get_vertex_color(1) != (glm::vec4) data._right)
         {
-            _gradient_shape->set_vertex_color(1, right_color);
-            _gradient_shape->set_vertex_color(2, right_color);
+            _gradient_shape->set_vertex_color(1, data._right);
+            _gradient_shape->set_vertex_color(2, data._right);
         }
+
+        int x, y;
+        gtk_widget_get_size_request(get_native(), &x, &y);
+
+        float x_pos = data._value;
+        auto current_page = _cursor_shape->get_centroid();
+        _cursor_shape->set_centroid({x_pos, 0});
+        _cursor_frame_shape->set_centroid({x_pos, 0});
     }
 
     void ColorGradientRectangle::on_realize(GtkGLArea* area)
     {
         gtk_gl_area_make_current(area);
 
-        if (_shader == nullptr)
-            _shader = new Shader();
+        auto& data = _data.at(get_id());
 
-        static const float gradient_margin = 0.1;
+        _shader = new Shader();
+        if (not data._shader_path.empty())
+        {
+            _shader->create_from_file(data._shader_path, ShaderType::FRAGMENT);
+            _current_color_location = glGetUniformLocation(_shader->get_program_id(), "_current_color");
+        }
+
+        static const float gradient_margin = 0.05;
         _gradient_shape = new Shape();
         _gradient_shape->as_rectangle({0.0, gradient_margin}, {1, 1 - 2*gradient_margin});
 
-        update_gradient_shape_color();
+        _cursor_shape = new Shape();
+        _cursor_shape->as_rectangle({0, 0}, {0.01, 1});
 
-        static const float gradient_frame = 0.05;
-        static const float cursor_width = 0.01;
-        static const float cursor_frame = 0.25 * cursor_width;
+        auto viewport = get_viewport_size();
+        float frame_width = 0.01;
 
-        int x = 0, y = 0;
-        gtk_widget_get_size_request(GTK_WIDGET(get_native()), &x, &y);
 
-        float initial_x = 0.5;
-        _cursor_shape_inner = new Shape();
-        _cursor_shape_inner->as_rectangle({initial_x, 0}, {cursor_width, 1});
+        _cursor_frame_shape = new Shape();
+        _cursor_frame_shape->as_frame(_cursor_shape->get_top_left() - Vector2f(frame_width), _cursor_shape->get_size() + Vector2f(frame_width*2), 0.01 * (viewport.x / viewport.y), 0.01);
+        _cursor_frame_shape->set_color(RGBA(0, 0, 0, 1));
 
-        _cursor_shape_frame = new Shape();
-        _cursor_shape_frame->as_frame({initial_x, 0}, {cursor_width, 1}, cursor_frame, cursor_frame);
-        _cursor_shape_frame->set_color(RGBA(0, 0, 0, 1));
-
-        _gradient_shape_frame = new Shape();
-        _gradient_shape_frame->as_frame({0.0, gradient_margin}, {1, 1 - 2*gradient_margin}, gradient_frame * (y / x), gradient_frame);
-        _gradient_shape_frame->set_color(RGBA(0, 0, 0, 1));
-
+        update_shape();
         gtk_gl_area_queue_render(area);
     }
 
@@ -163,13 +144,14 @@ namespace rat
 
         delete _shader;
         delete _gradient_shape;
+        delete _cursor_frame_shape;
     }
 
     gboolean ColorGradientRectangle::on_render(GtkGLArea* area, GdkGLContext* context)
     {
         gtk_gl_area_make_current(area);
 
-        update_gradient_shape_color();
+        update_shape();
 
         glUseProgram(_shader->get_program_id());
         glUniform4f(_current_color_location, primary_color.r, primary_color.g, primary_color.b, primary_color.a);
@@ -180,28 +162,19 @@ namespace rat
         glClearColor(0, 0, 0, 0);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        _gradient_shape->render(*_shader, _identity_transform);
-        _gradient_shape_frame->render(*_noop_shader, _identity_transform);
-        _cursor_shape_inner->render(*_noop_shader, _identity_transform);
-        _cursor_shape_frame->render(*_noop_shader, _identity_transform);
+        static auto identity_transform = Transform();
+        _gradient_shape->render(*_shader, identity_transform);
+
+        static auto noop_shader = Shader();
+        _cursor_shape->render(noop_shader, identity_transform);
+        _cursor_frame_shape->render(noop_shader, identity_transform);
 
         glFlush();
         return FALSE;
     }
 
-    void ColorGradientRectangle::on_resize(GtkGLArea* area, gint _0, gint _1)
+    void ColorGradientRectangle::on_resize(GtkGLArea* area, gint width, gint height)
     {
         gtk_gl_area_queue_render(area);
-    }
-
-    void ColorGradientRectangle::on_click(GtkWidget *self, GdkEventButton* event)
-    {
-        int width, height;
-        gtk_widget_get_size_request(self, &width, &height);
-
-        auto position = Vector2f(event->x / width, event->y / height);
-        _cursor_shape_inner->set_top_left(position);
-
-        gtk_gl_area_queue_render(GTK_GL_AREA(self));
     }
 }
