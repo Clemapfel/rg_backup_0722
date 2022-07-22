@@ -49,6 +49,15 @@ namespace rat
 
             void update_shape();
     };
+
+    struct ColorGradientElement
+    {
+        ColorGradientElement(float x_size, const std::string& fragment_shader_path = "");
+
+        GtkOverlay* _overlay;
+        GtkScale* _scale;
+        ColorGradientRectangle _gradient;
+    };
 }
 
 // ##############################################################################################
@@ -100,7 +109,7 @@ namespace rat
         int x, y;
         gtk_widget_get_size_request(get_native(), &x, &y);
 
-        float x_pos = data._value;
+        float x_pos = (data._value * 2) - 1;
         auto current_page = _cursor_shape->get_centroid();
         _cursor_shape->set_centroid({x_pos, 0});
         _cursor_frame_shape->set_centroid({x_pos, 0});
@@ -119,16 +128,16 @@ namespace rat
             _current_color_location = glGetUniformLocation(_shader->get_program_id(), "_current_color");
         }
 
-        static const float gradient_margin = 0.05;
+        static const float gradient_y_margin = 0.1;
+        static const float gradient_x_margin = 0.03;
         _gradient_shape = new Shape();
-        _gradient_shape->as_rectangle({0.0, gradient_margin}, {1, 1 - 2*gradient_margin});
+        _gradient_shape->as_rectangle({gradient_x_margin, gradient_y_margin*1.5}, {1 - 2*gradient_x_margin, 1 - 2*gradient_y_margin});
 
         _cursor_shape = new Shape();
         _cursor_shape->as_rectangle({0, 0}, {0.01, 1});
 
         auto viewport = get_viewport_size();
         float frame_width = 0.01;
-
 
         _cursor_frame_shape = new Shape();
         _cursor_frame_shape->as_frame(_cursor_shape->get_top_left() - Vector2f(frame_width), _cursor_shape->get_size() + Vector2f(frame_width*2), 0.01 * (viewport.x / viewport.y), 0.01);
@@ -177,4 +186,29 @@ namespace rat
     {
         gtk_gl_area_queue_render(area);
     }
+
+    ///
+
+    gboolean on_value_change(GtkRange* range, GtkScrollType* _, gdouble value, ColorGradientRectangle* gradient)
+    {
+        gradient->set_value(gtk_range_get_value(range));
+        return FALSE;
+    }
+
+    ColorGradientElement::ColorGradientElement(float x_size, const std::string& fragment_shader_path)
+        : _gradient({x_size, 30}, fragment_shader_path)
+    {
+        _scale = GTK_SCALE(gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0, 1, 0.01));
+        gtk_scale_set_draw_value(_scale, FALSE);
+        gtk_widget_set_margin_top(GTK_WIDGET(_scale), 0);
+
+        g_signal_connect(_scale, "change-value", G_CALLBACK(on_value_change), &_gradient);
+
+        _overlay = GTK_OVERLAY(gtk_overlay_new());
+
+        gtk_container_add(GTK_CONTAINER(_overlay), GTK_WIDGET(_gradient.get_native()));
+        gtk_widget_set_opacity(GTK_WIDGET(_scale), 0.25);
+        gtk_overlay_add_overlay(_overlay, GTK_WIDGET(_scale));
+    }
+
 }

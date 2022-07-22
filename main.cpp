@@ -71,30 +71,30 @@ int main(int argc, char *argv[])
     std::string value;
     value.resize(4);
 
-    Vector2f gradient_size = {300, 20};
-    std::map<std::string, ColorGradientRectangle> gradients =
+    float gradient_size = 300;
+    std::map<std::string, ColorGradientElement> gradients =
     {
-        {"ORIGINAL", ColorGradientRectangle(gradient_size)},
-        {"H", ColorGradientRectangle(gradient_size, "/home/clem/Workspace/mousetrap/resources/shaders/color_picker_hue_gradient.frag")},
-        {"S", ColorGradientRectangle(gradient_size)},
-        {"V", ColorGradientRectangle(gradient_size)},
+        {"ORIGINAL", ColorGradientElement(gradient_size)},
+        {"H", ColorGradientElement(gradient_size, "/home/clem/Workspace/mousetrap/resources/shaders/color_picker_hue_gradient.frag")},
+        {"S", ColorGradientElement(gradient_size)},
+        {"V", ColorGradientElement(gradient_size)},
 
-        {"R", ColorGradientRectangle(gradient_size)},
-        {"G", ColorGradientRectangle(gradient_size)},
-        {"B", ColorGradientRectangle(gradient_size)},
+        {"R", ColorGradientElement(gradient_size)},
+        {"G", ColorGradientElement(gradient_size)},
+        {"B", ColorGradientElement(gradient_size)},
 
-        {"C", ColorGradientRectangle(gradient_size)},
-        {"Y", ColorGradientRectangle(gradient_size)},
-        {"M", ColorGradientRectangle(gradient_size)},
-        {"K", ColorGradientRectangle(gradient_size)}
+        {"C", ColorGradientElement(gradient_size)},
+        {"Y", ColorGradientElement(gradient_size)},
+        {"M", ColorGradientElement(gradient_size)},
+        {"K", ColorGradientElement(gradient_size)}
     };
 
     primary_color = HSVA(0.5, 0.75, 1, 1);
 
     auto update_gradients = [&]()
     {
-        gradients.at("ORIGINAL").set_left_color(primary_color);
-        gradients.at("ORIGINAL").set_right_color(primary_color);
+        gradients.at("ORIGINAL")._gradient.set_left_color(primary_color);
+        gradients.at("ORIGINAL")._gradient.set_right_color(primary_color);
 
         // HSVA
         const HSVA as_hsva = primary_color.operator HSVA();
@@ -108,9 +108,9 @@ int main(int argc, char *argv[])
         hsva_0.s = 0;
         hsva_1.s = 1;
 
-        gradients.at("S").set_left_color(hsva_0);
-        gradients.at("S").set_right_color(hsva_1);
-        gradients.at("S").set_value(as_hsva.s);
+        gradients.at("S")._gradient.set_left_color(hsva_0);
+        gradients.at("S")._gradient.set_right_color(hsva_1);
+        gradients.at("S")._gradient.set_value(as_hsva.s);
 
         hsva_0 = as_hsva;
         hsva_1 = as_hsva;
@@ -118,9 +118,9 @@ int main(int argc, char *argv[])
         hsva_0.v = 0;
         hsva_1.v = 1;
 
-        gradients.at("V").set_left_color(hsva_0);
-        gradients.at("V").set_right_color(hsva_1);
-        gradients.at("V").set_value(as_hsva.v);
+        gradients.at("V")._gradient.set_left_color(hsva_0);
+        gradients.at("V")._gradient.set_right_color(hsva_1);
+        gradients.at("V")._gradient.set_value(as_hsva.v);
 
         // RGBA
         const auto as_rgba = primary_color;
@@ -131,9 +131,9 @@ int main(int argc, char *argv[])
         rgba_0.r = 0;
         rgba_1.r = 1;
 
-        gradients.at("R").set_left_color(rgba_0);
-        gradients.at("R").set_right_color(rgba_1);
-        gradients.at("R").set_value(as_rgba.r);
+        gradients.at("R")._gradient.set_left_color(rgba_0);
+        gradients.at("R")._gradient.set_right_color(rgba_1);
+        gradients.at("R")._gradient.set_value(as_rgba.r);
 
         rgba_0 = as_rgba;
         rgba_1 = as_rgba;
@@ -141,9 +141,9 @@ int main(int argc, char *argv[])
         rgba_0.g = 0;
         rgba_1.g = 1;
 
-        gradients.at("G").set_left_color(rgba_0);
-        gradients.at("G").set_right_color(rgba_1);
-        gradients.at("G").set_value(as_rgba.g);
+        gradients.at("G")._gradient.set_left_color(rgba_0);
+        gradients.at("G")._gradient.set_right_color(rgba_1);
+        gradients.at("G")._gradient.set_value(as_rgba.g);
 
         rgba_0 = as_rgba;
         rgba_1 = as_rgba;
@@ -151,9 +151,9 @@ int main(int argc, char *argv[])
         rgba_0.b = 0;
         rgba_1.b = 1;
 
-        gradients.at("B").set_left_color(rgba_0);
-        gradients.at("B").set_right_color(rgba_1);
-        gradients.at("B").set_value(as_rgba.b);
+        gradients.at("B")._gradient.set_left_color(rgba_0);
+        gradients.at("B")._gradient.set_right_color(rgba_1);
+        gradients.at("B")._gradient.set_value(as_rgba.b);
 
         // CYMK
         const auto as_cymk = primary_color.operator CYMK();
@@ -164,9 +164,9 @@ int main(int argc, char *argv[])
         cymk_0.c = 0;
         cymk_1.c = 1;
 
-        gradients.at("C").set_left_color(cymk_0);
-        gradients.at("C").set_right_color(cymk_1);
-        gradients.at("C").set_value(as_cymk.c);
+        gradients.at("C")._gradient.set_left_color(cymk_0);
+        gradients.at("C")._gradient.set_right_color(cymk_1);
+        gradients.at("C")._gradient.set_value(as_cymk.c);
 
         cymk_0 = as_cymk;
         cymk_1 = as_cymk;
@@ -174,9 +174,9 @@ int main(int argc, char *argv[])
         cymk_0.y = 0;
         cymk_1.y = 1;
 
-        gradients.at("Y").set_left_color(cymk_0);
-        gradients.at("Y").set_right_color(cymk_1);
-        gradients.at("Y").set_value(as_cymk.y);
+        gradients.at("Y")._gradient.set_left_color(cymk_0);
+        gradients.at("Y")._gradient.set_right_color(cymk_1);
+        gradients.at("Y")._gradient.set_value(as_cymk.y);
 
 
         cymk_0 = as_cymk;
@@ -185,9 +185,9 @@ int main(int argc, char *argv[])
         cymk_0.m = 0;
         cymk_1.m = 1;
 
-        gradients.at("M").set_left_color(cymk_0);
-        gradients.at("M").set_right_color(cymk_1);
-        gradients.at("M").set_value(as_cymk.m);
+        gradients.at("M")._gradient.set_left_color(cymk_0);
+        gradients.at("M")._gradient.set_right_color(cymk_1);
+        gradients.at("M")._gradient.set_value(as_cymk.m);
 
         cymk_0 = as_cymk;
         cymk_1 = as_cymk;
@@ -195,9 +195,9 @@ int main(int argc, char *argv[])
         cymk_0.k = 0;
         cymk_1.k = 1;
 
-        gradients.at("K").set_left_color(cymk_0);
-        gradients.at("K").set_right_color(cymk_1);
-        gradients.at("K").set_value(as_cymk.k);
+        gradients.at("K")._gradient.set_left_color(cymk_0);
+        gradients.at("K")._gradient.set_right_color(cymk_1);
+        gradients.at("K")._gradient.set_value(as_cymk.k);
     };
     update_gradients();
 
@@ -224,18 +224,18 @@ int main(int argc, char *argv[])
     gtk_box_pack_start(GTK_BOX(hsv_separator), GTK_WIDGET(gtk_separator_menu_item_new()), TRUE, TRUE, 0);
 
     gtk_box_pack_start(GTK_BOX(vbox_hsv), hsv_separator, TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox_hsv), gradients.at("H").get_native(), TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox_hsv), gradients.at("S").get_native(), TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox_hsv), gradients.at("V").get_native(), TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox_hsv), GTK_WIDGET(gradients.at("H")._overlay), TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox_hsv), GTK_WIDGET(gradients.at("S")._overlay), TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox_hsv), GTK_WIDGET(gradients.at("V")._overlay), TRUE, TRUE, 0);
 
-    gtk_box_pack_start(GTK_BOX(vbox_rgb), gradients.at("R").get_native(), TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox_rgb), gradients.at("G").get_native(), TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox_rgb), gradients.at("B").get_native(), TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox_rgb), GTK_WIDGET(gradients.at("R")._overlay), TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox_rgb), GTK_WIDGET(gradients.at("G")._overlay), TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox_rgb), GTK_WIDGET(gradients.at("B")._overlay), TRUE, TRUE, 0);
 
-    gtk_box_pack_start(GTK_BOX(vbox_cymk), gradients.at("C").get_native(), TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox_cymk), gradients.at("Y").get_native(), TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox_cymk), gradients.at("M").get_native(), TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox_cymk), gradients.at("K").get_native(), TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox_cymk), GTK_WIDGET(gradients.at("C")._overlay), TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox_cymk), GTK_WIDGET(gradients.at("Y")._overlay), TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox_cymk), GTK_WIDGET(gradients.at("M")._overlay), TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox_cymk), GTK_WIDGET(gradients.at("K")._overlay), TRUE, TRUE, 0);
 
     auto rgb_separator = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_widget_set_margin_top(GTK_WIDGET(rgb_separator), 25);
