@@ -53,7 +53,7 @@ add_library(mousetrap SHARED
     include/opengl_common.hpp
     .src/opengl_common.inl
     include/sprite.hpp
-        .src/shader.inl)
+        .src/shader.inl include/alignment.hpp)
 
 set_target_properties(mousetrap PROPERTIES
     LINKER_LANGUAGE CXX

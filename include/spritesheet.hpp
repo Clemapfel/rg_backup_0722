@@ -100,4 +100,28 @@ namespace rat
         _texture.create_from(image);
     }
 
+    Rectangle Spritesheet::get_frame(size_t x, size_t y)
+    {
+        auto out = Rectangle();
+        out.top_left.x = x * _frame_size.x;
+        out.top_left.y = y * _frame_size.y;
+        out.size = _frame_size;
+
+        return out;
+    }
+
+    Rectangle Spritesheet::get_frame(size_t linear_index)
+    {
+        return get_frame(linear_index / _n_rows)
+    }
+
+    Rectangle Spritesheet::get_frame_bounds(size_t x, size_t y)
+    {
+        return _frame_bounds.at(x + _n_columns * y);
+    }
+
+    Rectangle Spritesheet::get_frame_bounds(size_t linear_index)
+    {
+        return _frame_bounds.at(linear_index);
+    }
 }
