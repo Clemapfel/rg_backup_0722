@@ -39,7 +39,7 @@ namespace rat
                 CurrentColorArea(float width, float height);
 
                 void on_realize(GtkGLArea*) override;
-                void on_shutdown(GtkGLArea*) override;
+                void on_shutdown(GtkGLArea*) override {};
 
                 Shape* _last_color_shape;
                 Shape* _current_color_shape;
@@ -48,9 +48,19 @@ namespace rat
             static inline CurrentColorArea* _current_color_area;
             
             // scale + gradient + entry
+            struct Gradient : public GLCanvas
+            {
+                Gradient(float width, float height);
+
+                void on_realize(GtkGLArea*) override;
+                void on_shutdown(GtkGLArea*) override {};
+
+                Shape* _shape;
+            };
+
             struct SliderElement
             {
-                ShaderArea  _gradient;
+                Gradient _gradient;
                 GtkOverlay* _overlay;
                 GtkScale* _scale;
                 GtkEntry* _entry;
@@ -173,33 +183,52 @@ namespace rat
         _last_color_shape = new Shape();
         _current_color_shape = new Shape();
 
-        _last_color_shape->as_rectangle({0, 0}, {0.5, 0.5});
+        _last_color_shape->as_rectangle({0, 0}, {last_width, 1});
         _last_color_shape->set_color(RGBA(1, 0, 1, 1));
 
-        //_current_color_shape->as_rectangle({-1 + last_width, 1}, {2 - last_width, 1});
-        //_current_color_shape->set_color(RGBA(0, 1, 1, 1));
+        _current_color_shape->as_rectangle({last_width, 0}, {1 - last_width, 1});
+        _current_color_shape->set_color(RGBA(0, 1, 1, 1));
 
         register_render_task(_last_color_shape);
         register_render_task(_current_color_shape);
     }
 
-    void ColorPicker::CurrentColorArea::on_shutdown(GtkGLArea*)
+    ColorPicker::Gradient::Gradient(float width, float height)
+        : GLCanvas({width, height}), _shape()
     {}
+
+    void ColorPicker::Gradient::on_realize(GtkGLArea* area)
+    {
+        gtk_gl_area_make_current(area);
+
+        _shape = new Shape();
+        _shape->as_rectangle({0, 0}, {1, 1});
+        _shape->set_vertex_color(0, RGBA(0, 0, 0, 1));
+        _shape->set_vertex_color(3, RGBA(0, 0, 0, 1));
+        _shape->set_vertex_color(1, RGBA(1, 1, 1, 1));
+        _shape->set_vertex_color(2, RGBA(1, 1, 1, 1));
+
+        register_render_task(_shape);
+    }
 
     void ColorPicker::initialize(float width)
     {
         _window = (GtkHBox*) gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 
         // current color
-        _current_color_area = new CurrentColorArea(width, width); //2 * margin);
-        gtk_container_add(GTK_CONTAINER(_window), _current_color_area->get_native());
+        _current_color_area = new CurrentColorArea(width, 2 * margin);
+        //gtk_container_add(GTK_CONTAINER(_window), _current_color_area->get_native());
+
+        // elements
+        static auto test_gradient = Gradient(width, margin);
+        gtk_container_add(GTK_CONTAINER(_window), test_gradient.get_native());
     }
 
     void ColorPicker::update_color(char which_component, float value)
     {
-        auto set_gradient_color = [](ShaderArea& gradient, RGBA left, RGBA right) {
-            
-            auto* shape = gradient.get_shape();
+        auto set_gradient_color = [](Gradient& gradient, RGBA left, RGBA right) {
+
+            auto* shape = gradient._shape;
             shape->set_vertex_color(0, left);
             shape->set_vertex_color(3, left);
             shape->set_vertex_color(1, right);
