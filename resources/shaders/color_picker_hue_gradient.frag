@@ -27,6 +27,9 @@ out vec4 _fragment_color;
 uniform int _texture_set;
 uniform sampler2D _texture;
 
+uniform float _canvas_width;
+uniform float _canvas_height;
+
 uniform vec4 _current_color;
 
 void main()

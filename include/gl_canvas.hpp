@@ -147,10 +147,27 @@ namespace rat
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        int width, height;
+        gtk_widget_get_size_request(_native, &width, &height);
+
+        int left = gtk_widget_get_margin_start(_native);
+        int right = gtk_widget_get_margin_end(_native);
+        int top = gtk_widget_get_margin_top(_native);
+        int bottom = gtk_widget_get_margin_bottom(_native);
+
+        width += (left + right);
+        height += (top + bottom);
+
         for (auto& task : _render_tasks)
         {
+            auto* shader = task._shader == nullptr ? noop_shader : task._shader;
+            glUseProgram(shader->get_program_id());
+
+            glUniform1f(shader->get_uniform_location("_canvas_width"), float(width));
+            glUniform1f(shader->get_uniform_location("_canvas_height"), float(height));
+
             task._shape->render(
-                task._shader == nullptr ? *noop_shader : *task._shader,
+                *shader,
                 task._transform == nullptr ? *noop_transform : *task._transform
             );
         }

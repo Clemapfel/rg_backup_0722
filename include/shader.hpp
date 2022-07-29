@@ -40,6 +40,9 @@ namespace rat
             void create_from_string(const std::string& code, ShaderType);
             void create_from_file(const std::string& path, ShaderType);
 
+            //
+            int get_uniform_location(const std::string&) const;
+
         private:
             [[nodiscard]] GLNativeHandle compile_shader(const std::string&, ShaderType shader_type);
             [[nodiscard]] GLNativeHandle link_program(GLNativeHandle fragment_id, GLNativeHandle vertex_id);
@@ -65,6 +68,9 @@ namespace rat
 
                 uniform int _texture_set;
                 uniform sampler2D _texture;
+
+                uniform float _canvas_width;
+                uniform float _canvas_height;
 
                 void main()
                 {
@@ -276,5 +282,10 @@ namespace rat
     int Shader::get_fragment_texture_set_location() const
     {
         return glGetUniformLocation(_program_id, "_texture_set");
+    }
+
+    int Shader::get_uniform_location(const std::string& str) const
+    {
+        return glGetUniformLocation(_program_id, str.c_str());
     }
 }

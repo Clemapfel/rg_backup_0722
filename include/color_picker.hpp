@@ -31,6 +31,13 @@ namespace rat
 
             /// \brief expose
             static GtkWidget* get_native();
+
+            // TODO
+            static void trigger_recompile_shader()
+            {
+                _current_color_area->_transparency_tiling_shader->create_from_file("/home/clem/Workspace/mousetrap/resources/shaders/transparency_tiling.frag", ShaderType::FRAGMENT);
+                _current_color_area->queue_render();
+            }
             
         private:
             // top left area that display current color and compares it with last one
@@ -215,10 +222,10 @@ namespace rat
         _transparency_tiling_shader = new Shader();
         _transparency_tiling_shader->create_from_file("/home/clem/Workspace/mousetrap/resources/shaders/transparency_tiling.frag", ShaderType::FRAGMENT);
         _last_color_shape->as_rectangle({0, 0}, {last_width, 1});
-        _last_color_shape->set_color(RGBA(1, 0, 1, 0.1));
+        _last_color_shape->set_color(RGBA(1, 0, 1, 0));
 
         _current_color_shape->as_rectangle({last_width, 0}, {1 - last_width, 1});
-        _current_color_shape->set_color(RGBA(0, 1, 1, 0.1));
+        _current_color_shape->set_color(RGBA(0, 1, 1, 0));
 
         _transparency_tiling->as_rectangle({0, 0}, {1, 1});
         _transparency_tiling->set_color(RGBA(1, 1, 1, 1));
@@ -256,7 +263,7 @@ namespace rat
         gtk_widget_set_opacity(GTK_WIDGET(_scale), 0.5);
         
         _entry = (GtkSpinButton*) gtk_spin_button_new_with_range(0, 1, 0.01);
-        gtk_spin_button_set_digits(_entry, 2);
+        gtk_spin_button_set_digits(_entry, 3);
 
         _overlay = GTK_OVERLAY(gtk_overlay_new());
 
@@ -289,6 +296,7 @@ namespace rat
     ColorPicker::CloseDialogue::CloseDialogue()
     {
         _button = (GtkButton*) gtk_button_new_with_label("todo");
+        g_signal_connect(_button, "clicked", G_CALLBACK(ColorPicker::trigger_recompile_shader), nullptr);
     }
 
     void ColorPicker::initialize(float width)
@@ -340,7 +348,7 @@ namespace rat
         gtk_container_add(GTK_CONTAINER(_all_slider_regions), GTK_WIDGET(_cmyk_region));
 
         _current_color_element_overlay = GTK_OVERLAY(gtk_overlay_new());
-        gtk_widget_set_margin_start(_current_color_area->get_native(), 8 * margin); // unable to align without hardcoding
+        gtk_widget_set_margin_start(_current_color_area->get_native(), 0.45 * width); // unable to align without hardcoding
         gtk_widget_set_hexpand(_current_color_area->get_native(), TRUE);
         gtk_widget_set_valign(_current_color_area->get_native(), GtkAlign::GTK_ALIGN_END);
         gtk_widget_set_valign(_current_color_area->get_native(), GtkAlign::GTK_ALIGN_START);
