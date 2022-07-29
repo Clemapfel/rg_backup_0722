@@ -2,15 +2,14 @@
 // Created by clem on 6/26/22.
 //
 
-#include <include/gl_canvas.hpp>
-#include <include/shader.hpp>
-#include <include/shape.hpp>
+#include <include/gl_common.hpp>
+#include <include/color_picker.hpp>
 #include <include/shader_area.hpp>
-#include <include/color_picker/color_gradient_element.hpp>
-#include <include/color_picker/color_component_entry.hpp>
-#include <include/color_picker/color_html_code_entry.hpp>
+
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
+
+#include <iostream>
 
 void initialize_opengl(GtkWindow* window)
 {
@@ -38,6 +37,8 @@ void initialize_opengl(GtkWindow* window)
     GL_INITIALIZED = true;
 }
 
+using namespace rat;
+
 int main()
 {
     // init gtk
@@ -45,26 +46,41 @@ int main()
 
     // main window
     auto *main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_default_size(GTK_WINDOW(main), 400, 300);
-    g_signal_connect(main, "destroy", G_CALLBACK(gtk_main_quit), nullptr);
-    gtk_widget_realize(main);
+    GtkWidget *main_window = main;
+    gtk_window_set_default_size(GTK_WINDOW(main_window), 400, 300);
+    g_signal_connect(main_window, "destroy", G_CALLBACK(gtk_main_quit), nullptr);
+    gtk_widget_realize(main_window);
 
     // init opengl
-    initialize_opengl(GTK_WINDOW(main));
+    initialize_opengl(GTK_WINDOW(main_window));
 
+    auto area = GLCanvas({400, 300});
+    auto* picker = area.get_native();
+    gtk_widget_set_halign(picker, GtkAlign::GTK_ALIGN_CENTER);
+    gtk_widget_set_valign(picker, GtkAlign::GTK_ALIGN_CENTER);
+    gtk_widget_set_margin_start(picker, 20);
+    gtk_widget_set_margin_end(picker, 20);
+    gtk_container_add(GTK_CONTAINER(main_window), picker);
+
+    /*
     // color picker
-    auto* color_pick = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    rat::ColorPicker::initialize(400);
+    auto* picker = rat::ColorPicker::get_native();
+    gtk_widget_set_halign(picker, GtkAlign::GTK_ALIGN_CENTER);
+    gtk_widget_set_valign(picker, GtkAlign::GTK_ALIGN_CENTER);
+    gtk_widget_set_margin_start(picker, 20);
+    gtk_widget_set_margin_end(picker, 20);
 
-
+    gtk_container_add(GTK_CONTAINER(main_window), picker);
+     */
 
     // render loop
-    gtk_widget_show_all(main);
-    gtk_window_present((GtkWindow*) main);
+    gtk_widget_show_all(main_window);
+    gtk_window_present((GtkWindow*) main_window);
     gtk_main();
 
     return 0;
 }
-
 
 /*
 #include <map>

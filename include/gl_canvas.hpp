@@ -36,17 +36,23 @@ namespace rat
             GtkWidget* get_native();
             size_t get_id() const;
 
+            void queue_render();
+
         protected:
-            virtual void on_realize(GtkGLArea*) = 0;
-            virtual gboolean on_render(GtkGLArea*, GdkGLContext*) = 0;
-            virtual void on_shutdown(GtkGLArea*) = 0;
-            virtual void on_resize(GtkGLArea* area, gint width, gint height) = 0;
+            virtual void on_realize(GtkGLArea*);
+            virtual gboolean on_render(GtkGLArea*, GdkGLContext*);
+            virtual void on_shutdown(GtkGLArea*);
+            virtual void on_resize(GtkGLArea* area, gint width, gint height);
 
         private:
+            GtkWidget* _native;
+
             static inline size_t current_id = 0;
             size_t _id;
 
-            GtkWidget* _native;
+            static inline Shader* noop_shader = nullptr;
+            static inline Transform* noop_transform = nullptr;
+            static inline Shape* background_shape = nullptr;
     };
 }
 
@@ -102,5 +108,57 @@ namespace rat
     GtkWidget *GLCanvas::get_native()
     {
         return _native;
+    }
+
+    void GLCanvas::queue_render()
+    {
+        gtk_gl_area_queue_render(GTK_GL_AREA(_native));
+    }
+
+    void GLCanvas::on_realize(GtkGLArea* area)
+    {
+        gtk_gl_area_make_current(area);
+
+        if (noop_shader == nullptr)
+            noop_shader = new Shader();
+
+        if (noop_transform == nullptr)
+            noop_transform = new Transform();
+
+        if (background_shape == nullptr)
+        {
+            background_shape = new Shape();
+            background_shape->set_color(RGBA(1, 0, 1, 1));
+            background_shape->as_rectangle({0, 0}, {1, 1});
+        }
+
+        gtk_gl_area_queue_render(area);
+    }
+
+    void GLCanvas::on_shutdown(GtkGLArea*)
+    {}
+
+    gboolean GLCanvas::on_render(GtkGLArea* area, GdkGLContext* context)
+    {
+        gtk_gl_area_make_current(area);
+
+        glUseProgram(noop_shader->get_program_id());
+        glViewport(0, 0, 1, 1);
+
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        glClearColor(0, 0, 0, 1);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        background_shape->render(*noop_shader, *noop_transform);
+
+        glFlush();
+        return FALSE;
+    }
+
+    void GLCanvas::on_resize(GtkGLArea *area, gint width, gint height)
+    {
+        gtk_gl_area_queue_render(area);
     }
 }

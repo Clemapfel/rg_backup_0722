@@ -14,6 +14,7 @@ namespace rat
         public:
             ShaderArea(const std::string& fragment_shader_path, Vector2f size);
             GLNativeHandle get_shader_program_id() const;
+            Shape* get_shape();
 
         protected:
             void on_realize(GtkGLArea*) override;
@@ -80,5 +81,10 @@ namespace rat
     void ShaderArea::on_resize(GtkGLArea* area, gint _0, gint _1)
     {
         gtk_gl_area_queue_render(area);
+    }
+
+    Shape *ShaderArea::get_shape()
+    {
+        return _shape;
     }
 }
