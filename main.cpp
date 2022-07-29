@@ -6,8 +6,8 @@
 #include <include/color_picker.hpp>
 #include <include/shader_area.hpp>
 
-#include <gtk/gtk.h>
-#include <gdk/gdk.h>
+#include <gtk-4.0/gtk/gtk.h>
+#include <gtk-4.0/gdk/gdk.h>
 
 #include <iostream>
 
@@ -47,7 +47,7 @@ int main()
     // main window
     auto *main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     GtkWidget *main_window = main;
-    gtk_window_set_default_size(GTK_WINDOW(main_window), 400, 300);
+    gtk_window_set_default_size(GTK_WINDOW(main_window), 200, 300);
     g_signal_connect(main_window, "destroy", G_CALLBACK(gtk_main_quit), nullptr);
     gtk_widget_realize(main_window);
 
@@ -55,16 +55,21 @@ int main()
     initialize_opengl(GTK_WINDOW(main_window));
 
     // color picker
-    rat::ColorPicker::initialize(400);
+    rat::ColorPicker::initialize(200);
     auto* picker = rat::ColorPicker::get_native();
+    gtk_widget_set_margin_start(picker, 0);
+    gtk_widget_set_margin_end(picker, 0);
     gtk_widget_set_halign(picker, GtkAlign::GTK_ALIGN_CENTER);
     gtk_widget_set_valign(picker, GtkAlign::GTK_ALIGN_CENTER);
-    gtk_widget_set_margin_start(picker, 20);
-    gtk_widget_set_margin_end(picker, 20);
-    gtk_widget_set_margin_top(picker, 20);
-    gtk_widget_set_margin_bottom(picker, 20);
-
     gtk_container_add(GTK_CONTAINER(main_window), picker);
+
+    /*
+    auto* hsv = gtk_hsv_new();
+    gtk_widget_set_size_request(hsv, 200, 200);
+    auto* spin_button = gtk_spin_button_new_with_range(0, 1, 0.001);
+    auto* test = gtk_switch_new();
+    gtk_container_add(GTK_CONTAINER(main_window), test);
+     */
 
     // render loop
     gtk_widget_show_all(main_window);

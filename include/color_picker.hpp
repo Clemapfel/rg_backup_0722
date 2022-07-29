@@ -48,6 +48,9 @@ namespace rat
 
                 Shape* _last_color_shape;
                 Shape* _current_color_shape;
+                Shape* _transparency_tiling;
+
+                Shader* _transparency_tiling_shader;
             };
 
             static inline CurrentColorArea* _current_color_area;
@@ -75,7 +78,7 @@ namespace rat
                 GtkOverlay* _overlay;
                 GtkBox* _hbox;
                 GtkScale* _scale;
-                GtkEntry* _entry;
+                GtkSpinButton* _entry;
 
                 GtkWidget* get_native() {
                     return GTK_WIDGET(_hbox);
@@ -121,13 +124,12 @@ namespace rat
             // close / dock dialogue
             struct CloseDialogue
             {
-                GtkBox* _hbox;
-                GtkButton* _close_button;
-                GtkButton* _dock_button;    // pin to main window
-                GtkButton* _free_button;    // move to new window
+                CloseDialogue();
+                GtkButton* _button;
 
-                GtkWidget* get_native() {
-                    return GTK_WIDGET(_hbox);
+                GtkWidget* get_native()
+                {
+                    return GTK_WIDGET(_button);
                 }
             };
 
@@ -153,22 +155,16 @@ namespace rat
                 // window underneath, close dialogue top left
             
             // global config
-            static inline const float margin = 10;
+            static inline float margin = 10;
 
-            static inline const float left_to_slider_left_margin = 2 * margin;
+            static inline const float left_to_slider_left_margin = 1.5 * margin;
                 // left of window to left of slider
 
             static inline const float left_to_label_left_margin = 1 * margin;
                 // left of window to left of label
 
-            static inline const float bottom_margin = 0.5 * margin;
-                // bottom of window to bottom of K slider
-
-            static inline const float right_margin = 1 * margin;
-                // right of window to right of entries
-
-            static inline const float top_margin = 0.5 * margin;
-                // top of window to top of current_color_area
+            static inline const float outer_margin = 2 * margin;
+                // around outermost box element
 
             static inline const float scale_to_entry_spacer = 1 * margin;
                 // right of scale to left of entry for each slider
@@ -180,7 +176,7 @@ namespace rat
             static inline const float slider_height = 1.5 * margin;
                 // height of slider + gradient + entry
                 
-            static inline const float slider_to_slider_spacer = 1 * margin;
+            static inline const float slider_to_slider_spacer = 0.5 * margin;
                 // bottom of slider to top of next slider within same region (HSV, RGBA, CYMK)
                 // also space from bottom of last slider in region to top of label of next region
                 // also space from bottom of label to top of first slider in that region
@@ -190,6 +186,9 @@ namespace rat
 
             static inline const float current_color_y_height = 10 * margin;
                 // height of last color
+
+            static inline const float close_dialogue_height = 0.5 * margin;
+                // closed dialogue = 3*h x h
     };
 }
 
@@ -211,13 +210,20 @@ namespace rat
 
         _last_color_shape = new Shape();
         _current_color_shape = new Shape();
+        _transparency_tiling = new Shape();
 
+        _transparency_tiling_shader = new Shader();
+        _transparency_tiling_shader->create_from_file("/home/clem/Workspace/mousetrap/resources/shaders/transparency_tiling.frag", ShaderType::FRAGMENT);
         _last_color_shape->as_rectangle({0, 0}, {last_width, 1});
-        _last_color_shape->set_color(RGBA(1, 0, 1, 1));
+        _last_color_shape->set_color(RGBA(1, 0, 1, 0.1));
 
         _current_color_shape->as_rectangle({last_width, 0}, {1 - last_width, 1});
-        _current_color_shape->set_color(RGBA(0, 1, 1, 1));
+        _current_color_shape->set_color(RGBA(0, 1, 1, 0.1));
 
+        _transparency_tiling->as_rectangle({0, 0}, {1, 1});
+        _transparency_tiling->set_color(RGBA(1, 1, 1, 1));
+
+        register_render_task(_transparency_tiling, _transparency_tiling_shader);
         register_render_task(_last_color_shape);
         register_render_task(_current_color_shape);
     }
@@ -247,12 +253,19 @@ namespace rat
         _scale = GTK_SCALE(gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0, 1, 0.001));
         gtk_scale_set_draw_value(_scale, false);
         gtk_scale_set_has_origin(_scale, false);
-        gtk_widget_set_opacity(GTK_WIDGET(_scale), 1);
+        gtk_widget_set_opacity(GTK_WIDGET(_scale), 0.5);
         
-        _entry = GTK_ENTRY(gtk_entry_new());
-        gtk_entry_set_width_chars(_entry, 3 + 2);
+        _entry = (GtkSpinButton*) gtk_spin_button_new_with_range(0, 1, 0.01);
+        gtk_spin_button_set_digits(_entry, 2);
 
         _overlay = GTK_OVERLAY(gtk_overlay_new());
+
+        static const float gradient_margin_factor = 0.5;
+        gtk_widget_set_margin_top(_gradient->get_native(), gradient_margin_factor * margin);
+        gtk_widget_set_margin_bottom(_gradient->get_native(), gradient_margin_factor * margin);
+        gtk_widget_set_margin_start(_gradient->get_native(), gradient_margin_factor * 0.5 * margin);
+        gtk_widget_set_margin_end(_gradient->get_native(), gradient_margin_factor * 0.5 * margin);
+
         gtk_container_add(GTK_CONTAINER(_overlay), GTK_WIDGET(_gradient->get_native()));
         gtk_overlay_add_overlay(_overlay, GTK_WIDGET(_scale));
         gtk_widget_set_margin_start(GTK_WIDGET(_overlay), left_to_slider_left_margin);
@@ -273,23 +286,31 @@ namespace rat
         gtk_container_add(GTK_CONTAINER(_hbox), GTK_WIDGET(_hline));
     }
 
+    ColorPicker::CloseDialogue::CloseDialogue()
+    {
+        _button = (GtkButton*) gtk_button_new_with_label("todo");
+    }
+
     void ColorPicker::initialize(float width)
     {
+        margin = 0.05 * width;
         _window = (GtkBox*) gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 
         // current color
-        _current_color_area = new CurrentColorArea(width, 2 * margin);
+        _current_color_area = new CurrentColorArea(width, 5 * margin);
+        int color_area_height;
+        gtk_widget_get_size_request(_current_color_area->get_native(), nullptr, &color_area_height);
 
-        // labels        
+        // labels
         _opacity_label = new LabeledSpacer(width, "Opacity");
         _hsv_label = new LabeledSpacer(width, "HSV");
         _rgb_label = new LabeledSpacer(width, "RGB");
         _cmyk_label = new LabeledSpacer(width, "CMYK");
-        
+
         // sliders
         for (char c : {'A', 'H', 'S', 'V', 'R', 'G', 'B', 'C', 'M', 'Y', 'K'})
             _elements[c] = new SliderElement(width, c);
-        
+
         // regions
         _opacity_region = GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, slider_to_slider_spacer));
         gtk_container_add(GTK_CONTAINER(_opacity_region), GTK_WIDGET(_opacity_label->get_native()));
@@ -311,12 +332,37 @@ namespace rat
             gtk_container_add(GTK_CONTAINER(_cmyk_region), GTK_WIDGET(_elements.at(c)->get_native()));
 
         _all_slider_regions = GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, slider_to_slider_spacer));
+
+        gtk_widget_set_margin_top(GTK_WIDGET(_opacity_region), color_area_height - margin);
         gtk_container_add(GTK_CONTAINER(_all_slider_regions), GTK_WIDGET(_opacity_region));
         gtk_container_add(GTK_CONTAINER(_all_slider_regions), GTK_WIDGET(_hsv_region));
         gtk_container_add(GTK_CONTAINER(_all_slider_regions), GTK_WIDGET(_rgb_region));
         gtk_container_add(GTK_CONTAINER(_all_slider_regions), GTK_WIDGET(_cmyk_region));
 
-        gtk_container_add(GTK_CONTAINER(_window), GTK_WIDGET(_all_slider_regions));
+        _current_color_element_overlay = GTK_OVERLAY(gtk_overlay_new());
+        gtk_widget_set_margin_start(_current_color_area->get_native(), 8 * margin); // unable to align without hardcoding
+        gtk_widget_set_hexpand(_current_color_area->get_native(), TRUE);
+        gtk_widget_set_valign(_current_color_area->get_native(), GtkAlign::GTK_ALIGN_END);
+        gtk_widget_set_valign(_current_color_area->get_native(), GtkAlign::GTK_ALIGN_START);
+
+        gtk_container_add(GTK_CONTAINER(_current_color_element_overlay), GTK_WIDGET(_all_slider_regions));
+        gtk_overlay_add_overlay(_current_color_element_overlay, _current_color_area->get_native());
+
+        gtk_widget_set_margin_top(GTK_WIDGET(_current_color_element_overlay), outer_margin);
+        gtk_widget_set_margin_bottom(GTK_WIDGET(_current_color_element_overlay), outer_margin);
+        gtk_widget_set_margin_start(GTK_WIDGET(_current_color_element_overlay), outer_margin);
+        gtk_widget_set_margin_end(GTK_WIDGET(_current_color_element_overlay), outer_margin);
+
+        _close_dialogue = new CloseDialogue();
+        gtk_widget_set_size_request(_close_dialogue->get_native(), 3 * close_dialogue_height, close_dialogue_height);
+
+        _close_dialogue_overlay = GTK_OVERLAY(gtk_overlay_new());
+        gtk_container_add(GTK_CONTAINER(_close_dialogue_overlay), GTK_WIDGET(_current_color_element_overlay));
+        gtk_widget_set_halign(_close_dialogue->get_native(), GtkAlign::GTK_ALIGN_START);
+        gtk_widget_set_valign(_close_dialogue->get_native(), GtkAlign::GTK_ALIGN_START);
+        gtk_overlay_add_overlay(_close_dialogue_overlay, _close_dialogue->get_native());
+
+        gtk_container_add(GTK_CONTAINER(_window), GTK_WIDGET(_close_dialogue_overlay));
     }
 
     void ColorPicker::update_color(char which_component, float value)
