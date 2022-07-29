@@ -143,7 +143,6 @@ namespace rat
         gtk_gl_area_make_current(area);
 
         glUseProgram(noop_shader->get_program_id());
-        glViewport(0, 0, 1, 1);
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -151,6 +150,7 @@ namespace rat
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        background_shape->set_centroid({0, 0});
         background_shape->render(*noop_shader, *noop_transform);
 
         glFlush();

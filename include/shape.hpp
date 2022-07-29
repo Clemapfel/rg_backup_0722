@@ -243,7 +243,6 @@ namespace rat
         glUseProgram(shader.get_program_id());
         glUniformMatrix4fv(shader.get_vertex_transform_location(), 1, GL_FALSE, &(transform.transform[0][0]));
 
-        // bind texture TODO
         glUniform1i(shader.get_fragment_texture_set_location(), GL_FALSE);
         glBindTexture(GL_TEXTURE_2D, 0);
 
