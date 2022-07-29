@@ -16,7 +16,7 @@ using GLNativeHandle = GLuint;
 namespace rat
 {
     Vector2f get_viewport_size();
-    
+
     Vector2f to_gl_position(Vector2f);
     Vector2f from_gl_position(Vector2f);
 

@@ -18,9 +18,7 @@ namespace rat
 
         protected:
             void on_realize(GtkGLArea*) override;
-            gboolean on_render(GtkGLArea*, GdkGLContext*) override;
             void on_shutdown(GtkGLArea*) override;
-            void on_resize(GtkGLArea* area, gint width, gint height) override;
 
         private:
             std::string _shader_path;
@@ -51,7 +49,11 @@ namespace rat
         _shader->create_from_file(_shader_path, ShaderType::FRAGMENT);
 
         _shape = new Shape();
-        _shape->as_rectangle({0.0, 0.0}, {1, 1});
+        _shape->as_rectangle({0.0, 0.0}, {2, 2});
+        _shape->set_centroid({0, 0});
+        _shape->set_color(RGBA(1, 1, 1, 1));
+
+        register_render_task(_shape, _shader);
     }
 
     void ShaderArea::on_shutdown(GtkGLArea* area)
@@ -60,27 +62,6 @@ namespace rat
 
         delete _shader;
         delete _shape;
-    }
-
-    gboolean ShaderArea::on_render(GtkGLArea* area, GdkGLContext* context)
-    {
-        gtk_gl_area_make_current(area);
-
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        glClearColor(0, 0, 0, 0);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        _shape->render(*_shader, _identity_transform);
-
-        glFlush();
-        return FALSE;
-    }
-
-    void ShaderArea::on_resize(GtkGLArea* area, gint _0, gint _1)
-    {
-        gtk_gl_area_queue_render(area);
     }
 
     Shape *ShaderArea::get_shape()

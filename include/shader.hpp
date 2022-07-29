@@ -72,8 +72,6 @@ namespace rat
                         _fragment_color = _vertex_color;
                     else
                         _fragment_color = texture2D(_texture, _texture_coordinates) * _vertex_color;
-
-                    _fragment_color = vec4(1, 0, 1, 1);
                 }
             )";
 

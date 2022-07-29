@@ -39,15 +39,10 @@ namespace rat
                 CurrentColorArea(float width, float height);
 
                 void on_realize(GtkGLArea*) override;
-                gboolean on_render(GtkGLArea*, GdkGLContext*) override;
                 void on_shutdown(GtkGLArea*) override;
-                void on_resize(GtkGLArea* area, gint width, gint height) override;
 
-                void render();
-
-                Shader _shader;
-                Shape _last_color_shape;
-                Shape _current_color_shape;
+                Shape* _last_color_shape;
+                Shape* _current_color_shape;
             };
 
             static inline CurrentColorArea* _current_color_area;
@@ -166,27 +161,8 @@ namespace rat
 namespace rat
 {
     ColorPicker::CurrentColorArea::CurrentColorArea(float width, float height)
-        : GLCanvas({width, height}), _shader(),  _last_color_shape(), _current_color_shape()
+        : GLCanvas({width, height}), _last_color_shape(), _current_color_shape()
     {}
-
-    void ColorPicker::CurrentColorArea::render()
-    {
-        _last_color_shape.set_centroid({0, 0});
-
-        glUseProgram(_shader.get_program_id());
-
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        glClearColor(0, 0, 0, 1);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        static auto identity_transform = Transform();
-        _current_color_shape.render(_shader, identity_transform);
-        _last_color_shape.render(_shader, identity_transform);
-
-        glFlush();
-    }
 
     void ColorPicker::CurrentColorArea::on_realize(GtkGLArea* area)
     {
@@ -194,35 +170,28 @@ namespace rat
 
         auto last_width = _last_color_to_current_color_x_ratio * 1;
 
-        _last_color_shape.as_rectangle({-10, 10}, {20, 20});
-        _last_color_shape.set_color(RGBA(1, 0, 1, 1));
+        _last_color_shape = new Shape();
+        _current_color_shape = new Shape();
 
-        _current_color_shape.as_rectangle({1 + last_width, 0}, {1 - last_width, 1});
-        _last_color_shape.set_color(RGBA(0, 1, 1, 1));
-    }
+        _last_color_shape->as_rectangle({0, 0}, {0.5, 0.5});
+        _last_color_shape->set_color(RGBA(1, 0, 1, 1));
 
-    gboolean ColorPicker::CurrentColorArea::on_render(GtkGLArea* area, GdkGLContext*)
-    {
-        gtk_gl_area_make_current(area);
-        render();
-        return FALSE;
+        //_current_color_shape->as_rectangle({-1 + last_width, 1}, {2 - last_width, 1});
+        //_current_color_shape->set_color(RGBA(0, 1, 1, 1));
+
+        register_render_task(_last_color_shape);
+        register_render_task(_current_color_shape);
     }
 
     void ColorPicker::CurrentColorArea::on_shutdown(GtkGLArea*)
     {}
-
-    void ColorPicker::CurrentColorArea::on_resize(GtkGLArea *area, gint width, gint height)
-    {
-        gtk_gl_area_make_current(area);
-        render();
-    }
 
     void ColorPicker::initialize(float width)
     {
         _window = (GtkHBox*) gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 
         // current color
-        _current_color_area = new CurrentColorArea(width, 2 * margin);
+        _current_color_area = new CurrentColorArea(width, width); //2 * margin);
         gtk_container_add(GTK_CONTAINER(_window), _current_color_area->get_native());
     }
 
@@ -402,8 +371,8 @@ namespace rat
 
         // update color field
 
-        _current_color_area->_last_color_shape.set_color(last_color);
-        _current_color_area->_current_color_shape.set_color(current_color);
+        _current_color_area->_last_color_shape->set_color(last_color);
+        _current_color_area->_current_color_shape->set_color(current_color);
         _current_color_area->queue_render();
     }
 

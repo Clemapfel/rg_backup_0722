@@ -39,24 +39,13 @@ namespace rat
             void queue_render();
 
         protected:
-            virtual void on_realize(GtkGLArea*);
-            virtual gboolean on_render(GtkGLArea*, GdkGLContext*);
-            virtual void on_shutdown(GtkGLArea*);
-            virtual void on_resize(GtkGLArea* area, gint width, gint height);
+            virtual void on_realize(GtkGLArea*) = 0;
+            virtual void on_shutdown(GtkGLArea*) = 0;
 
-            struct RenderObject
-            {
-                Shape _shape;
-                Shader _shader;
-                Transform _transform;
+            gboolean on_render(GtkGLArea*, GdkGLContext*);
+            void on_resize(GtkGLArea* area, gint width, gint height);
 
-                RenderObject(Shape shape, Shader shader, Transform transform)
-                    : _shape(shape), _shader(shader), _transform(transform)
-                {}
-            };
-
-            std::vector<RenderObject> _render_objects;
-            void register_render_object(Shape, Shader = Shader(), Transform = Transform());
+            void register_render_task(Shape*, Shader* = nullptr, Transform* = nullptr);
 
         private:
             GtkWidget* _native;
@@ -66,7 +55,15 @@ namespace rat
 
             static inline Shader* noop_shader = nullptr;
             static inline Transform* noop_transform = nullptr;
-            static inline Shape* background_shape = nullptr;
+
+            struct RenderTask
+            {
+                Shape* _shape;
+                Shader* _shader;
+                Transform* _transform;
+            };
+
+            std::vector<RenderTask> _render_tasks;
     };
 }
 
@@ -114,9 +111,9 @@ namespace rat
         g_signal_connect(_native, "resize", G_CALLBACK(gl_canvas_wrapper::on_resize), this);
     }
 
-    void GLCanvas::register_render_object(Shape shape, Shader shader, Transform transform)
+    void GLCanvas::register_render_task(Shape* shape, Shader* shader, Transform* transform)
     {
-        _render_objects.emplace_back(shape, shader, transform);
+        _render_tasks.push_back(RenderTask{shape, shader, transform});
     }
 
     size_t GLCanvas::get_id() const
@@ -134,7 +131,7 @@ namespace rat
         gtk_gl_area_queue_render(GTK_GL_AREA(_native));
     }
 
-    void GLCanvas::on_realize(GtkGLArea* area)
+    gboolean GLCanvas::on_render(GtkGLArea* area, GdkGLContext* context)
     {
         gtk_gl_area_make_current(area);
 
@@ -144,34 +141,19 @@ namespace rat
         if (noop_transform == nullptr)
             noop_transform = new Transform();
 
-        if (background_shape == nullptr)
-        {
-            background_shape = new Shape();
-            background_shape->set_color(RGBA(1, 0, 1, 1));
-            background_shape->as_rectangle({0, 0}, {1, 1});
-            background_shape->set_centroid({0, 0});
-        }
-
-        gtk_gl_area_queue_render(area);
-    }
-
-    void GLCanvas::on_shutdown(GtkGLArea*)
-    {}
-
-    gboolean GLCanvas::on_render(GtkGLArea* area, GdkGLContext* context)
-    {
-        gtk_gl_area_make_current(area);
-
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        for (auto& object : _render_objects)
-            object._shape.render(object._shader, object._transform);
-
-        background_shape->render(*noop_shader, *noop_transform);
+        for (auto& task : _render_tasks)
+        {
+            task._shape->render(
+                task._shader == nullptr ? *noop_shader : *task._shader,
+                task._transform == nullptr ? *noop_transform : *task._transform
+            );
+        }
 
         glFlush();
         return FALSE;

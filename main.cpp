@@ -54,15 +54,6 @@ int main()
     // init opengl
     initialize_opengl(GTK_WINDOW(main_window));
 
-    auto area = GLCanvas({400, 300});
-    auto* picker = area.get_native();
-    gtk_widget_set_halign(picker, GtkAlign::GTK_ALIGN_CENTER);
-    gtk_widget_set_valign(picker, GtkAlign::GTK_ALIGN_CENTER);
-    gtk_widget_set_margin_start(picker, 20);
-    gtk_widget_set_margin_end(picker, 20);
-    gtk_container_add(GTK_CONTAINER(main_window), picker);
-
-    /*
     // color picker
     rat::ColorPicker::initialize(400);
     auto* picker = rat::ColorPicker::get_native();
@@ -70,9 +61,10 @@ int main()
     gtk_widget_set_valign(picker, GtkAlign::GTK_ALIGN_CENTER);
     gtk_widget_set_margin_start(picker, 20);
     gtk_widget_set_margin_end(picker, 20);
+    gtk_widget_set_margin_top(picker, 20);
+    gtk_widget_set_margin_bottom(picker, 20);
 
     gtk_container_add(GTK_CONTAINER(main_window), picker);
-     */
 
     // render loop
     gtk_widget_show_all(main_window);
