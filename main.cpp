@@ -2,13 +2,6 @@
 // Created by clem on 6/26/22.
 //
 
-//#include <gtk-3.0/gtk/gtk.h>
-
-#include <functional>
-
-#include <iostream>
-#include <string>
-
 #include <include/gl_canvas.hpp>
 #include <include/shader.hpp>
 #include <include/shape.hpp>
@@ -19,6 +12,61 @@
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
 
+void initialize_opengl(GtkWindow* window)
+{
+    auto *gdk_window = gtk_widget_get_window(GTK_WIDGET(window));
+
+    GError *error_maybe = nullptr;
+    auto *context = gdk_window_create_gl_context(gdk_window, &error_maybe);
+    if (error_maybe != nullptr)
+        std::cerr << "[ERROR] In gdk_window_create_gl_context: " << error_maybe->message << std::endl;
+
+    gdk_gl_context_set_required_version(context, 3, 2);
+    gdk_gl_context_set_use_es(context, TRUE);
+
+    gdk_gl_context_realize(context, &error_maybe);
+    if (error_maybe != nullptr)
+        std::cerr << "[ERROR] In gdk_gl_context_realize: " << error_maybe->message << std::endl;
+
+    gdk_gl_context_make_current(context);
+
+    glewExperimental = GL_TRUE;
+    GLenum glewError = glewInit();
+    if (glewError != GLEW_OK)
+        std::cerr << "[ERROR] In glewInit: " << glewGetErrorString(glewError) << std::endl;
+
+    GL_INITIALIZED = true;
+}
+
+int main()
+{
+    // init gtk
+    gtk_init(nullptr, nullptr);
+
+    // main window
+    auto *main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_default_size(GTK_WINDOW(main), 400, 300);
+    g_signal_connect(main, "destroy", G_CALLBACK(gtk_main_quit), nullptr);
+    gtk_widget_realize(main);
+
+    // init opengl
+    initialize_opengl(GTK_WINDOW(main));
+
+    // color picker
+    auto* color_pick = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+
+
+
+    // render loop
+    gtk_widget_show_all(main);
+    gtk_window_present((GtkWindow*) main);
+    gtk_main();
+
+    return 0;
+}
+
+
+/*
 #include <map>
 
 void on_activate (GtkEntry* entry, void* _) {
@@ -36,7 +84,6 @@ int main(int argc, char *argv[])
     gtk_widget_set_events(window, GDK_BUTTON_PRESS_MASK);
 
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), nullptr);
-    //gtk_window_set_decorated(GTK_WINDOW(window), FALSE);
     gtk_widget_realize(window);
 
     // setup gl
@@ -264,3 +311,4 @@ int main(int argc, char *argv[])
     gtk_main();
     return 0;
 }
+*/

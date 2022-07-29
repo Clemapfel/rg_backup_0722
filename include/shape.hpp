@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <string>
+#include <algorithm>
 
 #include <include/gl_common.hpp>
 #include <include/colors.hpp>

@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <array>
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <include/vector.hpp>
