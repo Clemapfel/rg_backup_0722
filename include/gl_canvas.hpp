@@ -44,6 +44,20 @@ namespace rat
             virtual void on_shutdown(GtkGLArea*);
             virtual void on_resize(GtkGLArea* area, gint width, gint height);
 
+            struct RenderObject
+            {
+                Shape _shape;
+                Shader _shader;
+                Transform _transform;
+
+                RenderObject(Shape shape, Shader shader, Transform transform)
+                    : _shape(shape), _shader(shader), _transform(transform)
+                {}
+            };
+
+            std::vector<RenderObject> _render_objects;
+            void register_render_object(Shape, Shader = Shader(), Transform = Transform());
+
         private:
             GtkWidget* _native;
 
@@ -100,6 +114,11 @@ namespace rat
         g_signal_connect(_native, "resize", G_CALLBACK(gl_canvas_wrapper::on_resize), this);
     }
 
+    void GLCanvas::register_render_object(Shape shape, Shader shader, Transform transform)
+    {
+        _render_objects.emplace_back(shape, shader, transform);
+    }
+
     size_t GLCanvas::get_id() const
     {
         return _id;
@@ -130,6 +149,7 @@ namespace rat
             background_shape = new Shape();
             background_shape->set_color(RGBA(1, 0, 1, 1));
             background_shape->as_rectangle({0, 0}, {1, 1});
+            background_shape->set_centroid({0, 0});
         }
 
         gtk_gl_area_queue_render(area);
@@ -142,15 +162,15 @@ namespace rat
     {
         gtk_gl_area_make_current(area);
 
-        glUseProgram(noop_shader->get_program_id());
-
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        background_shape->set_centroid({0, 0});
+        for (auto& object : _render_objects)
+            object._shape.render(object._shader, object._transform);
+
         background_shape->render(*noop_shader, *noop_transform);
 
         glFlush();
