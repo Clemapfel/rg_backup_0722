@@ -55,9 +55,11 @@ namespace rat
 
                 Shape* _last_color_shape;
                 Shape* _current_color_shape;
-                Shape* _transparency_tiling;
 
+                Shape* _transparency_tiling;
                 Shader* _transparency_tiling_shader;
+
+                Shape* _frame;
             };
 
             static inline CurrentColorArea* _current_color_area;
@@ -75,6 +77,7 @@ namespace rat
                 }
 
                 Shape* _shape;
+                Shape* _frame;
             };
 
             struct SliderElement
@@ -202,6 +205,7 @@ namespace rat
 // ##############################################################################################
 
 #include <include/shader.hpp>
+#include <include/gtk_common.hpp>
 
 namespace rat
 {
@@ -218,6 +222,7 @@ namespace rat
         _last_color_shape = new Shape();
         _current_color_shape = new Shape();
         _transparency_tiling = new Shape();
+        _frame = new Shape();
 
         _transparency_tiling_shader = new Shader();
         _transparency_tiling_shader->create_from_file("/home/clem/Workspace/mousetrap/resources/shaders/transparency_tiling.frag", ShaderType::FRAGMENT);
@@ -230,13 +235,22 @@ namespace rat
         _transparency_tiling->as_rectangle({0, 0}, {1, 1});
         _transparency_tiling->set_color(RGBA(1, 1, 1, 1));
 
+        auto size = gtk_widget_get_true_size(area);
+
+        _frame = new Shape();
+        float target_frame_size = 0.025;
+        Vector2f frame_size = Vector2f(target_frame_size * (size.y / size.x), target_frame_size);
+        _frame->as_frame({0, 0}, {1, 1}, frame_size.x, frame_size.y);
+        _frame->set_color(RGBA(0, 0, 0, 1));
+
         register_render_task(_transparency_tiling, _transparency_tiling_shader);
         register_render_task(_last_color_shape);
         register_render_task(_current_color_shape);
+        register_render_task(_frame);
     }
 
     ColorPicker::Gradient::Gradient(float width, float height)
-        : GLCanvas({width, height}), _shape()
+        : GLCanvas({width, height}), _shape(), _frame()
     {}
 
     void ColorPicker::Gradient::on_realize(GtkGLArea* area)
@@ -250,7 +264,16 @@ namespace rat
         _shape->set_vertex_color(1, RGBA(1, 1, 1, 1));
         _shape->set_vertex_color(2, RGBA(1, 1, 1, 1));
 
+        auto size = gtk_widget_get_true_size(area);
+
+        _frame = new Shape();
+        float target_frame_size = 0.025;
+        Vector2f frame_size = Vector2f(target_frame_size * (size.y / size.x), target_frame_size);
+        _frame->as_frame({0, 0}, {1 - frame_size.x, 1}, frame_size.x, frame_size.y);
+        _frame->set_color(RGBA(0, 0, 0, 1));
+
         register_render_task(_shape);
+        register_render_task(_frame);
     }
     
     ColorPicker::SliderElement::SliderElement(float width, char component)

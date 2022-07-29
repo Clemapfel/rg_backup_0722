@@ -30,7 +30,7 @@ add_library(mousetrap SHARED mousetrap.hpp
     include/shader_area.hpp
     include/colors.hpp
     include/color_picker.hpp
-)
+        include/gtk_common.hpp)
 
 
 set_target_properties(mousetrap PROPERTIES
