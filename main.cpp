@@ -39,6 +39,21 @@ void initialize_opengl(GtkWindow* window)
 
 using namespace rat;
 
+static void changed (GtkHSV* hsv)
+{
+    double h, s, v;
+    gtk_hsv_get_color(hsv, &h, &s, &v);
+    std::cout << HSVA(h, s, v, 1).operator std::string() << std::endl;
+}
+
+static ShaderArea* shader_area;
+
+static void recompile()
+{
+    shader_area->_shader->create_from_file("/home/clem/Workspace/mousetrap/resources/shaders/hsv_selection_shape.frag", ShaderType::FRAGMENT);
+    shader_area->queue_render();
+}
+
 int main()
 {
     // init gtk
@@ -48,7 +63,7 @@ int main()
     auto *main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     GtkWidget *main_window = main;
 
-    Vector2f window_size = {150, 200};
+    Vector2f window_size = {150, 500};
     gtk_window_set_default_size(GTK_WINDOW(main_window), window_size.x, window_size.y);
     g_signal_connect(main_window, "destroy", G_CALLBACK(gtk_main_quit), nullptr);
     gtk_widget_realize(main_window);
@@ -65,16 +80,9 @@ int main()
     gtk_widget_set_valign(picker, GtkAlign::GTK_ALIGN_CENTER);
     gtk_container_add(GTK_CONTAINER(main_window), picker);
 
-    /*
-    auto* hsv = gtk_hsv_new();
-    gtk_widget_set_size_request(hsv, 200, 200);
-    auto* spin_button = gtk_spin_button_new_with_range(0, 1, 0.001);
-    auto* test = gtk_switch_new();
-    gtk_container_add(GTK_CONTAINER(main_window), test);
-     */
-
     // render loop
     gtk_widget_show_all(main_window);
+    rat::ColorPicker::update_color('H', 0.3);
     gtk_window_present((GtkWindow*) main_window);
     gtk_main();
 
@@ -82,6 +90,20 @@ int main()
 }
 
 /*
+  // debug
+    shader_area = new ShaderArea("/home/clem/Workspace/mousetrap/resources/shaders/hsv_selection_shape.frag", {200, 200});
+
+    auto overlay = gtk_overlay_new();
+    gtk_container_add(GTK_CONTAINER(overlay), shader_area->get_native());
+
+    auto button = gtk_button_new_with_label("");
+    gtk_widget_set_halign(button, GtkAlign::GTK_ALIGN_START);
+    gtk_widget_set_valign(button, GtkAlign::GTK_ALIGN_END);
+    gtk_overlay_add_overlay(GTK_OVERLAY(overlay), GTK_WIDGET(button));
+    g_signal_connect(button, "clicked", G_CALLBACK(recompile), nullptr);
+    gtk_container_add(GTK_CONTAINER(main_window), overlay);
+
+
 #include <map>
 
 void on_activate (GtkEntry* entry, void* _) {

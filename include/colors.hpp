@@ -125,7 +125,7 @@ namespace rat
     RGBA::operator std::string()
     {
         std::stringstream out;
-        out << "RGBA(" << r << ", " << g << ", " << b << ")";
+        out << "RGBA(" << r << ", " << g << ", " << b << " ," << a << ")";
 
         return out.str();
     }
@@ -176,6 +176,13 @@ namespace rat
         return HSVA(rgba_to_hsva(this->operator glm::vec4()));
     }
 
+    HSVA::operator std::string()
+    {
+        auto str = std::stringstream();
+        str << "HSVA(" << h << ", " << s << ", " << v << ", " << a << ")";
+        return str.str();
+    }
+
     HSVA::HSVA(float r, float g, float b, float a)
             : h(r), s(g), v(b), a(a)
     {}
@@ -220,6 +227,13 @@ namespace rat
     HSVA::operator CMYK() const
     {
         return CMYK(rgba_to_hsva(this->operator glm::vec4()));
+    }
+
+    CMYK::operator std::string()
+    {
+        auto str = std::stringstream();
+        str << "CMYK(" << c << ", " << m << ", " << y << ", " << k << ")";
+        return str.str();
     }
 
     CMYK::CMYK(float c, float y, float m, float k)

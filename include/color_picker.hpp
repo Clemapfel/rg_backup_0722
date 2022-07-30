@@ -31,13 +31,6 @@ namespace rat
 
             /// \brief expose
             static GtkWidget* get_native();
-
-            // TODO
-            static void trigger_recompile_shader()
-            {
-                _current_color_area->_transparency_tiling_shader->create_from_file("/home/clem/Workspace/mousetrap/resources/shaders/transparency_tiling.frag", ShaderType::FRAGMENT);
-                _current_color_area->queue_render();
-            }
             
         private:
             // top left area that display current color and compares it with last one
@@ -144,6 +137,32 @@ namespace rat
             };
 
             static inline CloseDialogue* _close_dialogue;
+
+            // signals
+
+            // scale::value-changed
+            static void scale_on_value_changed(GtkRange* self, gpointer user_data)
+            {
+                auto component = *((char*) user_data);
+                auto value = gtk_range_get_value(self);
+                update_color(component, value);
+            }
+
+            // entry::activate
+            static void entry_on_activate(GtkEntry* entry, gpointer user_data)
+            {
+                auto component = *((char*) user_data);
+                auto value = std::stof(gtk_entry_get_text(entry));
+                update_color(component, value);
+            }
+
+            // entry::change-value
+            static void entry_on_value_changed(GtkSpinButton* self, gpointer user_data)
+            {
+                auto component = *((char*) user_data);
+                auto value = gtk_spin_button_get_value(self);
+                update_color(component, value);
+            }
 
             // global containers
 
@@ -275,6 +294,11 @@ namespace rat
         register_render_task(_shape);
         register_render_task(_frame);
     }
+
+    static void test()
+    {
+        std::cout << "called" << std::endl;
+    }
     
     ColorPicker::SliderElement::SliderElement(float width, char component)
     {
@@ -284,7 +308,7 @@ namespace rat
         gtk_scale_set_draw_value(_scale, false);
         gtk_scale_set_has_origin(_scale, false);
         gtk_widget_set_opacity(GTK_WIDGET(_scale), 0.5);
-        
+
         _entry = (GtkSpinButton*) gtk_spin_button_new_with_range(0, 1, 0.01);
         gtk_spin_button_set_digits(_entry, 3);
 
@@ -304,6 +328,10 @@ namespace rat
         _hbox = GTK_BOX(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0));
         gtk_container_add(GTK_CONTAINER(_hbox), GTK_WIDGET(_overlay));
         gtk_container_add(GTK_CONTAINER(_hbox), GTK_WIDGET(_entry));
+
+        g_signal_connect(GTK_WIDGET(_scale), "value-changed", G_CALLBACK(scale_on_value_changed), (void*) new char(component));
+        g_signal_connect(GTK_WIDGET(_entry), "activate", G_CALLBACK(entry_on_activate), (void*) new char(component));
+        g_signal_connect(GTK_WIDGET(_entry), "value-changed", G_CALLBACK(entry_on_value_changed), (void*) new char(component));
     }
     
     ColorPicker::LabeledSpacer::LabeledSpacer(float width, std::string label)
@@ -319,7 +347,7 @@ namespace rat
     ColorPicker::CloseDialogue::CloseDialogue()
     {
         _button = (GtkButton*) gtk_button_new_with_label("todo");
-        g_signal_connect(_button, "clicked", G_CALLBACK(ColorPicker::trigger_recompile_shader), nullptr);
+        //g_signal_connect(_button, "clicked", G_CALLBACK(ColorPicker::trigger_recompile_shader), nullptr);
     }
 
     void ColorPicker::initialize(float width)
@@ -370,6 +398,8 @@ namespace rat
         gtk_container_add(GTK_CONTAINER(_all_slider_regions), GTK_WIDGET(_rgb_region));
         gtk_container_add(GTK_CONTAINER(_all_slider_regions), GTK_WIDGET(_cmyk_region));
 
+        // current color
+
         _current_color_element_overlay = GTK_OVERLAY(gtk_overlay_new());
         gtk_widget_set_margin_start(_current_color_area->get_native(), 0.45 * width); // unable to align without hardcoding
         gtk_widget_set_hexpand(_current_color_area->get_native(), TRUE);
@@ -379,10 +409,12 @@ namespace rat
         gtk_container_add(GTK_CONTAINER(_current_color_element_overlay), GTK_WIDGET(_all_slider_regions));
         gtk_overlay_add_overlay(_current_color_element_overlay, _current_color_area->get_native());
 
-        gtk_widget_set_margin_top(GTK_WIDGET(_current_color_element_overlay), outer_margin);
-        gtk_widget_set_margin_bottom(GTK_WIDGET(_current_color_element_overlay), outer_margin);
+        gtk_widget_set_margin_top(GTK_WIDGET(_current_color_element_overlay), 0.5 * outer_margin);
+        gtk_widget_set_margin_bottom(GTK_WIDGET(_current_color_element_overlay), 0.5 * outer_margin);
         gtk_widget_set_margin_start(GTK_WIDGET(_current_color_element_overlay), outer_margin);
         gtk_widget_set_margin_end(GTK_WIDGET(_current_color_element_overlay), outer_margin);
+
+        // closing dialogue
 
         _close_dialogue = new CloseDialogue();
         gtk_widget_set_size_request(_close_dialogue->get_native(), 3 * close_dialogue_height, close_dialogue_height);
@@ -398,14 +430,17 @@ namespace rat
 
     void ColorPicker::update_color(char which_component, float value)
     {
-        auto set_gradient_color = [](Gradient* gradient, RGBA left, RGBA right) {
+        std::cout << "set" << std::endl;
+        auto update_slider_element = [](SliderElement* slider, RGBA left, RGBA right, float value) {
 
-            auto* shape = gradient->_shape;
-            shape->set_vertex_color(0, left);
-            shape->set_vertex_color(3, left);
-            shape->set_vertex_color(1, right);
-            shape->set_vertex_color(2, right);
+            auto* gradient = slider->_gradient;
+            gradient->_shape->set_vertex_color(0, left);
+            gradient->_shape->set_vertex_color(3, left);
+            gradient->_shape->set_vertex_color(1, right);
+            gradient->_shape->set_vertex_color(2, right);
             gradient->queue_render();
+
+            gtk_spin_button_set_value(slider->_entry, value);
         };
         
         auto current = current_color;
@@ -503,72 +538,77 @@ namespace rat
         auto alpha_1 = rgba;
         alpha_1.a = 1;
 
-        set_gradient_color(_elements.at('A')->_gradient, alpha_0, alpha_1);
+        update_slider_element(_elements.at('A'), alpha_0, alpha_1, rgba.a);
 
-        // skip H
+        auto h_0 = hsva;
+        h_0.h = 0;
+        auto h_1 = hsva;
+        h_1.h = 1;
+
+        update_slider_element(_elements.at('H'), h_0, h_1, hsva.h);
 
         auto s_0 = hsva;
         s_0.s = 0;
         auto s_1 = hsva;
         s_0.s = 1;
 
-        set_gradient_color(_elements.at('S')->_gradient, s_0, s_1);
+        update_slider_element(_elements.at('S'), s_0, s_1, hsva.s);
 
         auto v_0 = hsva;
         v_0.v = 0;
         auto v_1 = hsva;
         v_1.v = 0;
 
-        set_gradient_color(_elements.at('V')->_gradient, v_0, v_1);
+        update_slider_element(_elements.at('V'), v_0, v_1, hsva.v);
 
         auto r_0 = rgba;
         r_0.r = 0;
         auto r_1 = rgba;
         r_1.r = 1;
 
-        set_gradient_color(_elements.at('R')->_gradient, r_0, r_1);
+        update_slider_element(_elements.at('R'), r_0, r_1, rgba.r);
 
         auto g_0 = rgba;
         g_0.g = 0;
         auto g_1 = rgba;
         g_1.g = 1;
 
-        set_gradient_color(_elements.at('G')->_gradient, g_0, g_1);
+        update_slider_element(_elements.at('G'), g_0, g_1, rgba.g);
 
         auto b_0 = rgba;
         b_0.b = 0;
         auto b_1 = rgba;
         b_1.b = 1;
 
-        set_gradient_color(_elements.at('B')->_gradient, b_0, b_1);
+        update_slider_element(_elements.at('B'), b_0, b_1, rgba.b);
 
         auto c_0 = cmyk;
         c_0.c = 0;
         auto c_1 = cmyk;
         c_1.c = 1;
 
-        set_gradient_color(_elements.at('C')->_gradient, c_0, c_1);
+        update_slider_element(_elements.at('C'), c_0, c_1, cmyk.c);
 
         auto m_0 = cmyk;
         m_0.m = 0;
         auto m_1 = cmyk;
         m_1.m = 1;
 
-        set_gradient_color(_elements.at('M')->_gradient, m_0, m_1);
+        update_slider_element(_elements.at('M'), m_0, m_1, cmyk.m);
 
         auto y_0 = cmyk;
         y_0.y = 0;
         auto y_1 = cmyk;
         y_1.y = 1;
 
-        set_gradient_color(_elements.at('Y')->_gradient, y_0, y_1);
+        update_slider_element(_elements.at('Y'), y_0, y_1, cmyk.y);
 
         auto k_0 = cmyk;
         k_0.k = 0;
         auto k_1 = cmyk;
         k_1.k = 1;
 
-        set_gradient_color(_elements.at('K')->_gradient, k_0, k_1);
+        update_slider_element(_elements.at('K'), k_0, k_1, cmyk.k);
 
         // update color field
 

@@ -13,18 +13,15 @@ namespace rat
     {
         public:
             ShaderArea(const std::string& fragment_shader_path, Vector2f size);
-            GLNativeHandle get_shader_program_id() const;
-            Shape* get_shape();
+
+            Shader* _shader;
+            Shape* _shape;
 
         protected:
             void on_realize(GtkGLArea*) override;
             void on_shutdown(GtkGLArea*) override;
 
-        private:
             std::string _shader_path;
-            Shader* _shader;
-            Shape* _shape;
-            static inline const Transform _identity_transform = Transform();
     };
 }
 
@@ -36,11 +33,6 @@ namespace rat
         : GLCanvas(size), _shader_path(fragment_shader_path)
     {}
 
-    GLNativeHandle ShaderArea::get_shader_program_id() const
-    {
-        return _shader->get_program_id();
-    }
-
     void ShaderArea::on_realize(GtkGLArea* area)
     {
         gtk_gl_area_make_current(area);
@@ -49,8 +41,7 @@ namespace rat
         _shader->create_from_file(_shader_path, ShaderType::FRAGMENT);
 
         _shape = new Shape();
-        _shape->as_rectangle({0.0, 0.0}, {2, 2});
-        _shape->set_centroid({0, 0});
+        _shape->as_rectangle({0.0, 0.0}, {1, 1});
         _shape->set_color(RGBA(1, 1, 1, 1));
 
         register_render_task(_shape, _shader);
@@ -62,10 +53,5 @@ namespace rat
 
         delete _shader;
         delete _shape;
-    }
-
-    Shape *ShaderArea::get_shape()
-    {
-        return _shape;
     }
 }
