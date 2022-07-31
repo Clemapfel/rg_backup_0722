@@ -28,7 +28,7 @@ namespace rat
             static void initialize(float width);
 
             /// \brief update current_color and all ui elements
-            static void update_color(char which_component, float value);
+            static bool update_color(char which_component, float value);
             static void update_gui();
 
             /// \brief expose
@@ -85,9 +85,17 @@ namespace rat
                 GtkScale* _scale;
                 GtkSpinButton* _entry;
 
+
                 GtkWidget* get_native() {
                     return GTK_WIDGET(_hbox);
                 }
+
+                char _component;
+                std::vector<size_t> _entry_signal_handlers;
+                std::vector<size_t> _scale_signal_handlers;
+
+                void connect_signals();
+                void set_signals_blocked(bool);
             };
             
             static inline std::map<char, SliderElement*> _elements = {
@@ -142,7 +150,7 @@ namespace rat
 
             // signals
 
-            static void noop() {};
+            static inline bool currently_updating = false;
 
             // window::realize
             static void widget_on_realize (GtkWidget* widget)
@@ -153,28 +161,54 @@ namespace rat
             // scale::value-changed
             static void scale_on_value_changed(GtkRange* self, gpointer user_data)
             {
+                for (auto& pair : _elements)
+                    pair.second->set_signals_blocked(true);
+
                 auto component = *((char*) user_data);
                 auto value = gtk_range_get_value(self);
+
+                static size_t i = 0;
+                std::cout << "scale:value-changed: " << component << " " << value << " " << i++ << std::endl;
+
                 update_color(component, value);
                 update_gui();
+
+                for (auto& pair : _elements)
+                    pair.second->set_signals_blocked(false);
             }
 
             // entry::activate
             static void entry_on_activate(GtkEntry* entry, gpointer user_data)
             {
+                for (auto& pair : _elements)
+                    pair.second->set_signals_blocked(true);
+
+                std::cout << "entry:activate" << std::endl;
+
                 auto component = *((char*) user_data);
                 auto value = std::stof(gtk_entry_get_text(entry));
                 update_color(component, value);
                 update_gui();
+
+                for (auto& pair : _elements)
+                    pair.second->set_signals_blocked(false);
             }
 
-            // entry::change-value
+            // entry::value-changed
             static void entry_on_value_changed(GtkSpinButton* self, gpointer user_data)
             {
+                for (auto& pair : _elements)
+                    pair.second->set_signals_blocked(true);
+
+                std::cout << "entry:value-changed" << std::endl;
+
                 auto component = *((char*) user_data);
                 auto value = gtk_spin_button_get_value(self);
                 update_color(component, value);
                 update_gui();
+
+                for (auto& pair : _elements)
+                    pair.second->set_signals_blocked(false);
             }
 
             // global containers
@@ -307,14 +341,10 @@ namespace rat
         register_render_task(_shape);
         register_render_task(_frame);
     }
-
-    static void test()
-    {
-        std::cout << "called" << std::endl;
-    }
     
     ColorPicker::SliderElement::SliderElement(float width, char component)
     {
+        _component = component;
         _gradient = new Gradient(width, margin);
 
         _scale = GTK_SCALE(gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0, 1, 0.001));
@@ -342,14 +372,40 @@ namespace rat
         gtk_container_add(GTK_CONTAINER(_hbox), GTK_WIDGET(_overlay));
         gtk_container_add(GTK_CONTAINER(_hbox), GTK_WIDGET(_entry));
 
-        if (component == 'H' or component == 'S' or component == 'V' or component == 'A')
-        {
-            g_signal_connect(GTK_WIDGET(_scale), "value-changed", G_CALLBACK(scale_on_value_changed), (void*) new char(component));
-            g_signal_connect(GTK_WIDGET(_entry), "activate", G_CALLBACK(entry_on_activate), (void*) new char(component));
-            g_signal_connect(GTK_WIDGET(_entry), "value-changed", G_CALLBACK(entry_on_value_changed), (void*) new char(component));
-        }
+        connect_signals();
     }
-    
+
+    void ColorPicker::SliderElement::connect_signals()
+    {
+        _entry_signal_handlers.clear();
+        _scale_signal_handlers.clear();
+
+        _scale_signal_handlers.push_back(g_signal_connect(GTK_WIDGET(_scale), "value-changed", G_CALLBACK(scale_on_value_changed), (void *) &_component));
+        _entry_signal_handlers.push_back(g_signal_connect(GTK_WIDGET(_entry), "activate", G_CALLBACK(entry_on_activate), (void *) &_component));
+        _entry_signal_handlers.push_back(g_signal_connect(GTK_WIDGET(_entry), "value-changed", G_CALLBACK(entry_on_value_changed), (void *) &_component));
+    }
+
+    void ColorPicker::SliderElement::set_signals_blocked(bool b)
+    {
+        if (b)
+        {
+            for (size_t id: _entry_signal_handlers)
+                g_signal_handler_block(_entry, id);
+
+            for (size_t id: _scale_signal_handlers)
+                g_signal_handler_block(_scale, id);
+        }
+        else
+        {
+            for (size_t id: _entry_signal_handlers)
+                g_signal_handler_unblock(_entry, id);
+
+            for (size_t id: _scale_signal_handlers)
+                g_signal_handler_unblock(_scale, id);
+        }
+
+    }
+
     ColorPicker::LabeledSpacer::LabeledSpacer(float width, std::string label)
     {
         _label = (GtkLabel*) gtk_label_new(label.c_str());
@@ -440,12 +496,12 @@ namespace rat
         gtk_widget_set_halign(_close_dialogue->get_native(), GtkAlign::GTK_ALIGN_START);
         gtk_widget_set_valign(_close_dialogue->get_native(), GtkAlign::GTK_ALIGN_START);
         gtk_overlay_add_overlay(_close_dialogue_overlay, _close_dialogue->get_native());
-
         gtk_container_add(GTK_CONTAINER(_window), GTK_WIDGET(_close_dialogue_overlay));
+
         g_signal_connect(GTK_WIDGET(_window), "realize", G_CALLBACK(widget_on_realize), nullptr);
     }
 
-    void ColorPicker::update_color(char which_component, float value)
+    bool ColorPicker::update_color(char which_component, float value)
     {
         last_color = current_color;
 
@@ -454,20 +510,22 @@ namespace rat
             case 'A':
             {
                 current_color.a = value;
-                return;
+                break;
             }
             case 'H':
             {
                 current_color.h = value;
-                return;
+                break;
             }
             case 'S':
             {
                 current_color.s = value;
+                break;
             }
             case 'V':
             {
                 current_color.v = value;
+                break;
             }
             case 'R':
             {
@@ -479,7 +537,7 @@ namespace rat
 
                 if (current_color.s <= 0.001)
                     current_color.h = hue_before;
-                return;
+                break;
             }
             case 'G':
             {
@@ -491,7 +549,7 @@ namespace rat
 
                 if (current_color.s <= 0.001)
                     current_color.h = hue_before;
-                return;
+                break;
             }
             case 'B':
             {
@@ -503,7 +561,7 @@ namespace rat
 
                 if (current_color.s <= 0.001)
                     current_color.h = hue_before;
-                return;
+                break;
             }
             case 'C':
             {
@@ -514,7 +572,7 @@ namespace rat
 
                 if (current_color.s <= 0.001)
                     current_color.h = hue_before;
-                return;
+                break;
             }
 
             case 'M':
@@ -526,7 +584,7 @@ namespace rat
 
                 if (current_color.s <= 0.001)
                     current_color.h = hue_before;
-                return;
+                break;
             }
 
             case 'Y':
@@ -538,7 +596,7 @@ namespace rat
 
                 if (current_color.s <= 0.001)
                     current_color.h = hue_before;
-                return;
+                break;
             }
 
             case 'K':
@@ -550,13 +608,20 @@ namespace rat
 
                 if (current_color.s <= 0.001)
                     current_color.h = hue_before;
-                return;
+                break;
             }
         }
+
+        return last_color.h != current_color.h or last_color.s != current_color.s or last_color.v != current_color.v or last_color.a != current_color.a;
     }
     
     void ColorPicker::update_gui()
     {
+        if (currently_updating)
+            return;
+
+        currently_updating = true;
+
         auto update_slider_element = [&](SliderElement *slider, RGBA left, RGBA right, float value, char which) {
 
             auto *gradient = slider->_gradient;
@@ -658,6 +723,8 @@ namespace rat
         _current_color_area->_last_color_shape->set_color(last_color);
         _current_color_area->_current_color_shape->set_color(current_color);
         _current_color_area->queue_render();
+
+        currently_updating = false;
     }
 
     GtkWidget* ColorPicker::get_native()
