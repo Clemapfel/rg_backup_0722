@@ -59,32 +59,35 @@ namespace rat
 
             static inline CurrentColorArea* _current_color_area;
             
-            // scale + gradient + entry
             struct Gradient : public GLCanvas
             {
-                Gradient(float width, float height);
+                Gradient(float width, float height, std::string shader_path_maybe = "");
 
                 void on_realize(GtkGLArea*) override;
                 void on_shutdown(GtkGLArea*) override {};
 
-                GtkWidget* get_native() {
+                GtkWidget* get_native()
+                {
                     return GLCanvas::get_native();
                 }
 
                 Shape* _shape;
                 Shape* _frame;
+
+                std::string _shader_path;
+                Shader* _shader;
             };
 
+            // scale + gradient + entry
             struct SliderElement
             {
-                SliderElement(float width, char component);
+                SliderElement(float width, char component, std::string shader_path = "");
                 
                 Gradient* _gradient;
                 GtkOverlay* _overlay;
                 GtkBox* _hbox;
                 GtkScale* _scale;
                 GtkSpinButton* _entry;
-
 
                 GtkWidget* get_native() {
                     return GTK_WIDGET(_hbox);
@@ -108,11 +111,6 @@ namespace rat
                 {'R', nullptr},
                 {'G', nullptr},
                 {'B', nullptr},
-
-                {'C', nullptr},
-                {'M', nullptr},
-                {'Y', nullptr},
-                {'K', nullptr}
             };
             
             // label + spacer
@@ -132,8 +130,8 @@ namespace rat
             static inline LabeledSpacer* _opacity_label;
             static inline LabeledSpacer* _hsv_label;
             static inline LabeledSpacer* _rgb_label;
-            static inline LabeledSpacer* _cmyk_label;
-            
+            static inline LabeledSpacer* _html_label;
+
             // close / dock dialogue
             struct CloseDialogue
             {
@@ -148,6 +146,24 @@ namespace rat
 
             static inline CloseDialogue* _close_dialogue;
 
+            // html code entry
+
+            struct HexCodeEntry
+            {
+                HexCodeEntry();
+
+                GtkEntry* _entry;
+                GtkButton* _warning_notification;
+                GtkBox* _hbox;
+
+                GtkWidget* get_native()
+                {
+                    return GTK_WIDGET(_hbox);
+                }
+            };
+
+            static inline HexCodeEntry* _hex_code_entry = nullptr;
+
             // signals
 
             static inline bool currently_updating = false;
@@ -161,6 +177,8 @@ namespace rat
             static void scale_on_value_changed(GtkRange* self, gpointer user_data);
             static void entry_on_activate(GtkEntry* entry, gpointer user_data);
             static void entry_on_value_changed(GtkSpinButton* self, gpointer user_data);
+            static void hex_entry_on_activate(GtkEntry* entry, gpointer user_data);
+            static void hex_entry_on_paste_clipboard(GtkEntry* entry, gpointer user_data);
 
             // global containers
 
@@ -170,7 +188,7 @@ namespace rat
             static inline GtkBox* _opacity_region;
             static inline GtkBox* _hsv_region;
             static inline GtkBox* _rgb_region;
-            static inline GtkBox* _cmyk_region;
+            static inline GtkBox* _html_region;
 
             static inline GtkBox* _all_slider_regions;
                 // spacer + opacity + hsv + rgb + cymk region
@@ -266,8 +284,8 @@ namespace rat
         register_render_task(_frame);
     }
 
-    ColorPicker::Gradient::Gradient(float width, float height)
-        : GLCanvas({width, height}), _shape(), _frame()
+    ColorPicker::Gradient::Gradient(float width, float height, std::string shader_path)
+        : GLCanvas({width, height}), _shape(), _frame(), _shader_path(shader_path)
     {}
 
     void ColorPicker::Gradient::on_realize(GtkGLArea* area)
@@ -289,7 +307,15 @@ namespace rat
         _frame->as_frame({frame_size.x, 0}, {1 - frame_size.x, 1}, frame_size.x, frame_size.y);
         _frame->set_color(RGBA(0, 0, 0, 1));
 
-        register_render_task(_shape);
+        if (_shader_path != "")
+        {
+            _shader = new Shader();
+            _shader->create_from_file(_shader_path, ShaderType::FRAGMENT);
+            register_render_task(_shape, _shader);
+        }
+        else
+            register_render_task(_shape);
+
         register_render_task(_frame);
     }
 
@@ -347,11 +373,33 @@ namespace rat
         for (auto& pair : _elements)
             pair.second->set_signals_blocked(false);
     }
-    
-    ColorPicker::SliderElement::SliderElement(float width, char component)
+
+    // entry::activate
+    void ColorPicker::hex_entry_on_activate(GtkEntry* entry, gpointer user_data)
+    {
+        std::string text = gtk_entry_get_text(entry);
+        current_color = html_code_to_rgba(text).operator HSVA();
+
+        for (auto& pair : _elements)
+            pair.second->set_signals_blocked(true);
+
+        update_gui();
+
+        for (auto& pair : _elements)
+            pair.second->set_signals_blocked(false);
+    }
+
+    void ColorPicker::hex_entry_on_paste_clipboard(GtkEntry* entry, gpointer user_data)
+    {
+        std::string text = gtk_entry_get_text(entry);
+        auto as_color = html_code_to_rgba(text);
+        gtk_entry_set_text(entry, rgba_to_html_code(as_color).c_str());
+    }
+
+    ColorPicker::SliderElement::SliderElement(float width, char component, std::string string)
     {
         _component = component;
-        _gradient = new Gradient(width, margin);
+        _gradient = new Gradient(width, margin, string);
 
         _scale = GTK_SCALE(gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0, 1, 0.001));
         gtk_scale_set_draw_value(_scale, false);
@@ -428,6 +476,22 @@ namespace rat
         //g_signal_connect(_button, "clicked", G_CALLBACK(ColorPicker::trigger_recompile_shader), nullptr);
     }
 
+    ColorPicker::HexCodeEntry::HexCodeEntry()
+    {
+        _entry = GTK_ENTRY(gtk_entry_new());
+        gtk_entry_set_width_chars(_entry, 4 * 2 + 1);
+        gtk_widget_set_hexpand(GTK_WIDGET(_entry), TRUE);
+        g_signal_connect(GTK_WIDGET(_entry), "activate", G_CALLBACK(hex_entry_on_activate), nullptr);
+        g_signal_connect(GTK_WIDGET(_entry), "paste-clipboard", G_CALLBACK(hex_entry_on_paste_clipboard), nullptr);
+
+        _warning_notification = GTK_BUTTON(gtk_button_new());
+        gtk_button_set_label(_warning_notification, "T");
+
+        _hbox = GTK_BOX(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, slider_to_slider_spacer));
+        gtk_container_add(GTK_CONTAINER(_hbox), GTK_WIDGET(_entry));
+        gtk_container_add(GTK_CONTAINER(_hbox), GTK_WIDGET(_warning_notification));
+    };
+
     void ColorPicker::initialize(float width)
     {
         margin = 0.05 * width;
@@ -442,11 +506,14 @@ namespace rat
         _opacity_label = new LabeledSpacer(width, "Opacity");
         _hsv_label = new LabeledSpacer(width, "HSV");
         _rgb_label = new LabeledSpacer(width, "RGB");
-        _cmyk_label = new LabeledSpacer(width, "CMYK");
+        _html_label = new LabeledSpacer(width, "HTML");
 
         // sliders
-        for (char c : {'A', 'H', 'S', 'V', 'R', 'G', 'B', 'C', 'M', 'Y', 'K'})
+        for (char c : {'A', 'S', 'V', 'R', 'G', 'B'})
             _elements[c] = new SliderElement(width, c);
+
+        _elements['H'] = new SliderElement(width, 'H', "/home/clem/Workspace/mousetrap/resources/shaders/color_picker_hue_gradient.frag");
+
 
         // regions
         _opacity_region = GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, slider_to_slider_spacer));
@@ -463,10 +530,16 @@ namespace rat
         for (char c : {'R', 'G', 'B'})
             gtk_container_add(GTK_CONTAINER(_rgb_region), GTK_WIDGET(_elements.at(c)->get_native()));
 
-        _cmyk_region = GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, slider_to_slider_spacer));
-        gtk_container_add(GTK_CONTAINER(_cmyk_region), GTK_WIDGET(_cmyk_label->get_native()));
-        for (char c : {'C', 'M', 'Y', 'K'})
-            gtk_container_add(GTK_CONTAINER(_cmyk_region), GTK_WIDGET(_elements.at(c)->get_native()));
+        // hex code
+
+        _hex_code_entry = new HexCodeEntry();
+        _html_region = GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, slider_to_slider_spacer));
+        gtk_container_add(GTK_CONTAINER(_html_region), GTK_WIDGET(_html_label->get_native()));
+
+        gtk_widget_set_margin_start(_hex_code_entry->get_native(), left_to_slider_left_margin);
+        gtk_widget_set_valign(_hex_code_entry->get_native(), GtkAlign::GTK_ALIGN_START);
+        gtk_widget_set_vexpand(_hex_code_entry->get_native(), FALSE);
+        gtk_container_add(GTK_CONTAINER(_html_region), GTK_WIDGET(_hex_code_entry->get_native()));
 
         _all_slider_regions = GTK_BOX(gtk_box_new(GTK_ORIENTATION_VERTICAL, slider_to_slider_spacer));
 
@@ -474,7 +547,7 @@ namespace rat
         gtk_container_add(GTK_CONTAINER(_all_slider_regions), GTK_WIDGET(_opacity_region));
         gtk_container_add(GTK_CONTAINER(_all_slider_regions), GTK_WIDGET(_hsv_region));
         gtk_container_add(GTK_CONTAINER(_all_slider_regions), GTK_WIDGET(_rgb_region));
-        gtk_container_add(GTK_CONTAINER(_all_slider_regions), GTK_WIDGET(_cmyk_region));
+        gtk_container_add(GTK_CONTAINER(_all_slider_regions), GTK_WIDGET(_html_region));
 
         // current color
 
@@ -488,7 +561,7 @@ namespace rat
         gtk_overlay_add_overlay(_current_color_element_overlay, _current_color_area->get_native());
 
         gtk_widget_set_margin_top(GTK_WIDGET(_current_color_element_overlay), 0.5 * outer_margin);
-        gtk_widget_set_margin_bottom(GTK_WIDGET(_current_color_element_overlay), 0.5 * outer_margin);
+        gtk_widget_set_margin_bottom(GTK_WIDGET(_current_color_element_overlay), outer_margin);
         gtk_widget_set_margin_start(GTK_WIDGET(_current_color_element_overlay), outer_margin);
         gtk_widget_set_margin_end(GTK_WIDGET(_current_color_element_overlay), outer_margin);
 
@@ -569,59 +642,7 @@ namespace rat
                     current_color.h = hue_before;
                 break;
             }
-            case 'C':
-            {
-                auto cmyk = current_color.operator CMYK();
-                cmyk.c = value;
-                float hue_before = current_color.h;
-                current_color = cmyk.operator HSVA();
-
-                if (current_color.s <= 0.001)
-                    current_color.h = hue_before;
-                break;
-            }
-
-            case 'M':
-            {
-                auto cmyk = current_color.operator CMYK();
-                cmyk.m = value;
-                float hue_before = current_color.h;
-                current_color = cmyk.operator HSVA();
-
-                if (current_color.s <= 0.001)
-                    current_color.h = hue_before;
-                break;
-            }
-
-            case 'Y':
-            {
-                auto cmyk = current_color.operator CMYK();
-                cmyk.y = value;
-                float hue_before = current_color.h;
-                current_color = cmyk.operator HSVA();
-
-                if (current_color.s <= 0.001)
-                    current_color.h = hue_before;
-                break;
-            }
-
-            case 'K':
-            {
-                auto cmyk = current_color.operator CMYK();
-                cmyk.k = value;
-                float hue_before = current_color.h;
-                current_color = cmyk.operator HSVA();
-
-                if (current_color.s <= 0.001)
-                    current_color.h = hue_before;
-                break;
-            }
         }
-
-        auto cmyk = current_color.operator CMYK();
-        auto to_rgba = cmyk.operator RGBA();
-
-        std::cout << cmyk.operator std::string() << " -> " << to_rgba.operator std::string() << std::endl;
 
         return last_color.h != current_color.h or last_color.s != current_color.s or last_color.v != current_color.v or last_color.a != current_color.a;
     }
@@ -648,7 +669,6 @@ namespace rat
 
         auto rgba = current_color.operator RGBA();
         auto hsva = current_color;
-        auto cmyk = rgba.operator CMYK();
 
         auto alpha_0 = rgba;
         alpha_0.a = 0;
@@ -671,7 +691,7 @@ namespace rat
         auto s_0 = hsva;
         s_0.s = 0;
         auto s_1 = hsva;
-        s_0.s = 1;
+        s_1.s = 1;
 
         update_slider_element(_elements.at('S'), s_0, s_1, hsva.s, 'S');
 
@@ -703,33 +723,8 @@ namespace rat
 
         update_slider_element(_elements.at('B'), b_0, b_1, rgba.b, 'B');
 
-        auto c_0 = cmyk;
-        c_0.c = 0;
-        auto c_1 = cmyk;
-        c_1.c = 1;
-
-        update_slider_element(_elements.at('C'), c_0, c_1, cmyk.c, 'C');
-
-        auto m_0 = cmyk;
-        m_0.m = 0;
-        auto m_1 = cmyk;
-        m_1.m = 1;
-
-        update_slider_element(_elements.at('M'), m_0, m_1, cmyk.m, 'M');
-
-        auto y_0 = cmyk;
-        y_0.y = 0;
-        auto y_1 = cmyk;
-        y_1.y = 1;
-
-        update_slider_element(_elements.at('Y'), y_0, y_1, cmyk.y, 'Y');
-
-        auto k_0 = cmyk;
-        k_0.k = 0;
-        auto k_1 = cmyk;
-        k_1.k = 1;
-
-        update_slider_element(_elements.at('K'), k_0, k_1, cmyk.k, 'K');
+        std::string text = rgba_to_html_code(current_color.operator RGBA());
+        gtk_entry_set_text(GTK_ENTRY(_hex_code_entry->_entry), text.c_str());
 
         _current_color_area->_last_color_shape->set_color(last_color);
         _current_color_area->_current_color_shape->set_color(current_color);

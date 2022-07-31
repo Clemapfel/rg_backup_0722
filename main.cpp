@@ -63,7 +63,7 @@ int main()
     auto *main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     GtkWidget *main_window = main;
 
-    Vector2f window_size = {150, 500};
+    Vector2f window_size = {150, 300};
     gtk_window_set_default_size(GTK_WINDOW(main_window), window_size.x, window_size.y);
     g_signal_connect(main_window, "destroy", G_CALLBACK(gtk_main_quit), nullptr);
     gtk_widget_realize(main_window);
@@ -74,10 +74,8 @@ int main()
     // color picker
     rat::ColorPicker::initialize(window_size.x);
     auto* picker = rat::ColorPicker::get_native();
-    gtk_widget_set_margin_start(picker, 0);
-    gtk_widget_set_margin_end(picker, 0);
-    gtk_widget_set_halign(picker, GtkAlign::GTK_ALIGN_CENTER);
-    gtk_widget_set_valign(picker, GtkAlign::GTK_ALIGN_CENTER);
+    //gtk_widget_set_halign(picker, GtkAlign::GTK_ALIGN_CENTER);
+    //gtk_widget_set_valign(picker, GtkAlign::GTK_ALIGN_CENTER);
     gtk_container_add(GTK_CONTAINER(main_window), picker);
 
     // render loop

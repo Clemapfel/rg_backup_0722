@@ -477,8 +477,8 @@ namespace rat
         out.g = hex_component_to_int(code.at(offset + 2), code.at(offset + 3)) / 255.f;
         out.b = hex_component_to_int(code.at(offset + 4), code.at(offset + 5)) / 255.f;
 
-        if (code.size() > offset + 6)
-            out.a = hex_component_to_int(code.at(offset + 6), code.at(offset + 7)) / 255.f;
+        if (code.size() > offset + 5)
+            out.a = hex_component_to_int(code.at(offset + 5), code.at(offset + 6)) / 255.f;
         else
             out.a = 1;
 
