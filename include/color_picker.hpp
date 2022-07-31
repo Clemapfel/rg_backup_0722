@@ -10,13 +10,14 @@
 #include <include/shader_area.hpp>
 
 #include <map>
+#include <atomic>
 
 namespace rat
 {
-    static inline RGBA current_color = RGBA(1, 1, 1, 1);
+    static inline HSVA current_color = HSVA(1, 1, 1, 1);
         // currently selected color at pallete index 1
 
-    static inline RGBA last_color = RGBA(1, 1, 1, 1);
+    static inline HSVA last_color = HSVA(0, 0, 0, 1);
         // last selected color, only used as UI element in color picker for comparison
     
     /// \brief verbose color picker, sliders for every component
@@ -28,6 +29,7 @@ namespace rat
 
             /// \brief update current_color and all ui elements
             static void update_color(char which_component, float value);
+            static void update_gui();
 
             /// \brief expose
             static GtkWidget* get_native();
@@ -102,7 +104,7 @@ namespace rat
                 {'C', nullptr},
                 {'M', nullptr},
                 {'Y', nullptr},
-                {'K', nullptr},
+                {'K', nullptr}
             };
             
             // label + spacer
@@ -140,12 +142,21 @@ namespace rat
 
             // signals
 
+            static void noop() {};
+
+            // window::realize
+            static void widget_on_realize (GtkWidget* widget)
+            {
+                //update_color('R', current_color.r);
+            }
+
             // scale::value-changed
             static void scale_on_value_changed(GtkRange* self, gpointer user_data)
             {
                 auto component = *((char*) user_data);
                 auto value = gtk_range_get_value(self);
                 update_color(component, value);
+                update_gui();
             }
 
             // entry::activate
@@ -154,6 +165,7 @@ namespace rat
                 auto component = *((char*) user_data);
                 auto value = std::stof(gtk_entry_get_text(entry));
                 update_color(component, value);
+                update_gui();
             }
 
             // entry::change-value
@@ -162,6 +174,7 @@ namespace rat
                 auto component = *((char*) user_data);
                 auto value = gtk_spin_button_get_value(self);
                 update_color(component, value);
+                update_gui();
             }
 
             // global containers
@@ -288,7 +301,7 @@ namespace rat
         _frame = new Shape();
         float target_frame_size = 0.025;
         Vector2f frame_size = Vector2f(target_frame_size * (size.y / size.x), target_frame_size);
-        _frame->as_frame({0, 0}, {1 - frame_size.x, 1}, frame_size.x, frame_size.y);
+        _frame->as_frame({frame_size.x, 0}, {1 - frame_size.x, 1}, frame_size.x, frame_size.y);
         _frame->set_color(RGBA(0, 0, 0, 1));
 
         register_render_task(_shape);
@@ -329,9 +342,12 @@ namespace rat
         gtk_container_add(GTK_CONTAINER(_hbox), GTK_WIDGET(_overlay));
         gtk_container_add(GTK_CONTAINER(_hbox), GTK_WIDGET(_entry));
 
-        g_signal_connect(GTK_WIDGET(_scale), "value-changed", G_CALLBACK(scale_on_value_changed), (void*) new char(component));
-        g_signal_connect(GTK_WIDGET(_entry), "activate", G_CALLBACK(entry_on_activate), (void*) new char(component));
-        g_signal_connect(GTK_WIDGET(_entry), "value-changed", G_CALLBACK(entry_on_value_changed), (void*) new char(component));
+        if (component == 'H' or component == 'S' or component == 'V' or component == 'A')
+        {
+            g_signal_connect(GTK_WIDGET(_scale), "value-changed", G_CALLBACK(scale_on_value_changed), (void*) new char(component));
+            g_signal_connect(GTK_WIDGET(_entry), "activate", G_CALLBACK(entry_on_activate), (void*) new char(component));
+            g_signal_connect(GTK_WIDGET(_entry), "value-changed", G_CALLBACK(entry_on_value_changed), (void*) new char(component));
+        }
     }
     
     ColorPicker::LabeledSpacer::LabeledSpacer(float width, std::string label)
@@ -426,14 +442,124 @@ namespace rat
         gtk_overlay_add_overlay(_close_dialogue_overlay, _close_dialogue->get_native());
 
         gtk_container_add(GTK_CONTAINER(_window), GTK_WIDGET(_close_dialogue_overlay));
+        g_signal_connect(GTK_WIDGET(_window), "realize", G_CALLBACK(widget_on_realize), nullptr);
     }
 
     void ColorPicker::update_color(char which_component, float value)
     {
-        std::cout << "set" << std::endl;
-        auto update_slider_element = [](SliderElement* slider, RGBA left, RGBA right, float value) {
+        last_color = current_color;
 
-            auto* gradient = slider->_gradient;
+        switch (which_component)
+        {
+            case 'A':
+            {
+                current_color.a = value;
+                return;
+            }
+            case 'H':
+            {
+                current_color.h = value;
+                return;
+            }
+            case 'S':
+            {
+                current_color.s = value;
+            }
+            case 'V':
+            {
+                current_color.v = value;
+            }
+            case 'R':
+            {
+                auto rgba = current_color.operator RGBA();
+                rgba.r = value;
+
+                float hue_before = current_color.h;
+                current_color = rgba.operator HSVA();
+
+                if (current_color.s <= 0.001)
+                    current_color.h = hue_before;
+                return;
+            }
+            case 'G':
+            {
+                auto rgba = current_color.operator RGBA();
+                rgba.g = value;
+
+                float hue_before = current_color.h;
+                current_color = rgba.operator HSVA();
+
+                if (current_color.s <= 0.001)
+                    current_color.h = hue_before;
+                return;
+            }
+            case 'B':
+            {
+                auto rgba = current_color.operator RGBA();
+                rgba.b = value;
+
+                float hue_before = current_color.h;
+                current_color = rgba.operator HSVA();
+
+                if (current_color.s <= 0.001)
+                    current_color.h = hue_before;
+                return;
+            }
+            case 'C':
+            {
+                auto cmyk = current_color.operator CMYK();
+                cmyk.c = value;
+                float hue_before = current_color.h;
+                current_color = cmyk.operator HSVA();
+
+                if (current_color.s <= 0.001)
+                    current_color.h = hue_before;
+                return;
+            }
+
+            case 'M':
+            {
+                auto cmyk = current_color.operator CMYK();
+                cmyk.m = value;
+                float hue_before = current_color.h;
+                current_color = cmyk.operator HSVA();
+
+                if (current_color.s <= 0.001)
+                    current_color.h = hue_before;
+                return;
+            }
+
+            case 'Y':
+            {
+                auto cmyk = current_color.operator CMYK();
+                cmyk.y = value;
+                float hue_before = current_color.h;
+                current_color = cmyk.operator HSVA();
+
+                if (current_color.s <= 0.001)
+                    current_color.h = hue_before;
+                return;
+            }
+
+            case 'K':
+            {
+                auto cmyk = current_color.operator CMYK();
+                cmyk.k = value;
+                float hue_before = current_color.h;
+                current_color = cmyk.operator HSVA();
+
+                if (current_color.s <= 0.001)
+                    current_color.h = hue_before;
+                return;
+            }
+        }
+    }
+    
+    void ColorPicker::update_gui()
+    {
+        auto update_slider_element = [&](SliderElement *slider, RGBA left, RGBA right, float value, char which) {
+
+            auto *gradient = slider->_gradient;
             gradient->_shape->set_vertex_color(0, left);
             gradient->_shape->set_vertex_color(3, left);
             gradient->_shape->set_vertex_color(1, right);
@@ -441,96 +567,12 @@ namespace rat
             gradient->queue_render();
 
             gtk_spin_button_set_value(slider->_entry, value);
+            gtk_range_set_value(GTK_RANGE(slider->_scale), value);
         };
-        
-        auto current = current_color;
-        
-        RGBA rgba;
-        HSVA hsva;
-        CMYK cmyk;
-        
-        switch (which_component)
-        {
-            case 'A':
-                rgba = current_color;
-                rgba.a = value;
-                hsva = rgba.operator HSVA();
-                cmyk = rgba.operator CMYK();
-                break;
-                
-            case 'H':
-                hsva = current_color.operator HSVA();
-                hsva.h = value;
-                rgba = hsva.operator RGBA();
-                cmyk = hsva.operator CMYK();
-                break;
-                
-            case 'S':
-                hsva = current_color.operator HSVA();
-                hsva.s = value;
-                rgba = hsva.operator RGBA();
-                cmyk = hsva.operator CMYK();
-                break;
-                
-            case 'V':
-                hsva = current_color.operator HSVA();
-                hsva.v = value;
-                rgba = hsva.operator RGBA();
-                cmyk = hsva.operator CMYK();
-                break;
-                
-            case 'R':
-                rgba = current_color;
-                rgba.r = value;
-                hsva = rgba.operator HSVA();
-                cmyk = rgba.operator CMYK();
-                break;
 
-            case 'G':
-                rgba = current_color;
-                rgba.g = value;
-                hsva = rgba.operator HSVA();
-                cmyk = rgba.operator CMYK();
-                break;
-
-            case 'B':
-                rgba = current_color;
-                rgba.b = value;
-                hsva = rgba.operator HSVA();
-                cmyk = rgba.operator CMYK();
-                break;
-                
-            case 'C':
-                cmyk = current_color.operator CMYK();
-                cmyk.c = value;
-                rgba = cmyk.operator RGBA();
-                hsva = rgba.operator HSVA();
-                break;
-
-            case 'M':
-                cmyk = current_color.operator CMYK();
-                cmyk.m = value;
-                rgba = cmyk.operator RGBA();
-                hsva = rgba.operator HSVA();
-                break;
-
-            case 'Y':
-                cmyk = current_color.operator CMYK();
-                cmyk.y = value;
-                rgba = cmyk.operator RGBA();
-                hsva = rgba.operator HSVA();
-                break;
-
-            case 'K':
-                cmyk = current_color.operator CMYK();
-                cmyk.k = value;
-                rgba = cmyk.operator RGBA();
-                hsva = rgba.operator HSVA();
-                break;
-        }
-
-        last_color = current_color;
-        current_color = rgba;
+        auto rgba = current_color.operator RGBA();
+        auto hsva = current_color;
+        auto cmyk = current_color.operator CMYK();
 
         auto alpha_0 = rgba;
         alpha_0.a = 0;
@@ -538,79 +580,80 @@ namespace rat
         auto alpha_1 = rgba;
         alpha_1.a = 1;
 
-        update_slider_element(_elements.at('A'), alpha_0, alpha_1, rgba.a);
+        update_slider_element(_elements.at('A'), alpha_0, alpha_1, rgba.a, 'A');
+
+        rgba.a = 1;
+        hsva.a = 1;
 
         auto h_0 = hsva;
         h_0.h = 0;
         auto h_1 = hsva;
         h_1.h = 1;
 
-        update_slider_element(_elements.at('H'), h_0, h_1, hsva.h);
+        update_slider_element(_elements.at('H'), h_0, h_1, hsva.h, 'H');
 
         auto s_0 = hsva;
         s_0.s = 0;
         auto s_1 = hsva;
         s_0.s = 1;
 
-        update_slider_element(_elements.at('S'), s_0, s_1, hsva.s);
+        update_slider_element(_elements.at('S'), s_0, s_1, hsva.s, 'S');
 
         auto v_0 = hsva;
         v_0.v = 0;
         auto v_1 = hsva;
-        v_1.v = 0;
+        v_1.v = 1;
 
-        update_slider_element(_elements.at('V'), v_0, v_1, hsva.v);
+        update_slider_element(_elements.at('V'), v_0, v_1, hsva.v, 'V');
 
         auto r_0 = rgba;
         r_0.r = 0;
         auto r_1 = rgba;
         r_1.r = 1;
 
-        update_slider_element(_elements.at('R'), r_0, r_1, rgba.r);
+        update_slider_element(_elements.at('R'), r_0, r_1, rgba.r, 'R');
 
         auto g_0 = rgba;
         g_0.g = 0;
         auto g_1 = rgba;
         g_1.g = 1;
 
-        update_slider_element(_elements.at('G'), g_0, g_1, rgba.g);
+        update_slider_element(_elements.at('G'), g_0, g_1, rgba.g, 'G');
 
         auto b_0 = rgba;
         b_0.b = 0;
         auto b_1 = rgba;
         b_1.b = 1;
 
-        update_slider_element(_elements.at('B'), b_0, b_1, rgba.b);
+        update_slider_element(_elements.at('B'), b_0, b_1, rgba.b, 'B');
 
         auto c_0 = cmyk;
         c_0.c = 0;
         auto c_1 = cmyk;
         c_1.c = 1;
 
-        update_slider_element(_elements.at('C'), c_0, c_1, cmyk.c);
+        update_slider_element(_elements.at('C'), c_0, c_1, cmyk.c, 'C');
 
         auto m_0 = cmyk;
         m_0.m = 0;
         auto m_1 = cmyk;
         m_1.m = 1;
 
-        update_slider_element(_elements.at('M'), m_0, m_1, cmyk.m);
+        update_slider_element(_elements.at('M'), m_0, m_1, cmyk.m, 'M');
 
         auto y_0 = cmyk;
         y_0.y = 0;
         auto y_1 = cmyk;
         y_1.y = 1;
 
-        update_slider_element(_elements.at('Y'), y_0, y_1, cmyk.y);
+        update_slider_element(_elements.at('Y'), y_0, y_1, cmyk.y, 'Y');
 
         auto k_0 = cmyk;
         k_0.k = 0;
         auto k_1 = cmyk;
         k_1.k = 1;
 
-        update_slider_element(_elements.at('K'), k_0, k_1, cmyk.k);
-
-        // update color field
+        update_slider_element(_elements.at('K'), k_0, k_1, cmyk.k, 'K');
 
         _current_color_area->_last_color_shape->set_color(last_color);
         _current_color_area->_current_color_shape->set_color(current_color);

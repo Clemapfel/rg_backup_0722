@@ -118,6 +118,7 @@ namespace rat
 
 #include <include/vector.hpp>
 #include <sstream>
+#include <iostream>
 #include <cctype>
 
 namespace rat
@@ -299,33 +300,23 @@ namespace rat
 
         auto delta = max - min;
 
-        if (delta > 0)
-        {
-            if (max == r)
-                h = 60 * (fmod(((g - b) / delta), 6));
-
-            else if (max == g)
-                h = 60 * (((b - r) / delta) + 2);
-
-            else if (max == b)
-                h = 60 * (((r - g) / delta) + 4);
-
-            if (max > 0)
-                s = delta / max;
-            else
-                s = 0;
-
-            v = max;
-        }
-        else
-        {
+        if (delta < 0.001)
             h = 0;
-            s = 0;
-            v = max;
-        }
+        else if (max == r)
+            h = 60 * (fmod(((g - b) / delta), 6));
+        else if (max == g)
+            h = 60 * (((b - r) / delta) + 2);
 
-        if (h < 0)
-            h += 360;
+        else if (max == b)
+            h = 60 * (((r - g) / delta) + 4);
+
+        if (max == 0)
+            s = 1;
+        else
+            s = delta / max;
+
+        v = max;
+        h = std::fmod(h, 360.f);
 
         return glm::vec4(h / 360.f, s, v, a);
     }

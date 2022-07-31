@@ -8,6 +8,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <mutex>
 
 #include <include/gl_common.hpp>
 #include <include/colors.hpp>
@@ -68,6 +69,8 @@ namespace rat
             std::vector<Vertex> _vertices;
             std::vector<int> _indices;
             GLenum _render_type = GL_TRIANGLE_STRIP;
+
+            std::mutex _data_lock;
 
             void update_position();
             void update_color();
@@ -190,7 +193,7 @@ namespace rat
         }
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray (0);
+        //glBindVertexArray(0); // this deadlocks for some reason
     }
 
     void Shape::update_position()

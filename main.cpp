@@ -82,7 +82,6 @@ int main()
 
     // render loop
     gtk_widget_show_all(main_window);
-    rat::ColorPicker::update_color('H', 0.3);
     gtk_window_present((GtkWindow*) main_window);
     gtk_main();
 
