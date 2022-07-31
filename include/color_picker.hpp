@@ -14,7 +14,7 @@
 
 namespace rat
 {
-    static inline HSVA current_color = HSVA(1, 1, 1, 1);
+    static inline HSVA current_color = HSVA(0.3, 1, 1, 1);
         // currently selected color at pallete index 1
 
     static inline HSVA last_color = HSVA(0, 0, 0, 1);
@@ -158,58 +158,9 @@ namespace rat
                 //update_color('R', current_color.r);
             }
 
-            // scale::value-changed
-            static void scale_on_value_changed(GtkRange* self, gpointer user_data)
-            {
-                for (auto& pair : _elements)
-                    pair.second->set_signals_blocked(true);
-
-                auto component = *((char*) user_data);
-                auto value = gtk_range_get_value(self);
-
-                static size_t i = 0;
-                std::cout << "scale:value-changed: " << component << " " << value << " " << i++ << std::endl;
-
-                update_color(component, value);
-                update_gui();
-
-                for (auto& pair : _elements)
-                    pair.second->set_signals_blocked(false);
-            }
-
-            // entry::activate
-            static void entry_on_activate(GtkEntry* entry, gpointer user_data)
-            {
-                for (auto& pair : _elements)
-                    pair.second->set_signals_blocked(true);
-
-                std::cout << "entry:activate" << std::endl;
-
-                auto component = *((char*) user_data);
-                auto value = std::stof(gtk_entry_get_text(entry));
-                update_color(component, value);
-                update_gui();
-
-                for (auto& pair : _elements)
-                    pair.second->set_signals_blocked(false);
-            }
-
-            // entry::value-changed
-            static void entry_on_value_changed(GtkSpinButton* self, gpointer user_data)
-            {
-                for (auto& pair : _elements)
-                    pair.second->set_signals_blocked(true);
-
-                std::cout << "entry:value-changed" << std::endl;
-
-                auto component = *((char*) user_data);
-                auto value = gtk_spin_button_get_value(self);
-                update_color(component, value);
-                update_gui();
-
-                for (auto& pair : _elements)
-                    pair.second->set_signals_blocked(false);
-            }
+            static void scale_on_value_changed(GtkRange* self, gpointer user_data);
+            static void entry_on_activate(GtkEntry* entry, gpointer user_data);
+            static void entry_on_value_changed(GtkSpinButton* self, gpointer user_data);
 
             // global containers
 
@@ -340,6 +291,61 @@ namespace rat
 
         register_render_task(_shape);
         register_render_task(_frame);
+    }
+
+    // scale::value-changed
+    void ColorPicker::scale_on_value_changed(GtkRange* self, gpointer user_data)
+    {
+        for (auto& pair : _elements)
+            pair.second->set_signals_blocked(true);
+
+        auto component = *((char*) user_data);
+        auto value = gtk_range_get_value(self);
+
+        static size_t i = 0;
+        std::cout << "scale:value-changed: " << component << " " << value << " " << i++ << std::endl;
+
+        update_color(component, value);
+        update_gui();
+
+        for (auto& pair : _elements)
+            pair.second->set_signals_blocked(false);
+    }
+
+    // entry::activate
+    void ColorPicker::entry_on_activate(GtkEntry* entry, gpointer user_data)
+    {
+        for (auto& pair : _elements)
+            pair.second->set_signals_blocked(true);
+
+        std::cout << "entry:activate" << std::endl;
+
+        auto component = *((char*) user_data);
+        auto value = std::stof(gtk_entry_get_text(entry));
+        update_color(component, value);
+        update_gui();
+
+        for (auto& pair : _elements)
+            pair.second->set_signals_blocked(false);
+    }
+
+    // entry::value-changed
+    void ColorPicker::entry_on_value_changed(GtkSpinButton* self, gpointer user_data)
+    {
+        for (auto& pair : _elements)
+            pair.second->set_signals_blocked(true);
+
+        auto component = *((char*) user_data);
+        auto value = gtk_spin_button_get_value(self);
+
+        static size_t i = 0;
+        std::cout << "entry:value-changed: " << component << " " << value << " " << i++ << std::endl;
+
+        update_color(component, value);
+        update_gui();
+
+        for (auto& pair : _elements)
+            pair.second->set_signals_blocked(false);
     }
     
     ColorPicker::SliderElement::SliderElement(float width, char component)
@@ -612,6 +618,11 @@ namespace rat
             }
         }
 
+        auto cmyk = current_color.operator CMYK();
+        auto to_rgba = cmyk.operator RGBA();
+
+        std::cout << cmyk.operator std::string() << " -> " << to_rgba.operator std::string() << std::endl;
+
         return last_color.h != current_color.h or last_color.s != current_color.s or last_color.v != current_color.v or last_color.a != current_color.a;
     }
     
@@ -637,7 +648,7 @@ namespace rat
 
         auto rgba = current_color.operator RGBA();
         auto hsva = current_color;
-        auto cmyk = current_color.operator CMYK();
+        auto cmyk = rgba.operator CMYK();
 
         auto alpha_0 = rgba;
         alpha_0.a = 0;

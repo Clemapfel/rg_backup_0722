@@ -37,7 +37,7 @@ namespace rat
         /// \brief convert cmyk to rgb
         explicit RGBA(CMYK);
 
-        /// \brief convert rgb to cymk
+        /// \brief convert rgb to cmyk
         explicit operator CMYK() const;
 
         float to_grayscale() const;
@@ -105,11 +105,11 @@ namespace rat
     glm::vec4 rgba_to_hsva(glm::vec4);
     glm::vec4 hsva_to_rgba(glm::vec4);
 
-    glm::vec4 cymk_to_rgba(glm::vec4);
-    glm::vec4 rgba_to_cymk(glm::vec4);
+    glm::vec4 cmyk_to_rgba(glm::vec4);
+    glm::vec4 rgba_to_cmyk(glm::vec4);
 
-    glm::vec4 cymk_to_hsva(glm::vec4);
-    glm::vec4 hsva_to_cymk(glm::vec4);
+    glm::vec4 cmyk_to_hsva(glm::vec4);
+    glm::vec4 hsva_to_cmyk(glm::vec4);
 
     RGBA html_code_to_rgba(const std::string& code);
 }
@@ -149,9 +149,9 @@ namespace rat
         return glm::vec4(r, g, b, a);
     }
 
-    RGBA::RGBA(CMYK cymk)
+    RGBA::RGBA(CMYK cmyk)
     {
-        auto out = cymk_to_rgba(cymk.operator glm::vec4());
+        auto out = cmyk_to_rgba(cmyk.operator glm::vec4());
         r = out[0];
         g = out[1];
         b = out[2];
@@ -160,7 +160,7 @@ namespace rat
 
     RGBA::operator CMYK() const
     {
-        return CMYK(rgba_to_cymk(this->operator glm::vec4()));
+        return CMYK(rgba_to_cmyk(this->operator glm::vec4()));
     }
 
     RGBA::RGBA(HSVA hsva)
@@ -216,9 +216,9 @@ namespace rat
         return RGBA(hsva_to_rgba(this->operator glm::vec4()));
     }
 
-    HSVA::HSVA(CMYK cymk)
+    HSVA::HSVA(CMYK cmyk)
     {
-        auto out = cymk_to_rgba(cymk.operator glm::vec4());
+        auto out = cmyk_to_rgba(cmyk.operator glm::vec4());
         h = out[0];
         s = out[1];
         v = out[2];
@@ -227,7 +227,7 @@ namespace rat
 
     HSVA::operator CMYK() const
     {
-        return CMYK(rgba_to_hsva(this->operator glm::vec4()));
+        return CMYK(rgba_to_cmyk(rgba_to_hsva(this->operator glm::vec4())));
     }
 
     CMYK::operator std::string()
@@ -257,7 +257,7 @@ namespace rat
 
     CMYK::CMYK(RGBA rgba)
     {
-        auto out = rgba_to_cymk(rgba.operator glm::vec4());
+        auto out = rgba_to_cmyk(rgba.operator glm::vec4());
         c = out[0];
         y = out[1];
         m = out[2];
@@ -266,12 +266,12 @@ namespace rat
 
     CMYK::operator RGBA() const
     {
-        return RGBA(cymk_to_rgba(this->operator glm::vec4()));
+        return RGBA(cmyk_to_rgba(this->operator glm::vec4()));
     }
 
     CMYK::CMYK(HSVA hsva)
     {
-        auto out = hsva_to_cymk(hsva.operator glm::vec4());
+        auto out = hsva_to_cmyk(hsva.operator glm::vec4());
         c = out[0];
         y = out[1];
         m = out[2];
@@ -280,7 +280,7 @@ namespace rat
 
     CMYK::operator HSVA() const
     {
-        return HSVA(cymk_to_hsva(this->operator glm::vec4()));
+        return HSVA(cmyk_to_hsva(this->operator glm::vec4()));
     }
 
     glm::vec4 rgba_to_hsva(glm::vec4 in)
@@ -368,41 +368,44 @@ namespace rat
         return glm::vec4(rgb.r, rgb.g, rgb.b, a);
     }
 
-    glm::vec4 rgba_to_cymk(glm::vec4 in)
+    glm::vec4 rgba_to_cmyk(glm::vec4 in)
     {
         float r = in[0];
         float g = in[1];
         float b = in[2];
 
-        float k = 1 - std::max(std::max(r, g), b);
-        float c = (1 - r - k) / (1 - k);
-        float m = (1 - g - k) / (1 - k);
-        float y = (1 - b - k) / (1 - k);
+        float c = 1 - r;
+        float m = 1 - g;
+        float y = 1 - b;
 
-        return glm::vec4(c, m, y, k);
+        float k = std::min<float>(std::min<float>(c, m), y);
+        return glm::vec4(c - k, m - k, y - k, k);
     }
 
-    glm::vec4 cymk_to_rgba(glm::vec4 in)
+    glm::vec4 cmyk_to_rgba(glm::vec4 in)
     {
-        const float c = in[0];
-        const float y = in[1];
-        const float m = in[2];
+        float c = in[0];
+        float y = in[1];
+        float m = in[2];
         const float k = in[3];
 
-        float r = (1 - c) * (1 - k);
-        float g = (1 - m) * (1 - k);
-        float b = (1 - y) * (1 - k);
-        return glm::vec4(r, g, b, 1);
+        return glm::vec4(
+            1 - c,
+            1 - y,
+            1 - m,
+            1
+        );
+
     }
 
-    glm::vec4 hsva_to_cymk(glm::vec4 in)
+    glm::vec4 hsva_to_cmyk(glm::vec4 in)
     {
-        return rgba_to_cymk(hsva_to_rgba(in));
+        return rgba_to_cmyk(hsva_to_rgba(in));
     }
 
-    glm::vec4 cymk_to_hsva(glm::vec4 in)
+    glm::vec4 cmyk_to_hsva(glm::vec4 in)
     {
-        return rgba_to_hsva(cymk_to_rgba(in));
+        return rgba_to_hsva(cmyk_to_rgba(in));
     }
 
     RGBA html_code_to_rgba(const std::string& code)
